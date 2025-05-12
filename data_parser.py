@@ -2,9 +2,6 @@ import os
 import Ofpp
 import numpy as np
 
-case_dir = "/home/luigi/Documenti/OpenFOAM/porous-mesh-template-2D"
-
-
 def parse_boundary(case_path: str):
     last_step = get_last_step(case_path)
     boundaries_path = f"{case_path}/postProcessing"
@@ -49,3 +46,4 @@ def parse_internal_mesh(case_path: str, fields: list[str]):
         parsed_field = Ofpp.parse_internal_field(f"{case_path}/{last_step}/{f}")
         field_value += parsed_field
     return domain_points + field_value
+

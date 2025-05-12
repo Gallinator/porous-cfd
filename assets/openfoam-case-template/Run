@@ -5,9 +5,9 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions
 
 cleanCase
-runApplication blockMesh
-runApplication snappyHexMesh -overwrite
-runApplication decomposePar
-runApplication $(getApplication)
-runApplication reconstructPar
-runApplication postProcess -func writeCellCentres
+blockMesh
+snappyHexMesh -overwrite
+decomposePar
+$(getApplication)
+reconstructPar
+postProcess -func writeCellCentres

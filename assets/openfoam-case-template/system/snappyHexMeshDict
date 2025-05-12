@@ -21,7 +21,7 @@ addLayers       false;
 geometry
 {
 
-    mesh.stl
+    mesh.obj
     {
         type triSurfaceMesh;
         name mesh;

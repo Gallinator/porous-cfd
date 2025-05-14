@@ -1,0 +1,79 @@
+import glob
+import json
+import math
+import os
+import pathlib
+import shutil
+import subprocess
+import mathutils
+
+import bpy
+from tqdm import tqdm
+from bpy import ops
+
+OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
+
+
+def generate_transformed_meshes():
+    with open('assets/meshes/transforms.json', 'r') as f:
+        ops.ed.undo_push()
+        ops.object.select_all(action='SELECT')
+        ops.object.delete()
+        for mesh, transforms in json.load(f).items():
+            ops.wm.obj_import(filepath=f'assets/meshes/{mesh}',
+                              forward_axis='Y',
+                              up_axis='Z')
+            for t in transforms:
+                for r in t["rotation"]:
+                    ops.object.select_all(action='SELECT')
+                    ops.object.duplicate(linked=False)
+                    obj = bpy.context.selected_objects[0]
+
+                    scale = t["scale"]
+                    obj.scale = mathutils.Vector((scale[0], scale[1], 1.0))
+
+                    obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
+
+                    ops.wm.obj_export(filepath=f'assets/generated-meshes/s{scale[0]}-{scale[1]}_r{r}_{mesh}',
+                                      forward_axis='Y',
+                                      up_axis='Z',
+                                      export_materials=False,
+                                      export_selected_objects=True)
+                    # Delete copy
+                    ops.object.delete()
+            # Delete original
+            ops.object.select_all(action='SELECT')
+            ops.object.delete()
+
+
+def clean_dir(directory: str):
+    for root, dirs, files in os.walk(directory):
+        for f in files:
+            os.remove(os.path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
+
+
+def generate_openfoam_cases(template_path: str):
+    meshes = glob.glob("assets/generated-meshes/*.obj")
+    for m in meshes:
+        case_path = f"data/{pathlib.Path(m).stem}"
+        shutil.copytree(template_path, case_path)
+        shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+
+
+def generate_data():
+    for case in tqdm(glob.glob("data/*"), desc="Running cases"):
+        process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                   stdout=subprocess.DEVNULL, text=True)
+        process.communicate(f"{case}/Run")
+        process.wait()
+        if process.returncode != 0:
+            raise RuntimeError(f'Failed to run {case}')
+
+
+clean_dir('data')
+clean_dir('assets/generated-meshes')
+generate_transformed_meshes()
+generate_openfoam_cases("assets/openfoam-case-template")
+generate_data()

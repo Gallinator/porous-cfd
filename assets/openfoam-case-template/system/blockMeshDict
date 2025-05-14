@@ -54,7 +54,7 @@ edges
 
 boundary
 (
-    outlet
+    inlet
     {
         type patch;
         faces
@@ -62,7 +62,7 @@ boundary
             (0 4 7 3)
         );
     }
-    inlet
+    outlet
     {
         type patch;
         faces

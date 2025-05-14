@@ -36,14 +36,14 @@ def get_last_step(case_path: str) -> str:
     return steps[-1]
 
 
-def parse_internal_mesh(case_path: str, fields: list[str]):
-    domain_mesh = Ofpp.FoamMesh(case_path)
-    domain_mesh.read_cell_centres(case_path)
-    domain_points = (domain_mesh.cell_centres())
+def parse_internal_mesh(case_path: str, *fields):
     last_step = get_last_step(case_path)
-    field_value = ()
+    domain_mesh = Ofpp.FoamMesh(case_path)
+    domain_mesh.read_cell_centres(f"{case_path}/{last_step}/C")
+    domain_points = [domain_mesh.cell_centres]
+    field_value = []
     for f in fields:
         parsed_field = Ofpp.parse_internal_field(f"{case_path}/{last_step}/{f}")
-        field_value += parsed_field
+        field_value.append(parsed_field)
     return domain_points + field_value
 

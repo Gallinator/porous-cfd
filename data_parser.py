@@ -25,7 +25,7 @@ def parse_surface(surface_path: str, field_components: int):
         for row in lines[2:]:
             content = row.split(' ')
             coords.append([float(content[0]), float(content[1])])
-            field.append([float(content[2 + i]) for i in range(field_components)])
+            field.append([float(content[3 + i]) for i in range(field_components)])
     return coords, field
 
 

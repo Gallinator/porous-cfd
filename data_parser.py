@@ -9,7 +9,7 @@ def parse_boundary(case_path: str):
     u = []
     p = []
     for s in os.listdir(boundaries_path):
-        u_coords, u_values = parse_surface(f"{boundaries_path}/{s}/surface/{last_step}/U_patch_{s}.raw", 3)
+        u_coords, u_values = parse_surface(f"{boundaries_path}/{s}/surface/{last_step}/U_patch_{s}.raw", 2)
         p_coords, p_values = parse_surface(f"{boundaries_path}/{s}/surface/{last_step}/p_patch_{s}.raw", 1)
         coords += u_coords
         u += u_values

@@ -8,7 +8,7 @@ import subprocess
 import mathutils
 import bpy
 import numpy as np
-from tqdm import tqdm
+from rich.progress import track
 from bpy import ops
 from data_parser import parse_boundary, parse_internal_mesh
 
@@ -68,7 +68,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
 
 
 def generate_data(cases_dir: str):
-    for case in tqdm(glob.glob(f"{cases_dir}/*"), desc="Running cases"):
+    for case in track(glob.glob(f"{cases_dir}/*"), description="Runiing cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
         process.communicate(f"{case}/Run")
@@ -79,7 +79,7 @@ def generate_data(cases_dir: str):
 
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points = [], []
-    for case in tqdm(glob.glob(f'{data_dir}/*'), desc='Generating metadata'):
+    for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
         b_n, i_n = parse_case_num_points(case)
         boundary_num_points.append(b_n)
         internal_num_points.append(i_n)

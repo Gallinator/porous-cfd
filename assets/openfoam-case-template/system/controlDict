@@ -51,7 +51,7 @@ functions
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
         libs            (fieldFunctionObjects);
-        surfaceFormat   raw;
+        surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
         fields          (U p);
@@ -68,7 +68,7 @@ functions
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
         libs            (fieldFunctionObjects);
-        surfaceFormat   raw;
+        surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
         fields          (U p);
@@ -85,7 +85,7 @@ functions
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
         libs            (fieldFunctionObjects);
-        surfaceFormat   raw;
+        surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
         fields          (U p);
@@ -102,7 +102,7 @@ functions
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
         libs            (fieldFunctionObjects);
-        surfaceFormat   raw;
+        surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
         fields          (U p);

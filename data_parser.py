@@ -9,29 +9,45 @@ def parse_boundary(case_path: str):
     faces = []
     u = []
     p = []
+
     for s in os.listdir(boundaries_path):
         coords = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")[None]
+        coords = make_at_most_2d(coords)
         u_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/vectorField/U")[None]
+        u_values = make_at_most_2d(u_values)
         p_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/scalarField/p")[None]
+        p_values = make_column(p_values)
         faces.extend(coords)
         u.extend(u_values)
         p.extend(p_values)
+
     return np.array(faces), np.array(u), np.array(p)
 
 
-def reshape_fields(fields: list[np.ndarray], size: int):
-    for i, f in enumerate(fields):
-        if len(f.shape) == 1:
-            fields[i] = np.atleast_2d(f).T
+def make_at_most_2d(field) -> np.array:
+    f = np.array(field)
+    if len(f.shape) > 1 and f.shape[-1] > 2:
+        return f[:, :2]
+    return f
+
+
+def make_column(field) -> np.array:
+    f = np.array(field)
+    if len(f.shape) == 1:
+        return np.vstack(f)
+    return f
 
 
 def parse_internal_mesh(case_path: str, *fields):
     case = FoamCase(case_path)
     last_step = case[-1]
-    domain_points = [last_step.cell_centers().internal_field]
-    field_value = []
+    domain_points = last_step.cell_centers().internal_field
+    domain_points = make_at_most_2d(domain_points)
+    fields_values = []
     for f in fields:
         parsed_field = last_step[f].internal_field
-        field_value.append(parsed_field)
-    reshape_fields(field_value, len(domain_points))
-    return domain_points + field_value
+        parsed_field = make_column(parsed_field)
+        parsed_field = make_at_most_2d(parsed_field)
+        fields_values.append(parsed_field)
+
+    return [domain_points] + fields_values

@@ -77,9 +77,9 @@ def generate_data(cases_path: str):
             raise RuntimeError(f'Failed to run {case}')
 
 
-def generate_meta():
+def generate_meta(data_path: str):
     boundary_num_points, internal_num_points = [], []
-    for case in tqdm(glob.glob('data/*'), desc='Generating metadata'):
+    for case in tqdm(glob.glob(f'{data_path}/*'), desc='Generating metadata'):
         b_n, i_n = parse_case_num_points(case)
         boundary_num_points.append(b_n)
         internal_num_points.append(i_n)
@@ -87,7 +87,7 @@ def generate_meta():
     boundary_meta = {"Min points": int(np.min(boundary_num_points))}
     internal_meta = {"Min points": int(np.min(internal_num_points))}
     meta_dict = {"Internal": internal_meta, "Boundary": boundary_meta}
-    with open('data/meta.json', 'w') as meta:
+    with open(f'{data_path}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
 
 
@@ -102,9 +102,7 @@ def parse_case_num_points(case_path: str):
 
 clean_dir('data')
 clean_dir('assets/generated-meshes')
-generate_transformed_meshes()
-generate_openfoam_cases("assets/openfoam-case-template")
-generate_data()
-generate_meta()
 generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')
 generate_openfoam_cases('assets/generated-meshes/train', 'data/train')
+generate_data('data/train')
+generate_meta('data/train')

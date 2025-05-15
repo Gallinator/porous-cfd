@@ -11,7 +11,7 @@ def parse_boundary(case_path: str):
     p = []
 
     for s in os.listdir(boundaries_path):
-        coords = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")[None]
+        coords = parse_face_centers(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")
         coords = make_at_most_2d(coords)
         u_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/vectorField/U")[None]
         u_values = make_at_most_2d(u_values)
@@ -22,6 +22,18 @@ def parse_boundary(case_path: str):
         p.extend(p_values)
 
     return np.array(faces), np.array(u), np.array(p)
+
+
+def parse_face_centers(path: str):
+    """This is a temporary workaround as foamlib cannot read all cell centers"""
+    centers = []
+    with open(path, 'r') as f:
+        lines = f.readlines()
+        for l in lines[3:-1]:
+            content = l[1:-2]
+            content = content.split(' ')
+            centers.append(list(map(float, content)))
+    return centers
 
 
 def make_at_most_2d(field) -> np.array:

@@ -6,10 +6,11 @@ import pathlib
 import shutil
 import subprocess
 import mathutils
-
 import bpy
+import numpy as np
 from tqdm import tqdm
 from bpy import ops
+from data_parser import parse_boundary, parse_internal_mesh
 
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
 
@@ -72,8 +73,32 @@ def generate_data():
             raise RuntimeError(f'Failed to run {case}')
 
 
+def generate_meta():
+    boundary_num_points, internal_num_points = [], []
+    for case in tqdm(glob.glob('data/*'), desc='Generating metadata'):
+        b_n, i_n = parse_case_num_points(case)
+        boundary_num_points.append(b_n)
+        internal_num_points.append(i_n)
+
+    boundary_meta = {"Min points": int(np.min(boundary_num_points))}
+    internal_meta = {"Min points": int(np.min(internal_num_points))}
+    meta_dict = {"Internal": internal_meta, "Boundary": boundary_meta}
+    with open('data/meta.json', 'w') as meta:
+        meta.write(json.dumps(meta_dict, indent=4))
+
+
+def parse_case_num_points(case_path: str):
+    boundary_c, boundary_u, boundary_p = parse_boundary(case_path)
+    internal_c, internal_u, internal_p = parse_internal_mesh(case_path, "U", "p")
+
+    boundary_n = len(boundary_c)
+    internal_n = len(internal_c)
+    return boundary_n, internal_n
+
+
 clean_dir('data')
 clean_dir('assets/generated-meshes')
 generate_transformed_meshes()
 generate_openfoam_cases("assets/openfoam-case-template")
 generate_data()
+generate_meta()

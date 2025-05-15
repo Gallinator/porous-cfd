@@ -15,13 +15,15 @@ from data_parser import parse_boundary, parse_internal_mesh
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
 
 
-def generate_transformed_meshes():
-    with open('assets/meshes/transforms.json', 'r') as f:
+def generate_transformed_meshes(meshes_path: str, dest_dir: str):
+    pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
+
+    with open(f'{meshes_path}/transforms.json', 'r') as f:
         ops.ed.undo_push()
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
-            ops.wm.obj_import(filepath=f'assets/meshes/{mesh}',
+            ops.wm.obj_import(filepath=f'{meshes_path}/{mesh}',
                               forward_axis='Y',
                               up_axis='Z')
             for t in transforms:
@@ -35,7 +37,7 @@ def generate_transformed_meshes():
 
                     obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
 
-                    ops.wm.obj_export(filepath=f'assets/generated-meshes/s{scale[0]}-{scale[1]}_r{r}_{mesh}',
+                    ops.wm.obj_export(filepath=f'{dest_dir}/s{scale[0]}-{scale[1]}_r{r}_{mesh}',
                                       forward_axis='Y',
                                       up_axis='Z',
                                       export_materials=False,
@@ -102,3 +104,4 @@ generate_transformed_meshes()
 generate_openfoam_cases("assets/openfoam-case-template")
 generate_data()
 generate_meta()
+generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')

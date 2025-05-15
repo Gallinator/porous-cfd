@@ -15,15 +15,15 @@ from data_parser import parse_boundary, parse_internal_mesh
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
 
 
-def generate_transformed_meshes(meshes_path: str, dest_dir: str):
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
-    with open(f'{meshes_path}/transforms.json', 'r') as f:
+    with open(f'{meshes_dir}/transforms.json', 'r') as f:
         ops.ed.undo_push()
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
-            ops.wm.obj_import(filepath=f'{meshes_path}/{mesh}',
+            ops.wm.obj_import(filepath=f'{meshes_dir}/{mesh}',
                               forward_axis='Y',
                               up_axis='Z')
             for t in transforms:
@@ -67,8 +67,8 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
         shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
 
 
-def generate_data(cases_path: str):
-    for case in tqdm(glob.glob(f"{cases_path}/*"), desc="Running cases"):
+def generate_data(cases_dir: str):
+    for case in tqdm(glob.glob(f"{cases_dir}/*"), desc="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
         process.communicate(f"{case}/Run")
@@ -77,9 +77,9 @@ def generate_data(cases_path: str):
             raise RuntimeError(f'Failed to run {case}')
 
 
-def generate_meta(data_path: str):
+def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points = [], []
-    for case in tqdm(glob.glob(f'{data_path}/*'), desc='Generating metadata'):
+    for case in tqdm(glob.glob(f'{data_dir}/*'), desc='Generating metadata'):
         b_n, i_n = parse_case_num_points(case)
         boundary_num_points.append(b_n)
         internal_num_points.append(i_n)
@@ -87,13 +87,13 @@ def generate_meta(data_path: str):
     boundary_meta = {"Min points": int(np.min(boundary_num_points))}
     internal_meta = {"Min points": int(np.min(internal_num_points))}
     meta_dict = {"Internal": internal_meta, "Boundary": boundary_meta}
-    with open(f'{data_path}/meta.json', 'w') as meta:
+    with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-def parse_case_num_points(case_path: str):
-    boundary_c, boundary_u, boundary_p = parse_boundary(case_path)
-    internal_c, internal_u, internal_p = parse_internal_mesh(case_path, "U", "p")
+def parse_case_num_points(case_dir: str):
+    boundary_c, boundary_u, boundary_p = parse_boundary(case_dir)
+    internal_c, internal_u, internal_p = parse_internal_mesh(case_dir, "U", "p")
 
     boundary_n = len(boundary_c)
     internal_n = len(internal_c)

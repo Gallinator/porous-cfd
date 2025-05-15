@@ -57,16 +57,18 @@ def clean_dir(directory: str):
             shutil.rmtree(os.path.join(root, d))
 
 
-def generate_openfoam_cases(template_path: str):
-    meshes = glob.glob("assets/generated-meshes/*.obj")
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
+    pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
+
+    meshes = glob.glob(f"{meshes_dir}/*.obj")
     for m in meshes:
-        case_path = f"data/{pathlib.Path(m).stem}"
-        shutil.copytree(template_path, case_path)
+        case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
+        shutil.copytree('assets/openfoam-case-template', case_path)
         shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
 
 
-def generate_data():
-    for case in tqdm(glob.glob("data/*"), desc="Running cases"):
+def generate_data(cases_path: str):
+    for case in tqdm(glob.glob(f"{cases_path}/*"), desc="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
         process.communicate(f"{case}/Run")
@@ -105,3 +107,4 @@ generate_openfoam_cases("assets/openfoam-case-template")
 generate_data()
 generate_meta()
 generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')
+generate_openfoam_cases('assets/generated-meshes/train', 'data/train')

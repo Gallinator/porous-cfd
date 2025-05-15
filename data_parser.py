@@ -1,49 +1,37 @@
 import os
-import Ofpp
 import numpy as np
+from foamlib import FoamCase, FoamFile
+
 
 def parse_boundary(case_path: str):
-    last_step = get_last_step(case_path)
+    last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
-    coords = []
+    faces = []
     u = []
     p = []
     for s in os.listdir(boundaries_path):
-        u_coords, u_values = parse_surface(f"{boundaries_path}/{s}/surface/{last_step}/U_patch_{s}.raw", 2)
-        p_coords, p_values = parse_surface(f"{boundaries_path}/{s}/surface/{last_step}/p_patch_{s}.raw", 1)
-        coords += u_coords
-        u += u_values
-        p += p_values
-    return np.array(coords), np.array(u), np.array(p)
+        coords = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")[None]
+        u_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/vectorField/U")[None]
+        p_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/scalarField/p")[None]
+        faces.extend(coords)
+        u.extend(u_values)
+        p.extend(p_values)
+    return np.array(faces), np.array(u), np.array(p)
 
 
-def parse_surface(surface_path: str, field_components: int):
-    with open(surface_path) as f:
-        lines = f.readlines()
-        coords = []
-        field = []
-        for row in lines[2:]:
-            content = row.split(' ')
-            coords.append([float(content[0]), float(content[1])])
-            field.append([float(content[3 + i]) for i in range(field_components)])
-    return coords, field
-
-
-def get_last_step(case_path: str) -> str:
-    steps = os.listdir(case_path)
-    steps = [s for s in steps if s.isdigit()]
-    steps.sort()
-    return steps[-1]
+def reshape_fields(fields: list[np.ndarray], size: int):
+    for i, f in enumerate(fields):
+        if len(f.shape) == 1:
+            fields[i] = np.atleast_2d(f).T
 
 
 def parse_internal_mesh(case_path: str, *fields):
-    last_step = get_last_step(case_path)
-    domain_mesh = Ofpp.FoamMesh(case_path)
-    domain_mesh.read_cell_centres(f"{case_path}/{last_step}/C")
-    domain_points = [domain_mesh.cell_centres]
+    case = FoamCase(case_path)
+    last_step = case[-1]
+    domain_points = [last_step.cell_centers().internal_field]
     field_value = []
     for f in fields:
-        parsed_field = Ofpp.parse_internal_field(f"{case_path}/{last_step}/{f}")
+        parsed_field = last_step[f].internal_field
         field_value.append(parsed_field)
+    reshape_fields(field_value, len(domain_points))
     return domain_points + field_value
-

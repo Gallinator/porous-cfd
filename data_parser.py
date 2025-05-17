@@ -1,4 +1,7 @@
+import json
 import os
+from pathlib import Path
+
 import numpy as np
 from foamlib import FoamCase, FoamFile
 
@@ -63,3 +66,8 @@ def parse_internal_mesh(case_path: str, *fields):
         fields_values.append(parsed_field)
 
     return [domain_points] + fields_values
+
+
+def parse_meta(data_dir: str) -> dict:
+    with open(Path(data_dir, 'meta.json'), 'r') as f:
+        return json.load(f)

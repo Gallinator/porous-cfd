@@ -16,6 +16,15 @@ class FoamDataset(Dataset):
         self.n_internal = n_internal
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
         self.meta = parse_meta(data_dir)
+        self.check_sample_size()
+
+    def check_sample_size(self):
+        data_min_points = self.meta['Internal']['Min points']
+        if self.n_internal > data_min_points:
+            raise ValueError(f'Cannot sample {self.n_internal} points from {data_min_points} points!')
+        data_min_points = self.meta['Boundary']['Min points']
+        if self.n_boundary > data_min_points:
+            raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
 
     def __len__(self):
         return len(self.samples)

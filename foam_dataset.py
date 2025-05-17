@@ -1,0 +1,37 @@
+import json
+from pathlib import Path
+
+import numpy as np
+import torch
+from torch import tensor
+from torch.utils.data import Dataset
+
+from data_parser import parse_meta, parse_boundary, parse_internal_mesh
+from visualization import plot_fields
+
+
+class FoamDataset(Dataset):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int):
+        self.n_boundary = n_boundary
+        self.n_internal = n_internal
+        self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
+        self.meta = parse_meta(data_dir)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, item) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        case_dir = self.samples[item]
+        b_points, b_u, b_p = parse_boundary(case_dir)
+        b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
+        b_points, b_u, b_p = b_points[b_samples], b_u[b_samples], b_p[b_samples]
+
+        i_points, i_u, i_p = parse_internal_mesh(case_dir, "U", "p")
+        i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
+        i_points, i_u, i_p = i_points[i_samples], i_u[i_samples], i_p[i_samples]
+
+        points = np.concatenate((i_points, b_points))
+        u = np.concatenate((i_u, b_u))
+        p = np.concatenate((i_p, b_p))
+
+        return tensor(points, dtype=torch.float), tensor(u, dtype=torch.float), tensor(p, dtype=torch.float)

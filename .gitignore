@@ -1,3 +1,4 @@
 .idea/**
 data/**
 assets/generated-meshes/**
+lightning_logs/**

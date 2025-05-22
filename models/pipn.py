@@ -1,0 +1,167 @@
+import torch
+from torch import nn, Tensor, autograd
+from torch.nn.functional import mse_loss, l1_loss
+from torchinfo import summary
+import lightning as L
+
+
+class Encoder(nn.Module):
+    def __init__(self, n_points: int):
+        super().__init__()
+        self.n_points = n_points
+        self.local_feature = nn.Sequential(
+            nn.Conv1d(2, 64, 1),
+            nn.Tanh(),
+            nn.Conv1d(64, 64, 1),
+            nn.Tanh(),
+        )
+
+        self.global_feature = nn.Sequential(
+            nn.Conv1d(64, 64, 1),
+            nn.Tanh(),
+            nn.Conv1d(64, 128, 1),
+            nn.Tanh(),
+            nn.Conv1d(128, 1024, 1),
+            nn.Tanh()
+        )
+
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(x)
+        global_feature = self.global_feature(local_features)
+        global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
+        return local_features, global_feature
+
+
+class Decoder(nn.Module):
+    def __init__(self, n_pde: int):
+        super().__init__()
+        self.decoder = nn.Sequential(
+            nn.Conv1d(1088, 512, 1),
+            nn.Tanh(),
+            nn.Conv1d(512, 256, 1),
+            nn.Tanh(),
+            nn.Conv1d(256, 128, 1),
+            nn.Tanh(),
+            nn.Conv1d(128, n_pde, 1)
+        )
+
+    def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
+        x = torch.concatenate([local_features, global_feature], 1)
+        return self.decoder(x)
+
+
+class Pipn(L.LightningModule):
+    def __init__(self, n_internal: int, n_boundary: int):
+        super().__init__()
+        self.save_hyperparameters()
+        self.n_internal = n_internal
+        self.n_boundary = n_boundary
+        self.n_points = n_internal + n_boundary
+        self.encoder = Encoder(self.n_points)
+        self.decoder = Decoder(3)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = x.transpose(dim0=1, dim1=2)
+
+        local_features, global_feature = self.encoder.forward(x)
+
+        # Expand global feature
+        exp_global = global_feature.repeat(1, 1, self.n_points)
+
+        pde = self.decoder.forward(local_features, exp_global)
+        return pde.transpose(dim0=1, dim1=2)
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=0.002, eps=10e-6)
+
+    def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
+        return autograd.grad(outputs, inputs,
+                             grad_outputs=torch.ones_like(outputs),
+                             retain_graph=True, create_graph=True)[0]
+
+    def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        d_ui = self.calculate_gradients(ui, points)
+        d_ui_i, d_ui_j = d_ui[:, :, i:i + 1], d_ui[:, :, j:j + 1]
+        dd_ui_i = self.calculate_gradients(d_ui_i, points)[:, :, i:i + 1]
+        dd_ui_j = self.calculate_gradients(d_ui_j, points)[:, :, j:j + 1]
+        return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
+
+    def split_field(self, field: Tensor, region: str) -> Tensor:
+        if region == 'internal':
+            return field[:, 0:self.n_internal, :]
+        elif region == 'boundary':
+            return field[:, self.n_internal:, :]
+        raise NotImplementedError(f'{region} is not supported!')
+
+    def field_loss(self, pred_field: Tensor, tgt_field: Tensor):
+        return mse_loss(self.split_field(pred_field, 'boundary'),
+                        self.split_field(tgt_field, 'boundary'))
+
+    def continuity_loss(self, d_ux_x: Tensor, d_uy_y: Tensor) -> Tensor:
+        pde = d_ux_x + d_uy_y
+        pde = self.split_field(pde, 'internal')
+        return mse_loss(pde, torch.zeros_like(pde))
+
+    def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i):
+        pde = d_ui_i * ui + d_ui_j * uj - 0.01 * (dd_ui_i + dd_ui_j) + d_p_i - f_i
+        pde = self.split_field(pde, 'internal')
+        return mse_loss(pde, torch.zeros_like(pde))
+
+    def training_step(self, batch: Tensor):
+        points, u, p, f = batch
+        points.requires_grad = True
+        ux, uy = u[:, :, 0:1], u[:, :, 1:2]
+
+        pred = self.forward(points)
+        pred_ux, pred_uy, pred_p = pred[:, :, 0:1], pred[:, :, 1:2], pred[:, :, 2:3]
+
+        # i=0 is x, j=1 is y
+        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(points, pred_ux, 0, 1)
+        # i=1 is y, j=0 is x
+        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(points, pred_uy, 1, 0)
+
+        d_p = self.calculate_gradients(pred_p, points)
+        d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+
+        p_loss = self.field_loss(pred_p, p)
+        uy_loss = self.field_loss(pred_uy, uy)
+        ux_loss = self.field_loss(pred_ux, ux)
+
+        cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
+        mom_loss_x = self.momentum_loss(pred_ux, d_ux_x, d_ux_y, pred_uy, dd_ux_x, dd_ux_y, d_p_x, f[:, :, 0:1])
+        mom_loss_y = self.momentum_loss(pred_uy, d_uy_y, d_uy_x, pred_ux, dd_uy_y, dd_uy_x, d_p_y, f[:, :, 1:2])
+
+        loss = (p_loss + ux_loss + uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
+
+        self.log("Train loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("Train loss p", p_loss, on_step=False, on_epoch=True)
+        self.log("Train loss ux", ux_loss, on_step=False, on_epoch=True)
+        self.log("Train loss uy", uy_loss, on_step=False, on_epoch=True)
+        self.log("Train loss continuity", cont_loss, on_step=False, on_epoch=True)
+        self.log("Train loss momentum x", mom_loss_x, on_step=False, on_epoch=True)
+        self.log("Train loss momentum y", mom_loss_y, on_step=False, on_epoch=True)
+
+        self.log("Train ux error", l1_loss(pred_ux, ux), on_step=False, on_epoch=True)
+        self.log("Train uy error", l1_loss(pred_uy, uy), on_step=False, on_epoch=True)
+        self.log("Train p error", l1_loss(pred_p, p), on_step=False, on_epoch=True)
+
+        return loss
+
+    def validation_step(self, batch: Tensor):
+        points, u, p, _ = batch
+        ux, uy = u[:, :, 0:1], u[:, :, 1:2]
+
+        pred = self.forward(points)
+        pred_ux, pred_uy, pred_p = pred[:, :, 0:1], pred[:, :, 1:2], pred[:, :, 2:3]
+
+        p_loss = l1_loss(pred_p, p)
+        ux_loss = l1_loss(pred_ux, ux)
+        uy_loss = l1_loss(pred_uy, uy)
+        self.log("Val loss p", p_loss, on_step=False, on_epoch=True)
+        self.log("Val loss ux", ux_loss, on_step=False, on_epoch=True)
+        self.log("Val loss uy", uy_loss, on_step=False, on_epoch=True)
+
+    def predict_step(self, batch) -> tuple[Tensor, Tensor, Tensor]:
+        points, u, p, _ = batch
+        pred = self.forward(points)
+        return pred[:, :, 0:1], pred[:, :, 1:2], pred[:, :, 2:3]

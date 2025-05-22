@@ -1,0 +1,14 @@
+{
+  "circle_cut.obj": [{
+      "rotation": [0],
+      "scale": [1,1]
+    }],
+  "two_circles.obj": [{
+      "rotation": [0],
+      "scale": [1,1]
+    }],
+    "angel.obj": [{
+      "rotation": [0],
+      "scale": [1,1]
+    }]
+}

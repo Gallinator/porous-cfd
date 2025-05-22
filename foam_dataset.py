@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import numpy as np
 import torch
 from rich.progress import track
@@ -30,20 +29,38 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def load_case(self, case_dir):
-        b_points, b_u, b_p = parse_boundary(case_dir)
-        b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
-        b_points, b_u, b_p = b_points[b_samples], b_u[b_samples], b_p[b_samples]
+    def create_manufactured_solutions(self, points: np.array) -> tuple[np.array, np.array, np.array]:
+        points_x, points_y = points[:, 0:1], points[:, 1:2]
 
-        i_points, i_u, i_p = parse_internal_mesh(case_dir, "U", "p")
+        # Create manufactures data
+        u_x = np.sin(points_y) * np.cos(points_x)
+        u_y = -np.sin(points_x) * np.cos(points_y)
+        u = np.concatenate([u_x, u_y], axis=1)
+
+        p = -1 / 4 * (np.cos(2 * points_x) + np.cos(2 * points_y))
+
+        f_x = 2 * 0.01 * np.cos(points_x) * np.sin(points_y)
+        f_y = -2 * 0.01 * np.sin(points_x) * np.cos(points_y)
+        f = np.concatenate([f_x, f_y], axis=1)
+
+        return u, p, f
+
+    def load_case(self, case_dir):
+        b_points, _, _ = parse_boundary(case_dir)
+        b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
+        b_points = b_points[b_samples]
+
+        i_points = parse_internal_mesh(case_dir)[0]
         i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
-        i_points, i_u, i_p = i_points[i_samples], i_u[i_samples], i_p[i_samples]
+        i_points = i_points[i_samples]
 
         points = np.concatenate((i_points, b_points))
-        u = np.concatenate((i_u, b_u))
-        p = np.concatenate((i_p, b_p))
+        u, p, f = self.create_manufactured_solutions(points)
 
-        return tensor(points, dtype=torch.float), tensor(u, dtype=torch.float), tensor(p, dtype=torch.float)
+        return (tensor(points, dtype=torch.float),
+                tensor(u, dtype=torch.float),
+                tensor(p, dtype=torch.float),
+                tensor(f, dtype=torch.float))
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor]:
+    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         return self.data[item]

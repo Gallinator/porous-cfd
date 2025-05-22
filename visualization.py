@@ -1,3 +1,4 @@
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import norm
@@ -36,8 +37,9 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(points: np.array, u: np.array, p: np.array):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array):
     fig = plt.figure(figsize=(12, 10), layout='constrained')
+    fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure
     plot_scalar_field('$p$ $\left[ \\frac{m^2}{s^2} \\right]$', points, p, fig, ax_p)
@@ -56,6 +58,7 @@ def plot_case(path: str):
     boundary_c, boundary_u, boundary_p = data_parser.parse_boundary(path)
     mesh_c, mesh_p, mesh_u = parse_internal_mesh(path, "p", "U")
 
-    plot_fields(np.vstack([boundary_c, mesh_c]),
+    plot_fields(Path(path).stem,
+                np.vstack([boundary_c, mesh_c]),
                 np.vstack([boundary_u, mesh_u]),
                 np.vstack([boundary_p, mesh_p]))

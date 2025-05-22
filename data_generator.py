@@ -102,7 +102,18 @@ def parse_case_num_points(case_dir: str):
 
 clean_dir('data')
 clean_dir('assets/generated-meshes')
+
 generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')
 generate_openfoam_cases('assets/generated-meshes/train', 'data/train')
 generate_data('data/train')
 generate_meta('data/train')
+
+generate_transformed_meshes('assets/meshes/test', 'assets/generated-meshes/test')
+generate_openfoam_cases('assets/generated-meshes/test', 'data/test')
+generate_data('data/test')
+generate_meta('data/test')
+
+generate_transformed_meshes('assets/meshes/eval', 'assets/generated-meshes/eval')
+generate_openfoam_cases('assets/generated-meshes/eval', 'data/eval')
+generate_data('data/eval')
+generate_meta('data/eval')

@@ -3,7 +3,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch import tensor
+from rich.progress import track
+from torch import tensor, Tensor
 from torch.utils.data import Dataset
 
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
@@ -18,6 +19,8 @@ class FoamDataset(Dataset):
         self.meta = parse_meta(data_dir)
         self.check_sample_size()
 
+        self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
+
     def check_sample_size(self):
         data_min_points = self.meta['Internal']['Min points']
         if self.n_internal > data_min_points:
@@ -29,8 +32,7 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def __getitem__(self, item) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        case_dir = self.samples[item]
+    def load_case(self, case_dir):
         b_points, b_u, b_p = parse_boundary(case_dir)
         b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
         b_points, b_u, b_p = b_points[b_samples], b_u[b_samples], b_p[b_samples]
@@ -44,3 +46,6 @@ class FoamDataset(Dataset):
         p = np.concatenate((i_p, b_p))
 
         return tensor(points, dtype=torch.float), tensor(u, dtype=torch.float), tensor(p, dtype=torch.float)
+
+    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor]:
+        return self.data[item]

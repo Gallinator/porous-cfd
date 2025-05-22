@@ -10,7 +10,7 @@ N_BOUNDARY = 168
 
 train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY)
 train_loader = DataLoader(train_data, BATCH_SIZE, True, num_workers=8)
-val_data = FoamDataset('data/eval', N_INTERNAL, N_BOUNDARY)
+val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY)
 val_loader = DataLoader(val_data, BATCH_SIZE, False, num_workers=8, pin_memory=True)
 
 model = Pipn(N_INTERNAL, N_BOUNDARY)

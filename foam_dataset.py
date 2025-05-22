@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +7,6 @@ from torch import tensor, Tensor
 from torch.utils.data import Dataset
 
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
-from visualization import plot_fields
 
 
 class FoamDataset(Dataset):

@@ -10,3 +10,4 @@ snappyHexMesh -overwrite
 decomposePar
 $(getApplication)
 reconstructPar
+splitMeshRegions -cellZonesOnly -overwrite -detectOnly

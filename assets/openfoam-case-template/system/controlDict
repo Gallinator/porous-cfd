@@ -97,21 +97,11 @@ functions
         writeFields     true;
         writeControl    writeTime;
     }
-    mesh
+    writeCellData
     {
-        // Mandatory entries (unmodifiable)
-        type            surfaceFieldValue;
+        type            writeCellCentres;
         libs            (fieldFunctionObjects);
-        surfaceFormat   foam;
 
-        // Mandatory entries (runtime modifiable)
-        fields          (U p);
-        operation       none;
-        regionType      patch;
-        name            mesh;
-
-        // Optional (inherited) entries
-        writeFields     true;
         writeControl    writeTime;
     }
 }

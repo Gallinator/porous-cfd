@@ -97,6 +97,13 @@ functions
         writeFields     true;
         writeControl    writeTime;
     }
+    writeCellData
+    {
+        type            writeCellCentres;
+        libs            (fieldFunctionObjects);
+
+        writeControl    writeTime;
+    }
 }
 
 

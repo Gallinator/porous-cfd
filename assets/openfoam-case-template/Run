@@ -10,4 +10,3 @@ snappyHexMesh -overwrite
 decomposePar
 $(getApplication)
 reconstructPar
-postProcess -func writeCellCentres

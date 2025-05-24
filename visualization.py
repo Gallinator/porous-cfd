@@ -10,9 +10,9 @@ from data_parser import parse_internal_mesh
 plt.style.use('dark_background')
 
 
-def plot_scalar_field(title: str, points: np.array, value: np.array, fig, ax):
+def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
-    plot = ax.scatter(points[:, 0], points[:, 1], s=2, c=value, cmap='turbo')
+    plot = ax.scatter(points[:, 0], points[:, 1], s=porous + 1 * 0.5, c=value, cmap='turbo')
     fig.colorbar(plot, ax=ax)
     ax.set_aspect('equal')
 
@@ -37,17 +37,17 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None):
     fig = plt.figure(figsize=(12, 10), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure
-    plot_scalar_field('$p$ $\left[ \\frac{m^2}{s^2} \\right]$', points, p, fig, ax_p)
+    plot_scalar_field('$p$ $\left[ \\frac{m^2}{s^2} \\right]$', points, p, porous, fig, ax_p)
 
     # Velocity
-    plot_scalar_field('$u_x$ $\left[ \\frac{m}{s} \\right]$', points, u[:, 0], fig, ax_u_x)
+    plot_scalar_field('$u_x$ $\left[ \\frac{m}{s} \\right]$', points, u[:, 0], porous, fig, ax_u_x)
 
-    plot_scalar_field('$u_y$ $\left[ \\frac{m}{s} \\right]$', points, u[:, 1], fig, ax_u_y)
+    plot_scalar_field('$u_y$ $\left[ \\frac{m}{s} \\right]$', points, u[:, 1], porous, fig, ax_u_y)
 
     plot_uneven_stream('$U$ $\left[ \\frac{m}{s} \\right]$', points, u, fig, ax_u)
 
@@ -56,9 +56,13 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array):
 
 def plot_case(path: str):
     boundary_c, boundary_u, boundary_p = data_parser.parse_boundary(path)
-    mesh_c, mesh_p, mesh_u = parse_internal_mesh(path, "p", "U")
+    mesh_c, mesh_p, mesh_u, po = parse_internal_mesh(path, "p", "U")
+    porous = np.vstack([np.zeros(boundary_p.shape), po])
 
     plot_fields(Path(path).stem,
                 np.vstack([boundary_c, mesh_c]),
                 np.vstack([boundary_u, mesh_u]),
-                np.vstack([boundary_p, mesh_p]))
+                np.vstack([boundary_p, mesh_p]),
+                porous)
+
+plot_case('data/train/s1-1_r180_semi_circle')

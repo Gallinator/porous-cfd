@@ -53,7 +53,9 @@ def parse_internal_mesh(case_path: str, *fields):
         parsed_field = make_at_most_2d(parsed_field)
         fields_values.append(parsed_field)
 
-    return [domain_points] + fields_values
+    porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))
+
+    return [domain_points] + fields_values + [porous_points]
 
 
 def parse_meta(data_dir: str) -> dict:

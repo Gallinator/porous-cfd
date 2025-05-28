@@ -17,6 +17,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
                label='Porous')
     plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
     fig.colorbar(plot, ax=ax)
+    ax.legend(loc='upper right')
     ax.set_aspect('equal')
 
 

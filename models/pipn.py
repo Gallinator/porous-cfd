@@ -95,17 +95,17 @@ class Pipn(L.LightningModule):
 
     def field_loss(self, pred_field: Tensor, tgt_field: Tensor):
         return mse_loss(self.split_field(pred_field, 'boundary'),
-                        self.split_field(tgt_field, 'boundary'))
+                        self.split_field(tgt_field, 'boundary'), reduction='sum')
 
     def continuity_loss(self, d_ux_x: Tensor, d_uy_y: Tensor) -> Tensor:
         pde = d_ux_x + d_uy_y
         pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde))
+        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 
     def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i):
         pde = d_ui_i * ui + d_ui_j * uj - 0.01 * (dd_ui_i + dd_ui_j) + d_p_i - f_i
         pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde))
+        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 
     def training_step(self, batch: Tensor):
         points, u, p, f = batch

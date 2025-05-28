@@ -92,8 +92,8 @@ def generate_meta(data_dir: str):
 
 
 def parse_case_num_points(case_dir: str):
-    boundary_c, boundary_u, boundary_p = parse_boundary(case_dir)
-    internal_c, internal_u, internal_p = parse_internal_mesh(case_dir, "U", "p")
+    boundary_c, _, _, _ = parse_boundary(case_dir)
+    internal_c, _, _, _ = parse_internal_mesh(case_dir, "U", "p")
 
     boundary_n = len(boundary_c)
     internal_n = len(internal_c)

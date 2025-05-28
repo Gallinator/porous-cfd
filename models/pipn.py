@@ -62,6 +62,8 @@ class Pipn(L.LightningModule):
         self.n_points = n_internal + n_boundary
         self.encoder = Encoder(self.n_points)
         self.decoder = Decoder(3)
+        self.mu = 0.01
+        self.d = 100
 
     def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
         x = x.transpose(dim0=1, dim1=2)
@@ -107,7 +109,7 @@ class Pipn(L.LightningModule):
         return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 
     def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i, porous):
-        pde = d_ui_i * ui + d_ui_j * uj - 0.01 * (dd_ui_i + dd_ui_j) + d_p_i - f_i - (ui * 100 * 0.01) * porous
+        pde = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i - (ui * self.d * self.mu) * porous
         pde = self.split_field(pde, 'internal')
         return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 

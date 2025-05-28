@@ -27,7 +27,7 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, porous: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
         global_feature = self.global_feature(local_features)
         global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
@@ -65,7 +65,7 @@ class Pipn(L.LightningModule):
     def forward(self, x: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)
 
-        local_features, global_feature = self.encoder.forward(x)
+        local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
 
         # Expand global feature
         exp_global = global_feature.repeat(1, 1, self.n_points)

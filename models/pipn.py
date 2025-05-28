@@ -19,7 +19,7 @@ class Encoder(nn.Module):
         )
 
         self.global_feature = nn.Sequential(
-            nn.Conv1d(64, 64, 1),
+            nn.Conv1d(65, 64, 1),
             nn.Tanh(),
             nn.Conv1d(64, 128, 1),
             nn.Tanh(),
@@ -29,6 +29,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, porous: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
+        local_features = torch.concatenate([local_features, porous], dim=1)
         global_feature = self.global_feature(local_features)
         global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
         return local_features, global_feature
@@ -38,7 +39,7 @@ class Decoder(nn.Module):
     def __init__(self, n_pde: int):
         super().__init__()
         self.decoder = nn.Sequential(
-            nn.Conv1d(1088, 512, 1),
+            nn.Conv1d(1089, 512, 1),
             nn.Tanh(),
             nn.Conv1d(512, 256, 1),
             nn.Tanh(),

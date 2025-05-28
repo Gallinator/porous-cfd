@@ -46,21 +46,23 @@ class FoamDataset(Dataset):
         return u, p, f
 
     def load_case(self, case_dir):
-        b_points, _, _ = parse_boundary(case_dir)
+        b_points, _, _, b_porous = parse_boundary(case_dir)
         b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
-        b_points = b_points[b_samples]
+        b_points, b_porous = b_points[b_samples], b_porous[b_samples]
 
-        i_points = parse_internal_mesh(case_dir)[0]
+        i_points, i_porous = parse_internal_mesh(case_dir)
         i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
-        i_points = i_points[i_samples]
+        i_points, i_porous = i_points[i_samples], i_porous[i_samples]
 
         points = np.concatenate((i_points, b_points))
         u, p, f = self.create_manufactured_solutions(points)
+        porous = np.concatenate((i_porous, b_porous))
 
         return (tensor(points, dtype=torch.float),
                 tensor(u, dtype=torch.float),
                 tensor(p, dtype=torch.float),
                 tensor(f, dtype=torch.float))
+                tensor(porous, dtype=torch.float))
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return self.data[item]

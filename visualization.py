@@ -12,7 +12,10 @@ plt.style.use('dark_background')
 
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
-    plot = ax.scatter(points[:, 0], points[:, 1], s=porous + 1 * 0.5, c=value, cmap='turbo')
+    porous_zone = np.nonzero(porous > 0)[0]
+    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=30, zorder=-1, c='silver',
+               label='Porous')
+    plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
     fig.colorbar(plot, ax=ax)
     ax.set_aspect('equal')
 

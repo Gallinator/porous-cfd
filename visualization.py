@@ -68,5 +68,3 @@ def plot_case(path: str):
                 np.vstack([boundary_u, mesh_u]),
                 np.vstack([boundary_p, mesh_p]),
                 porous)
-
-plot_case('data/train/s1-1_r180_semi_circle')

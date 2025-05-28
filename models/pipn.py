@@ -115,8 +115,7 @@ class Pipn(L.LightningModule):
         batch_data = FoamDataBatch(batch)
         batch_data.points.requires_grad = True
 
-        pred = self.forward(points)
-        pred_ux, pred_uy, pred_p = pred[:, :, 0:1], pred[:, :, 1:2], pred[:, :, 2:3]
+        pred = self.forward(batch_data.points, batch_data.porous_zone)
 
         # i=0 is x, j=1 is y
         d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(batch_data.points, pred.ux, 0, 1)

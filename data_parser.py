@@ -24,7 +24,7 @@ def parse_boundary(case_path: str):
         u.extend(u_values)
         p.extend(p_values)
 
-    return np.array(faces), np.array(u), np.array(p)
+    return np.array(faces), np.array(u), np.array(p), np.zeros_like(p)
 
 
 def make_at_most_2d(field) -> np.array:

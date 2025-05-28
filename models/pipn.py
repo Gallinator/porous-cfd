@@ -63,7 +63,7 @@ class Pipn(L.LightningModule):
         self.encoder = Encoder(self.n_points)
         self.decoder = Decoder(3)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
         x = x.transpose(dim0=1, dim1=2)
 
         local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
@@ -72,7 +72,8 @@ class Pipn(L.LightningModule):
         exp_global = global_feature.repeat(1, 1, self.n_points)
 
         pde = self.decoder.forward(local_features, exp_global)
-        return pde.transpose(dim0=1, dim1=2)
+        pde = pde.transpose(dim0=1, dim1=2)
+        return PredictedDataBatch(pde[:, :, 0:2], pde[:, :, 2:3])
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.002, eps=10e-6)

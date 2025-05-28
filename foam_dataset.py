@@ -29,7 +29,7 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def create_manufactured_solutions(self, points: np.array) -> tuple[np.array, np.array, np.array]:
+    def create_manufactured_solutions(self, points: np.array, porous: np.array) -> tuple[np.array, np.array, np.array]:
         points_x, points_y = points[:, 0:1], points[:, 1:2]
 
         # Create manufactures data
@@ -41,6 +41,10 @@ class FoamDataset(Dataset):
 
         f_x = 2 * 0.01 * np.cos(points_x) * np.sin(points_y)
         f_y = -2 * 0.01 * np.sin(points_x) * np.cos(points_y)
+
+        f_x -= 0.01 * 100 * u_x * porous
+        f_y -= 0.01 * 100 * u_y * porous
+
         f = np.concatenate([f_x, f_y], axis=1)
 
         return u, p, f
@@ -55,13 +59,14 @@ class FoamDataset(Dataset):
         i_points, i_porous = i_points[i_samples], i_porous[i_samples]
 
         points = np.concatenate((i_points, b_points))
-        u, p, f = self.create_manufactured_solutions(points)
         porous = np.concatenate((i_porous, b_porous))
+
+        u, p, f = self.create_manufactured_solutions(points, porous)
 
         return (tensor(points, dtype=torch.float),
                 tensor(u, dtype=torch.float),
                 tensor(p, dtype=torch.float),
-                tensor(f, dtype=torch.float))
+                tensor(f, dtype=torch.float),
                 tensor(porous, dtype=torch.float))
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:

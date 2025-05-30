@@ -109,7 +109,7 @@ class Pipn(L.LightningModule):
         return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 
     def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i, porous):
-        pde = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i - (ui * self.d * self.mu) * porous
+        pde = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i + (ui * self.d * self.mu) * porous
         pde = self.split_field(pde, 'internal')
         return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 

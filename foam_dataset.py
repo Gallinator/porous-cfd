@@ -89,8 +89,8 @@ class FoamDataset(Dataset):
         f_x = 2 * 0.01 * np.cos(points_x) * np.sin(points_y)
         f_y = -2 * 0.01 * np.sin(points_x) * np.cos(points_y)
 
-        f_x -= 0.01 * 100 * u_x * porous
-        f_y -= 0.01 * 100 * u_y * porous
+        f_x += 0.01 * 100 * u_x * porous
+        f_y += 0.01 * 100 * u_y * porous
 
         f = np.concatenate([f_x, f_y], axis=1)
 

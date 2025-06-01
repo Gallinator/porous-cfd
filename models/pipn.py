@@ -68,7 +68,7 @@ class Pipn(L.LightningModule):
         local_features, global_feature = self.encoder.forward(x)
 
         # Expand global feature
-        exp_global = global_feature.repeat(1, 1, self.n_points)
+        exp_global = global_feature.repeat(1, 1, local_features.shape[-1])
 
         pde = self.decoder.forward(local_features, exp_global)
         return pde.transpose(dim0=1, dim1=2)

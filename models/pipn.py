@@ -8,9 +8,8 @@ from foam_dataset import PredictedDataBatch, FoamDataBatch
 
 
 class Encoder(nn.Module):
-    def __init__(self, n_points: int):
+    def __init__(self):
         super().__init__()
-        self.n_points = n_points
         self.local_feature = nn.Sequential(
             nn.Conv1d(2, 64, 1),
             nn.Tanh(),
@@ -59,8 +58,7 @@ class Pipn(L.LightningModule):
         self.save_hyperparameters()
         self.n_internal = n_internal
         self.n_boundary = n_boundary
-        self.n_points = n_internal + n_boundary
-        self.encoder = Encoder(self.n_points)
+        self.encoder = Encoder()
         self.decoder = Decoder(3)
         self.mu = 0.01
         self.d = 100

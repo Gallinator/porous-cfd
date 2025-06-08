@@ -33,7 +33,17 @@ class FoamData:
         self.data = batch
         self.points = batch[..., 0:2]
         self.pde = PdeData(batch[..., 2:5])
+        self.f = batch[..., 5:7]
 
+    @property
+    def fx(self):
+        return self.f[..., 5:6]
+
+    @property
+    def fy(self):
+        return self.f[..., 6:7]
+
+    @property
     def numpy(self):
         return FoamData(self.data.numpy(force=True))
 

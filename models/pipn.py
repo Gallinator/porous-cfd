@@ -135,8 +135,7 @@ class Pipn(L.LightningModule):
         exp_global = global_feature.repeat(1, 1, local_features.shape[-1])
 
         pde = self.decoder.forward(local_features, exp_global)
-        pde = pde.transpose(dim0=1, dim1=2)
-        return PredictedDataBatch(pde[:, :, 0:2], pde[:, :, 2:3])
+        return pde.transpose(dim0=1, dim1=2)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.002, eps=10e-6)

@@ -61,6 +61,10 @@ class FoamDataset(Dataset):
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
         self.meta = parse_meta(data_dir) if meta is None else meta
         self.check_sample_size()
+        self.standard_scaler = StandardScaler(
+            np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),
+            np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
+        )
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 

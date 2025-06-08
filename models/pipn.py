@@ -182,13 +182,6 @@ class Pipn(L.LightningModule):
         mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
                                           in_data.zones_ids)
 
-        self.log("Train loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("Train loss p", p_loss, on_step=False, on_epoch=True)
-        self.log("Train loss ux", ux_loss, on_step=False, on_epoch=True)
-        self.log("Train loss uy", uy_loss, on_step=False, on_epoch=True)
-        self.log("Train loss continuity", cont_loss, on_step=False, on_epoch=True)
-        self.log("Train loss momentum x", mom_loss_x, on_step=False, on_epoch=True)
-        self.log("Train loss momentum y", mom_loss_y, on_step=False, on_epoch=True)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,

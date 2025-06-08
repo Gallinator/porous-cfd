@@ -25,10 +25,9 @@ porousFilter{
         d   (5e7 1000 1000);
         f   (0 0 0);
 
-        coordinateSystem
-        {
-            e1 (0 0.70710678 0.70710678);
-            e2 (1 0 0);
+        coordinateSystem{
+            origin (0 0 0);
+            rotation none;
         }
     }
 }

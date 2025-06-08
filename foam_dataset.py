@@ -16,15 +16,15 @@ class PdeData:
         return self.data[..., 0:2]
 
     @property
-    def ux(self) -> Tensor:
+    def ux(self) -> Tensor | np.ndarray:
         return self.data[..., 0:1]
 
     @property
-    def uy(self) -> Tensor:
+    def uy(self) -> Tensor | np.ndarray:
         return self.data[..., 1:2]
 
     @property
-    def p(self) -> Tensor:
+    def p(self) -> Tensor | np.ndarray:
         return self.data[..., 2:3]
 
     def numpy(self):
@@ -38,19 +38,19 @@ class FoamData:
         self.pde = PdeData(self.data[..., 2:5])
 
     @property
-    def zones_ids(self) -> Tensor:
+    def zones_ids(self) -> Tensor | np.ndarray:
         return self.data[..., 5:6]
 
     @property
-    def obs_ux(self) -> Tensor:
+    def obs_ux(self) -> Tensor | np.ndarray:
         return self.pde.ux.gather(1, self.obs_samples)
 
     @property
-    def obs_uy(self) -> Tensor:
+    def obs_uy(self) -> Tensor | np.ndarray:
         return self.pde.uy.gather(1, self.obs_samples)
 
     @property
-    def obs_p(self) -> Tensor:
+    def obs_p(self) -> Tensor | np.ndarray:
         return self.pde.p.gather(1, self.obs_samples)
 
     def numpy(self):

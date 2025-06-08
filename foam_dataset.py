@@ -116,6 +116,8 @@ class FoamDataset(Dataset):
         data = np.concatenate((points, u, p, zones_ids), axis=1)
         obs_samples = np.random.choice(len(i_points), replace=False, size=self.n_obs)
 
+        # Do not standardize zones indices
+        data[:, 0:-1] = self.standard_scaler.transform(data[:, 0:-1])
 
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))

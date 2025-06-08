@@ -18,7 +18,7 @@ model = Pipn(N_INTERNAL, N_BOUNDARY)
 trainer = L.Trainer(max_epochs=-1,
                     callbacks=[RichProgressBar()],
                     log_every_n_steps=2,
-                    precision='16',
+                    precision='16-mixed',
                     val_check_interval=2)
 
 trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

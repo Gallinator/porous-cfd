@@ -8,51 +8,34 @@ from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
-class PredictedDataBatch:
-    def __init__(self, u: Tensor | np.ndarray, p: Tensor | np.ndarray):
-        self.u = u
-        self.p = p
+class PdeData:
+    def __init__(self, data: Tensor | np.ndarray):
+        self.data = data
 
     @property
     def ux(self) -> Tensor:
-        return self.u[:, :, 0:1]
+        return self.data[..., 0:1]
 
     @property
     def uy(self) -> Tensor:
-        return self.u[:, :, 1:2]
+        return self.data[..., 1:2]
+
+    @property
+    def p(self) -> Tensor:
+        return self.data[..., 2:3]
 
     def numpy(self):
-        return PredictedDataBatch(self.u.numpy(force=True), self.p.numpy(force=True))
+        return PdeData(self.data.numpy(force=True))
 
 
-class FoamDataBatch:
-    def __init__(self, batch: tuple | list):
-        self.points, self.u, self.p, self.f, self.porous_zone = batch
-
-    @property
-    def ux(self) -> Tensor:
-        return self.u[:, :, 0:1]
-
-    @property
-    def uy(self) -> Tensor:
-        return self.u[:, :, 1:2]
-
-    @property
-    def fx(self) -> Tensor:
-        return self.f[:, :, 0:1]
-
-    @property
-    def fy(self) -> Tensor:
-        return self.f[:, :, 1:2]
+class FoamData:
+    def __init__(self, batch: Tensor | np.ndarray):
+        self.data = batch
+        self.points = batch[..., 0:2]
+        self.pde = PdeData(batch[..., 2:5])
 
     def numpy(self):
-        return FoamDataBatch(
-            (self.points.numpy(force=True),
-             self.u.numpy(force=True),
-             self.p.numpy(force=True),
-             self.f.numpy(force=True),
-             self.porous_zone.numpy(force=True))
-        )
+        return FoamData(self.data.numpy(force=True))
 
 
 class FoamDataset(Dataset):

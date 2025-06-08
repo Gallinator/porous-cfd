@@ -115,11 +115,18 @@ class Pipn(L.LightningModule):
                                           'Val error ux',
                                           'Val error uy')
 
-    def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
         self.u_scaler = scalers['U']
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
 
+        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.d, n_internal,
+                                            self.u_scaler, self.points_scaler, self.p_scaler)
+        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.d, n_internal,
+                                            self.u_scaler, self.points_scaler, self.p_scaler)
+        self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
+        self.boundary_loss = BoundaryLoss(n_internal)
+
+    def forward(self, x: Tensor, porous: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)
 
         local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))

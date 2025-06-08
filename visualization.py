@@ -1,7 +1,9 @@
+import glob
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import norm
+from rich.progress import track
 from scipy.interpolate import griddata
 
 import data_parser
@@ -37,7 +39,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, plot_streams=True):
     fig = plt.figure(figsize=(12, 10), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
@@ -49,7 +51,10 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array):
 
     plot_scalar_field('$u_y$ $\left[ \\frac{m}{s} \\right]$', points, u[:, 1], fig, ax_u_y)
 
-    plot_uneven_stream('$U$ $\left[ \\frac{m}{s} \\right]$', points, u, fig, ax_u)
+    if plot_streams:
+        plot_uneven_stream('$U$ $\left[ \\frac{m}{s} \\right]$', points, u, fig, ax_u)
+    else:
+        plot_scalar_field('$U$ $\left[ \\frac{m}{s} \\right]$', points, norm(u, axis=1), fig, ax_u)
 
     plt.show()
 
@@ -62,3 +67,33 @@ def plot_case(path: str):
                 np.vstack([boundary_c, mesh_c]),
                 np.vstack([boundary_u, mesh_u]),
                 np.vstack([boundary_p, mesh_p]))
+
+
+def plot_dataset_dist(path: str):
+    ux, uy, p, zones = [], [], [], []
+    for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
+                      description="Reading data"):
+        b_points, b_u, b_p, b_porous_idx = data_parser.parse_boundary(case)
+        i_points, i_u, i_p, i_porous_idx = parse_internal_mesh(case, "U", "p")
+        ux += b_u[:, 0].flatten().tolist()
+        ux += i_u[:, 0].flatten().tolist()
+        uy += b_u[:, 1].flatten().tolist()
+        uy += i_u[:, 1].flatten().tolist()
+        p += i_p.flatten().tolist()
+        p += b_p.flatten().tolist()
+        zones += b_porous_idx.flatten().tolist()
+        zones += i_porous_idx.flatten().tolist()
+
+    def plot_histogram(ax, data, color: str, title: str, bins=100):
+        ax.set_title(title, pad=10)
+        ax.hist(data, bins=bins, color=color, edgecolor='black')
+
+    fig = plt.figure(layout='constrained')
+    ax_ux, ax_uy, ax_p, ax_zones = fig.subplots(ncols=2, nrows=2).flatten()
+
+    plot_histogram(ax_ux, ux, 'lightsteelblue', '$U_x$')
+    plot_histogram(ax_uy, uy, 'lemonchiffon', '$U_y$')
+    plot_histogram(ax_p, p, 'lightsalmon', '$p$')
+    plot_histogram(ax_zones, zones, 'palegreen', 'Material zones', 2)
+
+    plt.show()

@@ -4,7 +4,36 @@ from torch.nn.functional import mse_loss, l1_loss
 from torchinfo import summary
 import lightning as L
 
-from foam_dataset import PredictedDataBatch, FoamDataBatch
+class TNet(nn.Module):
+    def __init__(self, input_size: int, matrix_size: int):
+        super().__init__()
+        self.shared = nn.Sequential(
+            nn.Conv1d(input_size, 64, 1),
+            nn.Tanh(),
+            nn.Conv1d(64, 128, 1),
+            nn.Tanh(),
+            nn.Conv1d(128, 1024, 1),
+            nn.Tanh()
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(1024, 512),
+            nn.Tanh(),
+            nn.Linear(512, 256),
+            nn.Tanh(),
+            nn.Linear(256, matrix_size * matrix_size),
+            nn.Tanh(),
+        )
+        self.matrix_size = matrix_size
+
+    def forward(self, x):
+        y = self.shared(x)
+        y = torch.max(y, dim=2, keepdim=True)[0]
+        y = y.squeeze()
+        y = self.fc(y)
+        y = y.view(-1, self.matrix_size, self.matrix_size)
+        identity = torch.eye(self.matrix_size, self.matrix_size, requires_grad=True).repeat(y.shape[0], 1, 1)
+        identity = identity.to(y.get_device())
+        return y + identity
 
 
 class Encoder(nn.Module):

@@ -169,6 +169,9 @@ class Pipn(L.LightningModule):
         p_loss = self.field_loss(pred.p, batch_data.p)
         uy_loss = self.field_loss(pred.uy, batch_data.uy)
         ux_loss = self.field_loss(pred.ux, batch_data.ux)
+        boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
+        boundary_ux_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
+        boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_loss(pred.ux, d_ux_x, d_ux_y, pred.uy, dd_ux_x, dd_ux_y, d_p_x,

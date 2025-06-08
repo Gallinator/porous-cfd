@@ -3,6 +3,7 @@ from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 from torchinfo import summary
 import lightning as L
+from foam_dataset import PdeData, FoamData, StandardScaler
 
 class TNet(nn.Module):
     def __init__(self, input_size: int, matrix_size: int):
@@ -86,7 +87,7 @@ class Decoder(nn.Module):
 
 
 class Pipn(L.LightningModule):
-    def __init__(self, n_internal: int, n_boundary: int):
+    def __init__(self, n_internal: int, n_boundary: int, scalers: dict[str, StandardScaler]):
         super().__init__()
         self.save_hyperparameters()
         self.n_internal = n_internal

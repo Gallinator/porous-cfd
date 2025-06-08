@@ -12,6 +12,10 @@ class PdeData:
         self.data = data
 
     @property
+    def u(self) -> Tensor | np.ndarray:
+        return self.data[..., 0:2]
+
+    @property
     def ux(self) -> Tensor:
         return self.data[..., 0:1]
 

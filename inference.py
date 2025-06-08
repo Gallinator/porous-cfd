@@ -30,4 +30,4 @@ plt.interactive(False)
 
 u_error = pred.u[0] - tgt.pde.u
 p_error = pred.p[0] - tgt.pde.p
-plot_fields('Absolute error', tgt.points, np.abs(u_error), np.abs(p_error))
+plot_fields('Absolute error', tgt.points, np.abs(u_error), np.abs(p_error), plot_streams=False)

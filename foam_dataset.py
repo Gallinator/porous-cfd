@@ -4,7 +4,6 @@ import torch
 from rich.progress import track
 from torch import tensor, Tensor
 from torch.utils.data import Dataset
-
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
@@ -118,3 +117,19 @@ class FoamDataset(Dataset):
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return self.data[item]
+
+
+class StandardScaler:
+    def __init__(self, std, mean):
+        super().__init__()
+        self.std = std
+        self.mean = mean
+
+    def transform(self, data):
+        return (data - self.mean) / self.std
+
+    def inverse_transform(self, data):
+        return self.std * data + self.mean
+
+    def __getitem__(self, item):
+        return StandardScaler(self.std[item], self.std[item])

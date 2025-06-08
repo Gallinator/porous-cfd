@@ -175,12 +175,12 @@ class Pipn(L.LightningModule):
         boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
-        mom_loss_x = self.momentum_loss(pred.ux, d_ux_x, d_ux_y, pred.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                        batch_data.fx, batch_data.porous_zone)
-        mom_loss_y = self.momentum_loss(pred.uy, d_uy_y, d_uy_x, pred.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                        batch_data.fy, batch_data.porous_zone)
+        mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
+                                          in_data.zones_ids)
 
         loss = (p_loss + ux_loss + uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
+        mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
+                                          in_data.zones_ids)
 
         self.log("Train loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         self.log("Train loss p", p_loss, on_step=False, on_epoch=True)

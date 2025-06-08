@@ -1,7 +1,6 @@
 import torch
 from torch import nn, Tensor, autograd
-from torch.nn.functional import mse_loss, l1_loss
-from torchinfo import summary
+from torch.nn.functional import l1_loss
 import lightning as L
 from foam_dataset import PdeData, FoamData
 from models.losses import LossLogger, MomentumLoss, BoundaryLoss, ContinuityLoss

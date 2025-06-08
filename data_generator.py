@@ -10,6 +10,8 @@ import bpy
 import numpy as np
 from rich.progress import track
 from bpy import ops
+from welford import Welford
+
 from data_parser import parse_boundary, parse_internal_mesh
 
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
@@ -79,25 +81,30 @@ def generate_data(cases_dir: str):
 
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points = [], []
-    for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_n, i_n = parse_case_num_points(case)
-        boundary_num_points.append(b_n)
-        internal_num_points.append(i_n)
+    running_stats = Welford()
 
-    boundary_meta = {"Min points": int(np.min(boundary_num_points))}
-    internal_meta = {"Min points": int(np.min(internal_num_points))}
-    meta_dict = {"Internal": internal_meta, "Boundary": boundary_meta}
+    for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
+        b_points, b_u, b_p = parse_boundary(case)
+        i_points, i_u, i_p = parse_internal_mesh(case, "U", "p")
+
+        boundary_num_points.append(len(b_points))
+        internal_num_points.append(len(i_points))
+
+        points = np.concatenate((i_points, b_points))
+        u = np.concatenate((i_u, b_u))
+        p = np.concatenate((i_p, b_p))
+        running_stats.add_all(np.concatenate((points, u, p), axis=1))
+
+    min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
+                       "Internal": int(np.min(internal_num_points))}
+    features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
+    std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
+    mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}
+
+    meta_dict = {"Min points": min_points_meta, 'Mean': mean_meta, 'Std': std_meta}
+
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
-
-
-def parse_case_num_points(case_dir: str):
-    boundary_c, boundary_u, boundary_p = parse_boundary(case_dir)
-    internal_c, internal_u, internal_p = parse_internal_mesh(case_dir, "U", "p")
-
-    boundary_n = len(boundary_c)
-    internal_n = len(internal_c)
-    return boundary_n, internal_n
 
 
 clean_dir('data')

@@ -79,26 +79,6 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def create_manufactured_solutions(self, points: np.array, porous: np.array) -> tuple[np.array, np.array, np.array]:
-        points_x, points_y = points[:, 0:1], points[:, 1:2]
-
-        # Create manufactures data
-        u_x = np.sin(points_y) * np.cos(points_x)
-        u_y = -np.sin(points_x) * np.cos(points_y)
-        u = np.concatenate([u_x, u_y], axis=1)
-
-        p = -1 / 4 * (np.cos(2 * points_x) + np.cos(2 * points_y))
-
-        f_x = 2 * 0.01 * np.cos(points_x) * np.sin(points_y)
-        f_y = -2 * 0.01 * np.sin(points_x) * np.cos(points_y)
-
-        f_x += 0.01 * 100 * u_x * porous
-        f_y += 0.01 * 100 * u_y * porous
-
-        f = np.concatenate([f_x, f_y], axis=1)
-
-        return u, p, f
-
     def load_case(self, case_dir):
         b_points, b_u, b_p, b_zones_ids = parse_boundary(case_dir)
         b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)

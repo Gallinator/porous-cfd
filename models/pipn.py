@@ -39,13 +39,14 @@ class TNet(nn.Module):
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
+        self.tnet1 = TNet(2, 2)
         self.local_feature = nn.Sequential(
             nn.Conv1d(2, 64, 1),
             nn.Tanh(),
             nn.Conv1d(64, 64, 1),
             nn.Tanh(),
         )
-
+        self.tnet2 = TNet(64, 64)
         self.global_feature = nn.Sequential(
             nn.Conv1d(65, 64, 1),
             nn.Tanh(),
@@ -56,8 +57,11 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x: Tensor, porous: Tensor) -> tuple[Tensor, Tensor]:
+        x = torch.bmm(self.tnet1(x), x)
         local_features = self.local_feature(x)
         local_features = torch.concatenate([local_features, porous], dim=1)
+        local_features = torch.bmm(self.tnet2(local_features), local_features)
+
         global_feature = self.global_feature(local_features)
         global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
         return local_features, global_feature

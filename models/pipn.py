@@ -96,8 +96,8 @@ class Pipn(L.LightningModule):
         self.n_boundary = n_boundary
         self.encoder = Encoder()
         self.decoder = Decoder(3)
-        self.mu = 0.01
-        self.d = 100
+        self.mu = 0.01  # As rho=1 mu and nu are the same
+        self.d = 1000
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',
@@ -116,6 +116,10 @@ class Pipn(L.LightningModule):
                                           'Val error uy')
 
     def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
+        self.u_scaler = scalers['U']
+        self.p_scaler = scalers['p']
+        self.points_scaler = scalers['Points']
+
         x = x.transpose(dim0=1, dim1=2)
 
         local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
@@ -142,34 +146,9 @@ class Pipn(L.LightningModule):
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[:, :, j:j + 1]
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
-    def split_field(self, field: Tensor, region: str) -> Tensor:
-        if region == 'internal':
-            return field[:, 0:self.n_internal, :]
-        elif region == 'boundary':
-            return field[:, self.n_internal:, :]
-        raise NotImplementedError(f'{region} is not supported!')
-
-    def field_loss(self, pred_field: Tensor, tgt_field: Tensor):
-        return mse_loss(self.split_field(pred_field, 'boundary'),
-                        self.split_field(tgt_field, 'boundary'), reduction='sum')
+    def training_step(self, batch: list, batch_idx: int):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True
-
-    def continuity_loss(self, d_ux_x: Tensor, d_uy_y: Tensor) -> Tensor:
-        pde = d_ux_x + d_uy_y
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
-
-    def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i, porous):
-        pde = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i + (ui * self.d * self.mu) * porous
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
-
-    def training_step(self, batch: list):
-        batch_data = FoamDataBatch(batch)
-        batch_data.points.requires_grad = True
-
-        pred = self.forward(batch_data.points, batch_data.porous_zone)
 
         pred = self.forward(in_data.points, in_data.zones_ids)
         pred_data = PdeData(pred)

@@ -178,10 +178,18 @@ class Pipn(L.LightningModule):
         mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
                                           in_data.zones_ids)
 
-        loss = (p_loss + ux_loss + uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
         mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
                                           in_data.zones_ids)
 
+        loss = (cont_loss +
+                mom_loss_x +
+                mom_loss_y +
+                boundary_p_loss +
+                boundary_ux_loss +
+                boundary_uy_loss +
+                obs_p_loss * self.d +
+                obs_ux_loss * self.d +
+                obs_uy_loss * self.d)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,

@@ -58,6 +58,7 @@ class Pipn(L.LightningModule):
         self.n_boundary = n_boundary
         self.encoder = Encoder()
         self.decoder = Decoder(3)
+        self.mu = 0.01
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',

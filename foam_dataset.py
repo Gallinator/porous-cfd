@@ -54,11 +54,11 @@ class FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
-        self.meta = parse_meta(data_dir)
+        self.meta = parse_meta(data_dir) if meta is None else meta
         self.check_sample_size()
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]

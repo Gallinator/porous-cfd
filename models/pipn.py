@@ -126,8 +126,8 @@ class Pipn(L.LightningModule):
         d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
         boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
-        boundary_ux_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
-        boundary_uy_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
+        boundary_ux_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
+        boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x, in_data.fx)

@@ -103,7 +103,7 @@ class FoamDataset(Dataset):
 
         data = np.concatenate((points, u, p, f), axis=1)
 
-        return torch.tensor(data, dtype=torch.float)
+        return tensor(data, dtype=torch.float)
 
     def __getitem__(self, item) -> Tensor:
         return self.data[item]

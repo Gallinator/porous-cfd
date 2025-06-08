@@ -63,10 +63,10 @@ class FoamDataset(Dataset):
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
     def check_sample_size(self):
-        data_min_points = self.meta['Internal']['Min points']
+        data_min_points = self.meta['Min points']['Internal']
         if self.n_internal > data_min_points:
             raise ValueError(f'Cannot sample {self.n_internal} points from {data_min_points} points!')
-        data_min_points = self.meta['Boundary']['Min points']
+        data_min_points = self.meta['Min points']['Boundary']
         if self.n_boundary > data_min_points:
             raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
 

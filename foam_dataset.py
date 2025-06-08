@@ -87,10 +87,9 @@ class FoamDataset(Dataset):
         points = np.concatenate((i_points, b_points))
         u, p, f = self.create_manufactured_solutions(points)
 
-        return (tensor(points, dtype=torch.float),
-                tensor(u, dtype=torch.float),
-                tensor(p, dtype=torch.float),
-                tensor(f, dtype=torch.float))
+        data = np.concatenate((points, u, p, f), axis=1)
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+        return torch.tensor(data, dtype=torch.float)
+
+    def __getitem__(self, item) -> Tensor:
         return self.data[item]

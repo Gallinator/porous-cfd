@@ -5,8 +5,8 @@ from models.pipn import Pipn
 import lightning as L
 
 BATCH_SIZE = 13
-N_INTERNAL = 667
-N_BOUNDARY = 168
+N_INTERNAL = 1000
+N_BOUNDARY = 200
 
 train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY)
 train_loader = DataLoader(train_data, BATCH_SIZE, True, num_workers=8)

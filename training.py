@@ -7,8 +7,9 @@ import lightning as L
 BATCH_SIZE = 13
 N_INTERNAL = 1000
 N_BOUNDARY = 200
+N_OBS = 500
 
-train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY)
+train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY, N_OBS)
 train_loader = DataLoader(train_data, BATCH_SIZE, True, num_workers=8)
 val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY)
 val_loader = DataLoader(val_data, BATCH_SIZE, False, num_workers=8, pin_memory=True)

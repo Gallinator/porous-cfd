@@ -138,7 +138,7 @@ class Pipn(L.LightningModule):
         return pde.transpose(dim0=1, dim1=2)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.002, eps=10e-6)
+        return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
         return autograd.grad(outputs, inputs,

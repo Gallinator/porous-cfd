@@ -48,9 +48,9 @@ class Encoder(nn.Module):
         )
         self.tnet2 = TNet(64, 64)
         self.global_feature = nn.Sequential(
-            nn.Conv1d(65, 64, 1),
+            nn.Conv1d(65, 96, 1),
             nn.Tanh(),
-            nn.Conv1d(64, 128, 1),
+            nn.Conv1d(96, 128, 1),
             nn.Tanh(),
             nn.Conv1d(128, 1024, 1),
             nn.Tanh()

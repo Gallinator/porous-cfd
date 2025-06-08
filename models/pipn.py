@@ -73,7 +73,7 @@ class Pipn(L.LightningModule):
                                           'Val error ux',
                                           'Val error uy')
 
-        self.momentum_loss = MomentumLoss(n_internal)
+        self.momentum_loss = MomentumLoss(n_internal, self.mu)
         self.continuity_loss = ContinuityLoss(n_internal)
         self.boundary_loss = BoundaryLoss(n_internal)
 

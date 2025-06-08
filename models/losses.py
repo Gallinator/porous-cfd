@@ -18,9 +18,10 @@ class LossLogger:
 
 
 class MomentumLoss(nn.Module):
-    def __init__(self, n_internal):
+    def __init__(self, n_internal, mu):
         super().__init__()
         self.n_internal = n_internal
+        self.mu = mu
 
     def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i):
         res = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i

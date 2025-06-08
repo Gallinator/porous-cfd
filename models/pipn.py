@@ -4,7 +4,7 @@ from torch.nn.functional import mse_loss, l1_loss
 from torchinfo import summary
 import lightning as L
 from foam_dataset import PdeData, FoamData
-from models.losses import LossLogger
+from models.losses import LossLogger, MomentumLoss, BoundaryLoss, ContinuityLoss
 
 
 class Encoder(nn.Module):
@@ -73,6 +73,10 @@ class Pipn(L.LightningModule):
                                           'Val error ux',
                                           'Val error uy')
 
+        self.momentum_loss = MomentumLoss(n_internal)
+        self.continuity_loss = ContinuityLoss(n_internal)
+        self.boundary_loss = BoundaryLoss(n_internal)
+
     def forward(self, x: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)
 
@@ -106,20 +110,6 @@ class Pipn(L.LightningModule):
             return field[:, self.n_internal:, :]
         raise NotImplementedError(f'{region} is not supported!')
 
-    def field_loss(self, pred_field: Tensor, tgt_field: Tensor):
-        return mse_loss(self.split_field(pred_field, 'boundary'),
-                        self.split_field(tgt_field, 'boundary'))
-
-    def continuity_loss(self, d_ux_x: Tensor, d_uy_y: Tensor) -> Tensor:
-        pde = d_ux_x + d_uy_y
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde))
-
-    def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i):
-        pde = d_ui_i * ui + d_ui_j * uj - 0.01 * (dd_ui_i + dd_ui_j) + d_p_i - f_i
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde))
-
     def training_step(self, batch: list):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True
@@ -135,9 +125,9 @@ class Pipn(L.LightningModule):
         d_p = self.calculate_gradients(pred_data.p, in_data.points)
         d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-        boundary_p_loss = self.field_loss(pred_data.p, in_data.pde.p)
-        boundary_ux_loss = self.field_loss(pred_data.uy, in_data.pde.uy)
-        boundary_uy_loss = self.field_loss(pred_data.ux, in_data.pde.ux)
+        boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
+        boundary_ux_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
+        boundary_uy_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x, in_data.fx)

@@ -92,24 +92,22 @@ class FoamDataset(Dataset):
         return u, p, f
 
     def load_case(self, case_dir):
-        b_points, _, _, b_porous = parse_boundary(case_dir)
+        b_points, _, _, b_zones_ids = parse_boundary(case_dir)
         b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
-        b_points, b_porous = b_points[b_samples], b_porous[b_samples]
+        b_points, b_zones_ids = b_points[b_samples], b_zones_ids[b_samples]
 
-        i_points, i_porous = parse_internal_mesh(case_dir)
+        i_points, i_zones_ids = parse_internal_mesh(case_dir)
         i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
-        i_points, i_porous = i_points[i_samples], i_porous[i_samples]
+        i_points, i_zones_ids = i_points[i_samples], i_zones_ids[i_samples]
 
         points = np.concatenate((i_points, b_points))
-        porous = np.concatenate((i_porous, b_porous))
+        zones_ids = np.concatenate((i_zones_ids, b_zones_ids))
 
-        u, p, f = self.create_manufactured_solutions(points, porous)
+        u, p, f = self.create_manufactured_solutions(points, zones_ids)
 
-        return (tensor(points, dtype=torch.float),
-                tensor(u, dtype=torch.float),
-                tensor(p, dtype=torch.float),
-                tensor(f, dtype=torch.float),
-                tensor(porous, dtype=torch.float))
+        data = np.concatenate([points, u, p, f, zones_ids])
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+        return tensor(data, dtype=torch.float)
+
+    def __getitem__(self, item) -> Tensor:
         return self.data[item]

@@ -41,11 +41,11 @@ class FoamData:
 
     @property
     def fx(self) -> Tensor | np.ndarray:
-        return self.f[..., 5:6]
+        return self.f[..., 0:1]
 
     @property
     def fy(self) -> Tensor | np.ndarray:
-        return self.f[..., 6:7]
+        return self.f[..., 1:2]
 
     @property
     def numpy(self):

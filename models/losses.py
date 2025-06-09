@@ -3,8 +3,6 @@ from torch import nn, Tensor
 from torch.nn.functional import mse_loss
 import lightning as L
 
-from foam_dataset import StandardScaler
-
 
 class LossLogger:
     def __init__(self, module: L.LightningModule, *loss_labels):
@@ -20,44 +18,25 @@ class LossLogger:
 
 
 class MomentumLoss(nn.Module):
-    def __init__(self, i: int, j: int, mu, d, n_internal,
-                 u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler):
+    def __init__(self, mu, d, n_internal):
         super().__init__()
         self.mu = mu
         self.d = d
         self.n_internal = n_internal
-        self.u_scaler = u_scaler
-        self.points_scaler = points_scaler
-        self.p_stats = p_scaler
-        self.i = i
-        self.j = j
 
-    def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids):
-        i, j = self.i, self.j
-        norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
-        norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
-        norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
-        norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
-
-        res = (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
-               norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
-               self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
-               (self.p_stats.std / self.points_scaler.std[i]) * d_p_i +
-               (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
+    def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, fi, zones_ids):
+        res = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i + (ui * self.d * self.mu * zones_ids) - fi
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
 
 class ContinuityLoss(nn.Module):
-    def __init__(self, n_internal, u_scaler: StandardScaler, points_scaler: StandardScaler):
+    def __init__(self, n_internal):
         super().__init__()
         self.n_internal = n_internal
-        self.u_scaler = u_scaler
-        self.points_scaler = points_scaler
 
     def forward(self, d_ux_x, d_uy_y):
-        res = ((self.u_scaler[0].std / self.points_scaler[0].std) * d_ux_x +
-               (self.u_scaler[1].std / self.points_scaler[1].std) * d_uy_y)
+        res = d_ux_x + d_uy_y
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 

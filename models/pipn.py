@@ -101,20 +101,6 @@ class Pipn(L.LightningModule):
             return field[:, self.n_internal:, :]
         raise NotImplementedError(f'{region} is not supported!')
 
-    def field_loss(self, pred_field: Tensor, tgt_field: Tensor):
-        return mse_loss(self.split_field(pred_field, 'boundary'),
-                        self.split_field(tgt_field, 'boundary'), reduction='sum')
-
-    def continuity_loss(self, d_ux_x: Tensor, d_uy_y: Tensor) -> Tensor:
-        pde = d_ux_x + d_uy_y
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
-
-    def momentum_loss(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, f_i, porous):
-        pde = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i + (ui * self.d * self.mu) * porous
-        pde = self.split_field(pde, 'internal')
-        return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
-
     def training_step(self, batch: list):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True

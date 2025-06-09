@@ -36,19 +36,15 @@ class FoamData:
 
     @property
     def zones_ids(self) -> Tensor:
+        return self.data[..., 7:8]
+
+    @property
+    def fx(self) -> Tensor:
         return self.data[..., 5:6]
 
     @property
-    def obs_ux(self) -> Tensor:
-        return self.pde.ux.gather(1, self.obs_samples)
-
-    @property
-    def obs_uy(self) -> Tensor:
-        return self.pde.uy.gather(1, self.obs_samples)
-
-    @property
-    def obs_p(self) -> Tensor:
-        return self.pde.p.gather(1, self.obs_samples)
+    def fy(self) -> Tensor:
+        return self.data[..., 6:7]
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])

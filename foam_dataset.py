@@ -34,7 +34,7 @@ class PdeData:
 
 class FoamData:
     def __init__(self, batch: tuple | list):
-        self.data, self.obs_samples = batch
+        self.data = batch
         self.points = self.data[..., 0:2]
         self.pde = PdeData(self.data[..., 2:5])
 
@@ -51,7 +51,7 @@ class FoamData:
         return self.data[..., 6:7]
 
     def numpy(self):
-        return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
+        return FoamData(self.data.numpy(force=True))
 
 
 class FoamDataset(Dataset):

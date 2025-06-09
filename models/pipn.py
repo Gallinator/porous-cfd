@@ -14,7 +14,7 @@ class Encoder(nn.Module):
             nn.Conv1d(2, 64, 1),
             nn.Tanh(),
             nn.Conv1d(64, 64, 1),
-            nn.Tanh(),
+            nn.Tanh()
         )
 
         self.global_feature = nn.Sequential(

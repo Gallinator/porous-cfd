@@ -109,7 +109,7 @@ class FoamDataset(Dataset):
 
         u, p, f = self.create_manufactured_solutions(points, zones_ids)
 
-        data = np.concatenate([points, u, p, f, zones_ids])
+        data = np.concatenate([points, u, p, f, zones_ids], axis=1)
 
         return tensor(data, dtype=torch.float)
 

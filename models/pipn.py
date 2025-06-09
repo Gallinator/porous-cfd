@@ -4,7 +4,7 @@ from torch.nn.functional import mse_loss, l1_loss
 from torchinfo import summary
 import lightning as L
 
-from foam_dataset import PredictedDataBatch, FoamDataBatch
+from foam_dataset import PdeData, FoamData
 from models.losses import MomentumLoss, BoundaryLoss, ContinuityLoss
 
 
@@ -68,7 +68,7 @@ class Pipn(L.LightningModule):
         self.continuity_loss = ContinuityLoss(n_internal)
         self.boundary_loss = BoundaryLoss(n_internal)
 
-    def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
+    def forward(self, x: Tensor, porous: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)
 
         local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
@@ -116,28 +116,29 @@ class Pipn(L.LightningModule):
         return mse_loss(pde, torch.zeros_like(pde), reduction='sum')
 
     def training_step(self, batch: list):
-        batch_data = FoamDataBatch(batch)
-        batch_data.points.requires_grad = True
+        in_data = FoamData(batch)
+        in_data.points.requires_grad = True
 
-        pred = self.forward(batch_data.points, batch_data.porous_zone)
+        pred = self.forward(in_data.points, in_data.zones_ids)
+        pred_data = PdeData(pred)
 
         # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(batch_data.points, pred.ux, 0, 1)
+        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
         # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(batch_data.points, pred.uy, 1, 0)
+        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
 
-        d_p = self.calculate_gradients(pred.p, batch_data.points)
+        d_p = self.calculate_gradients(pred_data.p, in_data.points)
         d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-        p_loss = self.field_loss(pred.p, batch_data.p)
-        uy_loss = self.field_loss(pred.uy, batch_data.uy)
-        ux_loss = self.field_loss(pred.ux, batch_data.ux)
+        p_loss = self.field_loss(pred_data.p, in_data.pde.p)
+        uy_loss = self.field_loss(pred_data.uy, in_data.pde.uy)
+        ux_loss = self.field_loss(pred_data.ux, in_data.pde.ux)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
-        mom_loss_x = self.momentum_loss(pred.ux, d_ux_x, d_ux_y, pred.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                        batch_data.fx, batch_data.porous_zone)
-        mom_loss_y = self.momentum_loss(pred.uy, d_uy_y, d_uy_x, pred.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                        batch_data.fy, batch_data.porous_zone)
+        mom_loss_x = self.momentum_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
+                                        in_data.fx, in_data.zones_ids)
+        mom_loss_y = self.momentum_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
+                                        in_data.fy, in_data.zones_ids)
 
         loss = (p_loss + ux_loss + uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
 
@@ -149,23 +150,24 @@ class Pipn(L.LightningModule):
         self.log("Train loss momentum x", mom_loss_x, on_step=False, on_epoch=True)
         self.log("Train loss momentum y", mom_loss_y, on_step=False, on_epoch=True)
 
-        self.log("Train ux error", l1_loss(pred.ux, batch_data.ux), on_step=False, on_epoch=True)
-        self.log("Train uy error", l1_loss(pred.uy, batch_data.uy), on_step=False, on_epoch=True)
-        self.log("Train p error", l1_loss(pred.p, batch_data.p), on_step=False, on_epoch=True)
+        self.log("Train ux error", l1_loss(pred_data.ux, in_data.pde.ux), on_step=False, on_epoch=True)
+        self.log("Train uy error", l1_loss(pred_data.uy, in_data.pde.uy), on_step=False, on_epoch=True)
+        self.log("Train p error", l1_loss(pred_data.p, in_data.pde.p), on_step=False, on_epoch=True)
 
         return loss
 
     def validation_step(self, batch: list):
-        batch_data = FoamDataBatch(batch)
-        pred = self.forward(batch_data.points, batch_data.porous_zone)
+        batch_data = FoamData(batch)
+        pred = self.forward(batch_data.points, batch_data.zones_ids)
+        pred_data = PdeData(pred)
 
-        p_loss = l1_loss(pred.p, batch_data.p)
-        ux_loss = l1_loss(pred.ux, batch_data.ux)
-        uy_loss = l1_loss(pred.uy, batch_data.uy)
+        p_loss = l1_loss(pred_data.p, batch_data.pde.p)
+        ux_loss = l1_loss(pred_data.ux, batch_data.pde.ux)
+        uy_loss = l1_loss(pred_data.uy, batch_data.pde.uy)
         self.log("Val error p", p_loss, on_step=False, on_epoch=True)
         self.log("Val error ux", ux_loss, on_step=False, on_epoch=True)
         self.log("Val error uy", uy_loss, on_step=False, on_epoch=True)
 
-    def predict_step(self, batch: Tensor) -> PredictedDataBatch:
-        batch_data = FoamDataBatch(batch)
-        return self.forward(batch_data.points, batch_data.porous_zone)
+    def predict_step(self, batch: Tensor) -> Tensor:
+        batch_data = FoamData(batch)
+        return self.forward(batch_data.points, batch_data.zones_ids)

@@ -5,7 +5,7 @@ from torchinfo import summary
 import lightning as L
 
 from foam_dataset import PdeData, FoamData
-from models.losses import MomentumLoss, BoundaryLoss, ContinuityLoss
+from models.losses import MomentumLoss, BoundaryLoss, ContinuityLoss, LossLogger
 
 
 class Encoder(nn.Module):
@@ -67,6 +67,19 @@ class Pipn(L.LightningModule):
         self.momentum_y_loss = MomentumLoss(self.mu, self.d, n_internal)
         self.continuity_loss = ContinuityLoss(n_internal)
         self.boundary_loss = BoundaryLoss(n_internal)
+        self.training_loss_togger = LossLogger(self, 'Train loss',
+                                               'Train loss continuity',
+                                               'Train loss momentum x',
+                                               'Train loss momentum y',
+                                               'Train loss p',
+                                               'Train loss ux',
+                                               'Train loss uy',
+                                               'Train p error',
+                                               'Train ux error',
+                                               'Train uy error')
+        self.val_loss_logger = LossLogger(self, 'Val error p',
+                                          'Val error ux',
+                                          'Val error uy')
 
     def forward(self, x: Tensor, porous: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)
@@ -128,17 +141,16 @@ class Pipn(L.LightningModule):
 
         loss = (boundary_p_loss + boundary_ux_loss + boundary_uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
 
-        self.log("Train loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("Train loss p", boundary_p_loss, on_step=False, on_epoch=True)
-        self.log("Train loss ux", boundary_ux_loss, on_step=False, on_epoch=True)
-        self.log("Train loss uy", boundary_uy_loss, on_step=False, on_epoch=True)
-        self.log("Train loss continuity", cont_loss, on_step=False, on_epoch=True)
-        self.log("Train loss momentum x", mom_loss_x, on_step=False, on_epoch=True)
-        self.log("Train loss momentum y", mom_loss_y, on_step=False, on_epoch=True)
-
-        self.log("Train ux error", l1_loss(pred_data.ux, in_data.pde.ux), on_step=False, on_epoch=True)
-        self.log("Train uy error", l1_loss(pred_data.uy, in_data.pde.uy), on_step=False, on_epoch=True)
-        self.log("Train p error", l1_loss(pred_data.p, in_data.pde.p), on_step=False, on_epoch=True)
+        self.training_loss_togger.log(loss,
+                                      cont_loss,
+                                      mom_loss_x,
+                                      mom_loss_y,
+                                      boundary_p_loss,
+                                      boundary_ux_loss,
+                                      boundary_uy_loss,
+                                      l1_loss(pred_data.p, in_data.pde.p),
+                                      l1_loss(pred_data.ux, in_data.pde.ux),
+                                      l1_loss(pred_data.uy, in_data.pde.uy))
 
         return loss
 
@@ -147,12 +159,10 @@ class Pipn(L.LightningModule):
         pred = self.forward(batch_data.points, batch_data.zones_ids)
         pred_data = PdeData(pred)
 
-        p_loss = l1_loss(pred_data.p, batch_data.pde.p)
-        ux_loss = l1_loss(pred_data.ux, batch_data.pde.ux)
-        uy_loss = l1_loss(pred_data.uy, batch_data.pde.uy)
-        self.log("Val error p", p_loss, on_step=False, on_epoch=True)
-        self.log("Val error ux", ux_loss, on_step=False, on_epoch=True)
-        self.log("Val error uy", uy_loss, on_step=False, on_epoch=True)
+        p_error = l1_loss(pred_data.p, batch_data.pde.p)
+        ux_error = l1_loss(pred_data.ux, batch_data.pde.ux)
+        uy_error = l1_loss(pred_data.uy, batch_data.pde.uy)
+        self.val_loss_logger.log(p_error, ux_error, uy_error)
 
     def predict_step(self, batch: Tensor) -> Tensor:
         batch_data = FoamData(batch)

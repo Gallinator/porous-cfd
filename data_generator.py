@@ -78,26 +78,24 @@ def generate_data(cases_dir: str):
 
 
 def generate_meta(data_dir: str):
-    boundary_num_points, internal_num_points = [], []
+    boundary_num_points, internal_num_points, porous_num_points = [], [], []
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_n, i_n = parse_case_num_points(case)
-        boundary_num_points.append(b_n)
-        internal_num_points.append(i_n)
+        b_points, b_u, b_p, b_porous_idx = parse_boundary(case)
+        i_points, i_porous_idx = parse_internal_mesh(case)
+        n_porous = np.count_nonzero(b_porous_idx > 0) + np.count_nonzero(i_porous_idx > 0)
 
-    boundary_meta = {"Min points": int(np.min(boundary_num_points))}
-    internal_meta = {"Min points": int(np.min(internal_num_points))}
-    meta_dict = {"Internal": internal_meta, "Boundary": boundary_meta}
+        boundary_num_points.append(len(b_points))
+        internal_num_points.append(len(i_points))
+        porous_num_points.append(n_porous)
+
+    min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
+                       "Internal": int(np.min(internal_num_points)),
+                       'Porous': int(np.min(porous_num_points))}
+
+    meta_dict = {"Min points": min_points_meta}
+
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
-
-
-def parse_case_num_points(case_dir: str):
-    boundary_c, _, _, _ = parse_boundary(case_dir)
-    internal_c, _, _, _ = parse_internal_mesh(case_dir, "U", "p")
-
-    boundary_n = len(boundary_c)
-    internal_n = len(internal_c)
-    return boundary_n, internal_n
 
 
 clean_dir('data')

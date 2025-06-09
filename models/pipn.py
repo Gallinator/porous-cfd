@@ -5,6 +5,7 @@ from torchinfo import summary
 import lightning as L
 
 from foam_dataset import PredictedDataBatch, FoamDataBatch
+from models.losses import MomentumLoss, BoundaryLoss, ContinuityLoss
 
 
 class Encoder(nn.Module):
@@ -62,6 +63,10 @@ class Pipn(L.LightningModule):
         self.decoder = Decoder(3)
         self.mu = 0.01
         self.d = 100
+        self.momentum_x_loss = MomentumLoss(self.mu, self.d, n_internal)
+        self.momentum_y_loss = MomentumLoss(self.mu, self.d, n_internal)
+        self.continuity_loss = ContinuityLoss(n_internal)
+        self.boundary_loss = BoundaryLoss(n_internal)
 
     def forward(self, x: Tensor, porous: Tensor) -> PredictedDataBatch:
         x = x.transpose(dim0=1, dim1=2)

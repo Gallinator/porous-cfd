@@ -130,9 +130,9 @@ class Pipn(L.LightningModule):
         d_p = self.calculate_gradients(pred_data.p, in_data.points)
         d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-        p_loss = self.field_loss(pred_data.p, in_data.pde.p)
-        uy_loss = self.field_loss(pred_data.uy, in_data.pde.uy)
-        ux_loss = self.field_loss(pred_data.ux, in_data.pde.ux)
+        boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
+        boundary_ux_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
+        boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
@@ -140,12 +140,12 @@ class Pipn(L.LightningModule):
         mom_loss_y = self.momentum_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
                                         in_data.fy, in_data.zones_ids)
 
-        loss = (p_loss + ux_loss + uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
+        loss = (boundary_p_loss + boundary_ux_loss + boundary_uy_loss + cont_loss + mom_loss_x + mom_loss_y) / 5.0
 
         self.log("Train loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("Train loss p", p_loss, on_step=False, on_epoch=True)
-        self.log("Train loss ux", ux_loss, on_step=False, on_epoch=True)
-        self.log("Train loss uy", uy_loss, on_step=False, on_epoch=True)
+        self.log("Train loss p", boundary_p_loss, on_step=False, on_epoch=True)
+        self.log("Train loss ux", boundary_ux_loss, on_step=False, on_epoch=True)
+        self.log("Train loss uy", boundary_uy_loss, on_step=False, on_epoch=True)
         self.log("Train loss continuity", cont_loss, on_step=False, on_epoch=True)
         self.log("Train loss momentum x", mom_loss_x, on_step=False, on_epoch=True)
         self.log("Train loss momentum y", mom_loss_y, on_step=False, on_epoch=True)

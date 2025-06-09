@@ -106,13 +106,6 @@ class Pipn(L.LightningModule):
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[:, :, j:j + 1]
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
-    def split_field(self, field: Tensor, region: str) -> Tensor:
-        if region == 'internal':
-            return field[:, 0:self.n_internal, :]
-        elif region == 'boundary':
-            return field[:, self.n_internal:, :]
-        raise NotImplementedError(f'{region} is not supported!')
-
     def training_step(self, batch: list):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True

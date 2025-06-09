@@ -26,9 +26,9 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: Tensor, porous: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        local_features = torch.concatenate([local_features, porous], dim=1)
+        local_features = torch.concatenate([local_features, zones_ids], dim=1)
         global_feature = self.global_feature(local_features)
         global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
         return local_features, global_feature

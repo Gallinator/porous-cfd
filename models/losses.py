@@ -25,9 +25,10 @@ class MomentumLoss(nn.Module):
         self.n_internal = n_internal
 
     def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, fi, zones_ids):
-        res = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i + (ui * self.d * self.mu * zones_ids) - fi
+        res = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i + (
+                    ui * self.d * self.mu * zones_ids) - fi
         res = res[:, :self.n_internal, :]
-        return mse_loss(res, torch.zeros_like(res))
+        return mse_loss(res, torch.zeros_like(res), reduction='sum')
 
 
 class ContinuityLoss(nn.Module):
@@ -38,7 +39,7 @@ class ContinuityLoss(nn.Module):
     def forward(self, d_ux_x, d_uy_y):
         res = d_ux_x + d_uy_y
         res = res[:, :self.n_internal, :]
-        return mse_loss(res, torch.zeros_like(res))
+        return mse_loss(res, torch.zeros_like(res), reduction='sum')
 
 
 class BoundaryLoss(nn.Module):
@@ -47,4 +48,4 @@ class BoundaryLoss(nn.Module):
         self.n_internal = n_internal
 
     def forward(self, input: Tensor, target: Tensor):
-        return mse_loss(input[:, self.n_internal:, :], target[:, self.n_internal:, :])
+        return mse_loss(input[:, self.n_internal:, :], target[:, self.n_internal:, :], reduction='sum')

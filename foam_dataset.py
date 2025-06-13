@@ -123,4 +123,4 @@ class StandardScaler:
         return self.std * data + self.mean
 
     def __getitem__(self, item):
-        return StandardScaler(self.std[item], self.std[item])
+        return StandardScaler(self.std[item], self.mean[item])

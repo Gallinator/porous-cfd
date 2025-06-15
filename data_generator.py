@@ -66,7 +66,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
     for m in meshes:
         case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
         shutil.copytree('assets/openfoam-case-template', case_path)
-        shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+        shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 
 
 def generate_data(cases_dir: str):

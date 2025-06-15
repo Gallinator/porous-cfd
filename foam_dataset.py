@@ -84,21 +84,16 @@ class FoamDataset(Dataset):
         return len(self.samples)
 
     def load_case(self, case_dir):
-        b_points, b_u, b_p, b_zones_ids = parse_boundary(case_dir, ['U'], ['p'])
-        b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
-        b_points, b_u, b_p, b_zones_ids = b_points[b_samples], b_u[b_samples], b_p[b_samples], b_zones_ids[b_samples]
+        b_data = parse_boundary(case_dir, ['U'], ['p'])
+        b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_data = b_data[b_samples]
 
-        i_points, i_u, i_p, i_zones_ids = (parse_internal_mesh(case_dir, 'U', 'p'))
-        i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
-        i_points, i_u, i_p, i_zones_ids = i_points[i_samples], i_u[i_samples], i_p[i_samples], i_zones_ids[i_samples]
+        i_data = (parse_internal_mesh(case_dir, 'U', 'p'))
+        i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
+        i_data = i_data[i_samples]
 
-        points = np.concatenate((i_points, b_points))
-        u = np.concatenate((i_u, b_u))
-        p = np.concatenate((i_p, b_p))
-        zones_ids = np.concatenate((i_zones_ids, b_zones_ids))
-
-        data = np.concatenate((points, u, p, zones_ids), axis=1)
-        obs_samples = np.random.choice(len(i_points), replace=False, size=self.n_obs)
+        data = np.concatenate((i_data, b_data))
+        obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
         data[:, 0:-1] = self.standard_scaler.transform(data[:, 0:-1])

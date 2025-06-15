@@ -6,7 +6,7 @@ import numpy as np
 from foamlib import FoamCase, FoamFile
 
 
-def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]):
+def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np.ndarray:
     last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
     faces = []
@@ -27,7 +27,7 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]):
             vector_values[v].extend(values)
     vector_values = [np.array(vector_values[v]) for v in vectors]
     scalar_values = [np.array(scalar_values[s]) for s in scalars]
-    return [np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])]
+    return np.concatenate([np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])], axis=1)
 
 
 def make_at_most_2d(field) -> np.array:
@@ -44,7 +44,7 @@ def make_column(field) -> np.array:
     return f
 
 
-def parse_internal_mesh(case_path: str, *fields):
+def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
     case = FoamCase(case_path)
     last_step = case[-1]
     domain_points = last_step.cell_centers().internal_field
@@ -58,7 +58,7 @@ def parse_internal_mesh(case_path: str, *fields):
 
     porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))
 
-    return [domain_points] + fields_values + [porous_points]
+    return np.concatenate([domain_points] + fields_values + [porous_points], axis=1)
 
 
 def parse_meta(data_dir: str) -> dict:

@@ -84,7 +84,7 @@ class FoamDataset(Dataset):
         return len(self.samples)
 
     def load_case(self, case_dir):
-        b_points, b_u, b_p, b_zones_ids = parse_boundary(case_dir)
+        b_points, b_u, b_p, b_zones_ids = parse_boundary(case_dir, ['U'], ['p'])
         b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
         b_points, b_u, b_p, b_zones_ids = b_points[b_samples], b_u[b_samples], b_p[b_samples], b_zones_ids[b_samples]
 

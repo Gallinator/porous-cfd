@@ -6,25 +6,28 @@ import numpy as np
 from foamlib import FoamCase, FoamFile
 
 
-def parse_boundary(case_path: str):
+def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]):
     last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
     faces = []
-    u = []
-    p = []
-
-    for s in os.listdir(boundaries_path):
-        coords = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")[None]
+    scalar_values, vector_values = {s: [] for s in scalars}, {v: [] for v in vectors}
+    for b in os.listdir(boundaries_path):
+        coords = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/patch_{b}/faceCentres")[None]
         coords = make_at_most_2d(coords)
-        u_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/vectorField/U")[None]
-        u_values = make_at_most_2d(u_values)
-        p_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/scalarField/p")[None]
-        p_values = make_column(p_values)
         faces.extend(coords)
-        u.extend(u_values)
-        p.extend(p_values)
 
-    return np.array(faces), np.array(u), np.array(p), np.zeros_like(p)
+        for s in scalars:
+            values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/patch_{b}/scalarField/{s}")[None]
+            values = make_column(values)
+            scalar_values[s].extend(values)
+            np.array(scalar_values[s])
+        for v in vectors:
+            values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/patch_{b}/vectorField/{v}")[None]
+            values = make_at_most_2d(values)
+            vector_values[v].extend(values)
+    vector_values = [np.array(vector_values[v]) for v in vectors]
+    scalar_values = [np.array(scalar_values[s]) for s in scalars]
+    return [np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])]
 
 
 def make_at_most_2d(field) -> np.array:

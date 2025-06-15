@@ -70,10 +70,18 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
 
 
 def generate_data(cases_dir: str):
+    for case in track(glob.glob(f"{cases_dir}/*"), description="Generating geometries"):
+        process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                   stdout=subprocess.DEVNULL, text=True)
+        process.communicate(f"{case}/snappyHexMesh/Run")
+        process.wait()
+        if process.returncode != 0:
+            raise RuntimeError(f'Failed to run {case}')
+
     for case in track(glob.glob(f"{cases_dir}/*"), description="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
-        process.communicate(f"{case}/Run")
+        process.communicate(f"{case}/simpleFoam/Run")
         process.wait()
         if process.returncode != 0:
             raise RuntimeError(f'Failed to run {case}')

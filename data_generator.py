@@ -85,6 +85,11 @@ def generate_data(cases_dir: str):
         process.wait()
         if process.returncode != 0:
             raise RuntimeError(f'Failed to run {case}')
+        clean_dir(f"{case}/snappyHexMesh")
+        os.rmdir(f"{case}/snappyHexMesh")
+        shutil.move(f"{case}/simpleFoam", 'tmp')
+        os.rmdir(f'{case}')
+        shutil.move("tmp", f'{case}')
 
 
 def generate_meta(data_dir: str):

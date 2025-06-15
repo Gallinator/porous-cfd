@@ -97,18 +97,17 @@ def generate_meta(data_dir: str):
     running_stats = Welford()
 
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_points, b_u, b_p, b_porous_idx = parse_boundary(case)
-        i_points, i_u, i_p, i_porous_idx = parse_internal_mesh(case, "U", "p")
-        n_porous = np.count_nonzero(b_porous_idx > 0) + np.count_nonzero(i_porous_idx > 0)
+        b_data = parse_boundary(case, ['U'], ['p'])
+        i_data = parse_internal_mesh(case, "U", "p")
+        n_porous = np.count_nonzero(b_data[..., -1] > 0) + np.count_nonzero(i_data[..., -1] > 0)
 
-        boundary_num_points.append(len(b_points))
-        internal_num_points.append(len(i_points))
+        boundary_num_points.append(len(b_data))
+        internal_num_points.append(len(i_data))
         porous_num_points.append(n_porous)
 
-        points = np.concatenate((i_points, b_points))
-        u = np.concatenate((i_u, b_u))
-        p = np.concatenate((i_p, b_p))
-        running_stats.add_all(np.concatenate((points, u, p), axis=1))
+        data = np.concatenate((i_data, b_data))
+
+        running_stats.add_all(data[..., 0:5])
 
     min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
                        "Internal": int(np.min(internal_num_points)),

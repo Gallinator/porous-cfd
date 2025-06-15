@@ -16,7 +16,7 @@ FoamFile
 
 castellatedMesh true;
 snap            true;
-addLayers       false;
+addLayers       true;
 
 geometry
 {
@@ -104,31 +104,22 @@ addLayersControls
 {
     relativeSizes true;
 
-    expansionRatio 1.0;
+    expansionRatio 1.2;
 
-    finalLayerThickness 0.3;
+    finalLayerThickness 0.5;
 
-    minThickness 0.25;
+    minThickness 0.1;
 
     layers
     {
-        //sphere.stl_firstSolid
-        //{
-        //    nSurfaceLayers 1;
-
-        //}
-        //maxY
-        //{
-        //    nSurfaceLayers 1;
-        //    expansionRatio      1.3;
-        //   finalLayerThickness 0.3;
-        //    minThickness        0.1;
-        //}
-
-        //frozenPatches
-        //{
-        //    nSurfaceLayers 0;
-        //}
+        internalMesh_to_mesh
+        {
+           nSurfaceLayers 3;
+        }
+        mesh_to_internalMesh
+        {
+           nSurfaceLayers 3;
+        }
     }
 
     nGrow 0;

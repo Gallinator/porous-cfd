@@ -5,9 +5,6 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions
 
 cleanCase
-blockMesh
-snappyHexMesh -overwrite
-decomposePar
-$(getApplication)
-reconstructPar
+extrudeMesh
 splitMeshRegions -cellZonesOnly -overwrite -detectOnly
+$(getApplication)

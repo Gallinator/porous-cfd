@@ -113,6 +113,24 @@ functions
         writeFields     true;
         writeControl    writeTime;
     }
+    interface
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory entries (runtime modifiable)
+        fields          (U p div(phi) momentError);
+        operation       none;
+        regionType      faceZone;
+        name            internalMesh_to_mesh;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeToFile     true;
+        writeControl    writeTime;
+        surfaceFormat   foam;
+    }
     writeCellData
     {
         type            writeCellCentres;

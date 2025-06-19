@@ -43,8 +43,8 @@ class Encoder(nn.Module):
         super().__init__()
         self.tnet1 = TNet(3, 3)
         self.local_feature = nn.Sequential(
-            nn.Tanh(),
             nn.Conv1d(3, 64, 1),
+            nn.Tanh(),
             nn.Conv1d(64, 64, 1),
             nn.Tanh()
         )

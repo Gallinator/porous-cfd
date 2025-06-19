@@ -22,7 +22,7 @@ sourceCase "../snappyHexMesh";
 sourcePatches (front);
 
 // If construct from patch: patch to use for back (can be same as sourcePatch)
-exposedPatchName back;
+exposedPatchName front;
 
 // Flip surface normals before usage.
 flipNormals false;

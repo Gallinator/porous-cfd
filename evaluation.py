@@ -20,9 +20,9 @@ trainer = Trainer(logger=False, enable_checkpointing=False)
 
 start_time = time.perf_counter()
 pred = trainer.predict(model, dataloaders=val_loader)
-inference_time =time.perf_counter() - start_time
+inference_time = time.perf_counter() - start_time
 print(f'Total inference time: {inference_time} s')
-print(f'Inference time: {inference_time/len(val_data)} s/case')
+print(f'Average inference time: {inference_time / len(val_data)} s/case')
 
 errors = []
 pde_scaler = val_data.standard_scaler[2:5].to_torch()

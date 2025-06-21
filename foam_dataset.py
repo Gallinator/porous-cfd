@@ -119,3 +119,6 @@ class StandardScaler:
 
     def __getitem__(self, item):
         return StandardScaler(self.std[item], self.mean[item])
+
+    def to_torch(self, device=None):
+        return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))

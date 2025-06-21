@@ -77,12 +77,12 @@ class FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta=None):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
-        self.meta = parse_meta(data_dir) if meta is None else meta
+        self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
         self.check_sample_size()
         self.standard_scaler = StandardScaler(
             np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),

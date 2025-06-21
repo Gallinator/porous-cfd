@@ -12,8 +12,7 @@ CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt
 
 model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 
-train_data = FoamDataset('data/train', 1000, 200, 500)
-val_data = FoamDataset('data/val', 1000, 200, 500, train_data.meta)
+val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
 val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
 trainer = Trainer(logger=False, enable_checkpointing=False)
@@ -22,9 +21,9 @@ pred = PdeData(pred).numpy()
 
 tgt = FoamData(val_data[0]).numpy()
 
-points_scaler = train_data.standard_scaler[0:2]
-u_scaler = train_data.standard_scaler[2:4]
-p_scaler = train_data.standard_scaler[4]
+points_scaler = val_data.standard_scaler[0:2]
+u_scaler = val_data.standard_scaler[2:4]
+p_scaler = val_data.standard_scaler[4]
 
 raw_points = points_scaler.inverse_transform(tgt.points)
 

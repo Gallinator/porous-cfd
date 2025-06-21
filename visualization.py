@@ -16,7 +16,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     ax.set_title(title, pad=20)
     porous_zone = np.nonzero(porous > 0)[0]
     ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=100, zorder=-1, c='silver',
-              label='Porous')
+               label='Porous')
     ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=50, zorder=-1, c='black')
     plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
     fig.colorbar(plot, ax=ax)
@@ -76,31 +76,35 @@ def plot_case(path: str):
                 porous)
 
 
+def plot_histogram(ax, data, color: str, title: str, bins=100):
+    ax.set_title(title, pad=10)
+    ax.hist(data, bins=bins, color=color, edgecolor='black')
+
+
 def plot_dataset_dist(path: str):
-    ux, uy, p, zones = [], [], [], []
+    data = []
     for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
                       description="Reading data"):
-        b_points, b_u, b_p, b_porous_idx = data_parser.parse_boundary(case)
-        i_points, i_u, i_p, i_porous_idx = parse_internal_mesh(case, "U", "p")
-        ux += b_u[:, 0].flatten().tolist()
-        ux += i_u[:, 0].flatten().tolist()
-        uy += b_u[:, 1].flatten().tolist()
-        uy += i_u[:, 1].flatten().tolist()
-        p += i_p.flatten().tolist()
-        p += b_p.flatten().tolist()
-        zones += b_porous_idx.flatten().tolist()
-        zones += i_porous_idx.flatten().tolist()
+        b_data = data_parser.parse_boundary(case, ['U'], ['p'])
+        i_data = parse_internal_mesh(case, "U", "p")
+        data.extend(b_data)
+        data.extend(i_data)
 
-    def plot_histogram(ax, data, color: str, title: str, bins=100):
-        ax.set_title(title, pad=10)
-        ax.hist(data, bins=bins, color=color, edgecolor='black')
+    data = np.array(data)
+    plot_data_dist(f'{path} distribution', data[..., 2:4], data[..., 4:5], data[..., -1:])
 
+
+def plot_data_dist(title, u, p, zones_ids):
+    ux, uy = u[..., 0], u[..., 1]
     fig = plt.figure(layout='constrained')
+    fig.suptitle(title, fontsize=20)
     ax_ux, ax_uy, ax_p, ax_zones = fig.subplots(ncols=2, nrows=2).flatten()
 
     plot_histogram(ax_ux, ux, 'lightsteelblue', '$U_x$')
     plot_histogram(ax_uy, uy, 'lemonchiffon', '$U_y$')
     plot_histogram(ax_p, p, 'lightsalmon', '$p$')
-    plot_histogram(ax_zones, zones, 'palegreen', 'Material zones', 2)
-
+    if zones_ids is not None:
+        plot_histogram(ax_zones, zones_ids, 'palegreen', 'Material zones', 2)
+    else:
+        plot_histogram(ax_zones, norm(u, axis=1), 'palegreen', '$U$')
     plt.show()

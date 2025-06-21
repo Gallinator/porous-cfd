@@ -57,6 +57,25 @@ class FoamData:
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
 
 
+class StandardScaler:
+    def __init__(self, std, mean):
+        super().__init__()
+        self.std = std
+        self.mean = mean
+
+    def transform(self, data):
+        return (data - self.mean) / self.std
+
+    def inverse_transform(self, data):
+        return self.std * data + self.mean
+
+    def __getitem__(self, item):
+        return StandardScaler(self.std[item], self.mean[item])
+
+    def to_torch(self, device=None):
+        return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))
+
+
 class FoamDataset(Dataset):
     def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta=None):
         self.n_boundary = n_boundary
@@ -103,22 +122,3 @@ class FoamDataset(Dataset):
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor]:
         return self.data[item]
-
-
-class StandardScaler:
-    def __init__(self, std, mean):
-        super().__init__()
-        self.std = std
-        self.mean = mean
-
-    def transform(self, data):
-        return (data - self.mean) / self.std
-
-    def inverse_transform(self, data):
-        return self.std * data + self.mean
-
-    def __getitem__(self, item):
-        return StandardScaler(self.std[item], self.mean[item])
-
-    def to_torch(self, device=None):
-        return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))

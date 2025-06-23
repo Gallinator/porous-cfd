@@ -16,7 +16,7 @@ model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
 val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
-trainer = Trainer(logger=False, enable_checkpointing=False)
+trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
 
 start_time = time.perf_counter()
 pred = trainer.predict(model, dataloaders=val_loader)

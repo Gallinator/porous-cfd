@@ -33,10 +33,7 @@ for p, t in zip(pred, val_loader):
     errors.extend(error.numpy(force=True))
 errors = np.concatenate(errors)
 error_data = PdeData(errors)
-
-mae = np.sum(errors, axis=0) / len(errors)
-print(f'Ux MAE: {mae[0]:.3f}')
-print(f'Uy MAE: {mae[1]:.3f}')
-print(f'p MAE: {mae[2]:.3f}')
-
 plot_data_dist('Absolute error distribution', error_data.u, error_data.p, None)
+
+mae = np.average(errors, axis=0)
+plot_errors(mae.tolist())

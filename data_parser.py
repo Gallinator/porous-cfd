@@ -6,6 +6,16 @@ import numpy as np
 from foamlib import FoamCase, FoamFile
 
 
+def parse_scalar_field(path: str):
+    """This is a temporary workaround as foamlib cannot read boundary scalar fields"""
+    centers = []
+    with open(path, 'r') as f:
+        lines = f.readlines()
+        for l in lines[3:-1]:
+            centers.append(float(l))
+    return centers
+
+
 def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np.ndarray:
     last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
@@ -18,7 +28,11 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np
         faces.extend(coords)
 
         for s in scalars:
-            values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")[None]
+            if s == 'div(phi)':
+                values = parse_scalar_field(
+                    f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
+            else:
+                values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")[None]
             values = make_column(values)
             scalar_values[s].extend(values)
             np.array(scalar_values[s])

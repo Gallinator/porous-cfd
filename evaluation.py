@@ -4,10 +4,10 @@ import numpy as np
 from lightning import Trainer
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
-
+from data_parser import parse_meta
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
-from visualization import plot_data_dist
+from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
 
@@ -21,8 +21,10 @@ trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False
 start_time = time.perf_counter()
 pred = trainer.predict(model, dataloaders=val_loader)
 inference_time = time.perf_counter() - start_time
-print(f'Total inference time: {inference_time} s')
-print(f'Average inference time: {inference_time / len(val_data)} s/case')
+avg_inference_time = inference_time / len(val_data)
+val_timing = parse_meta('data/val_unseen')['Timing']
+plot_timing([inference_time, val_timing['Total'] / 1e3],
+            [avg_inference_time, val_timing['Average'] / 1e3])
 
 errors = []
 pde_scaler = val_data.standard_scaler[2:5].to_torch()

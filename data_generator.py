@@ -125,17 +125,8 @@ def generate_meta(data_dir: str):
 clean_dir('data')
 clean_dir('assets/generated-meshes')
 
-generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')
-generate_openfoam_cases('assets/generated-meshes/train', 'data/train')
-generate_data('data/train')
-generate_meta('data/train')
-
-generate_transformed_meshes('assets/meshes/test', 'assets/generated-meshes/test')
-generate_openfoam_cases('assets/generated-meshes/test', 'data/test')
-generate_data('data/test')
-generate_meta('data/test')
-
-generate_transformed_meshes('assets/meshes/val', 'assets/generated-meshes/val')
-generate_openfoam_cases('assets/generated-meshes/val', 'data/val')
-generate_data('data/val')
-generate_meta('data/val')
+for d in os.listdir('assets/meshes'):
+    generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}')
+    generate_data(f'data/{d}')
+    generate_meta(f'data/{d}')

@@ -122,3 +122,17 @@ def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
     ax.bar_label(rects, fmt='%.3f', padding=10)
     ax.set_yticks([])
     ax.legend(ncols=2)
+
+
+def plot_timing(total: list, average: list):
+    fig = plt.figure()
+    ax_total, ax_avg = fig.subplots(2)
+    colors = ['salmon', 'lightblue']
+    labels = ['PINN', 'OpenFoam']
+
+    plot_barh(ax_total, 'Total simulation time [s]', total, labels, colors)
+    plot_barh(ax_avg, 'Average simulation time [s/case]', average, labels, colors)
+
+    fig.tight_layout()
+    plt.show()
+

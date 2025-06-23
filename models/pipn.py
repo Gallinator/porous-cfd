@@ -186,6 +186,27 @@ class Pipn(L.LightningModule):
                            self.u_scaler[1].inverse_transform(batch_data.pde.uy))
         self.val_loss_logger.log(p_error, ux_error, uy_error)
 
-    def predict_step(self, batch: Tensor) -> Tensor:
-        batch_data = FoamData(batch)
-        return self.forward(batch_data.points, batch_data.zones_ids)
+    def predict_step(self, batch: Tensor) -> tuple[Tensor, Tensor] | Tensor:
+        in_data = FoamData(batch)
+        if self.verbose_predict:
+            torch.set_grad_enabled(True)
+            in_data.points.requires_grad = True
+            pred = self.forward(in_data.points, in_data.zones_ids)
+            pred_data = PdeData(pred)
+
+            # i=0 is x, j=1 is y
+            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
+            # i=1 is y, j=0 is x
+            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
+            d_p = self.calculate_gradients(pred_data.p, in_data.points)
+            d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+
+            momentum_x = self.momentum_x_loss.f(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
+                                                in_data.zones_ids)
+            momentum_y = self.momentum_y_loss.f(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
+                                                in_data.zones_ids)
+            cont = self.continuity_loss.f(d_ux_x, d_uy_y)
+
+            return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
+        else:
+            return self.forward(in_data.points, in_data.zones_ids)

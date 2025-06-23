@@ -7,4 +7,8 @@ cd "${0%/*}" || exit                                # Run from this directory
 cleanCase
 extrudeMesh
 splitMeshRegions -cellZonesOnly -overwrite -detectOnly
+
+start=$(date +%s%N)
 $(getApplication)
+end=end=$(date +%s%N)
+echo "$(($end-$start))" > ./timing.txt

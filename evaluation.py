@@ -11,6 +11,7 @@ from models.pipn import Pipn, FoamData
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
+N_INTERNAL = 1000
 
 model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True
@@ -37,9 +38,9 @@ for p, t in zip(pred, val_loader):
                     pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
     errors.extend(error.numpy(force=True))
 
-    pred_residuals.extend(phys_data[:, :1000, :].numpy(force=True))
+    pred_residuals.extend(phys_data[:, :N_INTERNAL, :].numpy(force=True))
     cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=2)
-    cfd_residuals.extend(cfd_res[:1000, :].numpy(force=True))
+    cfd_residuals.extend(cfd_res[:N_INTERNAL, :].numpy(force=True))
 
 errors = np.concatenate(errors)
 error_data = PdeData(errors)

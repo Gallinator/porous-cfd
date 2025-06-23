@@ -12,7 +12,7 @@ from rich.progress import track
 from bpy import ops
 from welford import Welford
 
-from data_parser import parse_boundary, parse_internal_mesh
+from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
 
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
 
@@ -95,6 +95,7 @@ def generate_data(cases_dir: str):
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points, porous_num_points = [], [], []
     running_stats = Welford()
+    elapse_times = []
 
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
         b_data = parse_boundary(case, ['U'], ['p'])
@@ -109,14 +110,17 @@ def generate_meta(data_dir: str):
 
         running_stats.add_all(data[..., 0:5])
 
+        elapse_times.append(parse_elapsed_time(case) / 1e6)
+
     min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
                        "Internal": int(np.min(internal_num_points)),
                        'Porous': int(np.min(porous_num_points))}
     features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
     std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
     mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}
+    timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
 
-    meta_dict = {"Min points": min_points_meta, 'Mean': mean_meta, 'Std': std_meta}
+    meta_dict = {"Min points": min_points_meta, 'Mean': mean_meta, 'Std': std_meta, 'Timing': timing_meta}
 
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))

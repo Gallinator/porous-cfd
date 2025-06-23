@@ -88,6 +88,7 @@ class Pipn(L.LightningModule):
                                             self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)
+        self.verbose_predict = False
 
     def forward(self, x: Tensor, porous: Tensor) -> Tensor:
         x = x.transpose(dim0=1, dim1=2)

@@ -79,3 +79,8 @@ def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
 def parse_meta(data_dir: str) -> dict:
     with open(Path(data_dir, 'meta.json'), 'r') as f:
         return json.load(f)
+
+
+def parse_elapsed_time(case_dir: str) -> int:
+    with open(Path(case_dir, 'timing.txt'), 'r') as f:
+        return int(f.readline())

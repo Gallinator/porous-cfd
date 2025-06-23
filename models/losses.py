@@ -32,18 +32,21 @@ class MomentumLoss(nn.Module):
         self.i = i
         self.j = j
 
-    def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids):
+    def f(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids):
         i, j = self.i, self.j
         norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
 
-        res = (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
-               norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
-               self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
-               (self.p_stats.std / self.points_scaler.std[i]) * d_p_i +
-               (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
+        return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
+                norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
+                self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
+                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i +
+                (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
+
+    def forward(self, *args):
+        res = self.f(*args)
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
@@ -55,9 +58,12 @@ class ContinuityLoss(nn.Module):
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
 
-    def forward(self, d_ux_x, d_uy_y):
-        res = ((self.u_scaler[0].std / self.points_scaler[0].std) * d_ux_x +
-               (self.u_scaler[1].std / self.points_scaler[1].std) * d_uy_y)
+    def f(self, d_ux_x, d_uy_y):
+        return ((self.u_scaler[0].std / self.points_scaler[0].std) * d_ux_x +
+                (self.u_scaler[1].std / self.points_scaler[1].std) * d_uy_y)
+
+    def forward(self, *args):
+        res = self.f(*args)
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 

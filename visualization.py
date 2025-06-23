@@ -68,7 +68,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
 
 def plot_case(path: str):
-    boundary_c, boundary_u, boundary_p, boundary_porous = data_parser.parse_boundary(path)
+    boundary_c, boundary_u, boundary_p, boundary_porous = data_parser.parse_boundary(path, ['U'], ['p'])
     mesh_c, mesh_p, mesh_u, mesh_porous = parse_internal_mesh(path, "p", "U")
     porous = np.vstack([boundary_porous, mesh_porous])
 

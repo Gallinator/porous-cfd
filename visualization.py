@@ -111,3 +111,14 @@ def plot_data_dist(title, u, p, zones_ids):
     else:
         plot_histogram(ax_zones, norm(u, axis=1), 'palegreen', '$U$')
     plt.show()
+
+
+def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
+    ax.set_title(title, pad=10)
+    ax.set_xlim(right=max(values) * 1.3)
+    w = 0.01
+    x = np.arange(0, spacing * len(values), step=w)
+    rects = ax.barh(x + offset, values, w, color=colors, label=labels)
+    ax.bar_label(rects, fmt='%.3f', padding=10)
+    ax.set_yticks([])
+    ax.legend(ncols=2)

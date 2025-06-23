@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from lightning import Trainer
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader

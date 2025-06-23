@@ -136,3 +136,14 @@ def plot_timing(total: list, average: list):
     fig.tight_layout()
     plt.show()
 
+
+def plot_errors(*args):
+    fig, ax = plt.subplots()
+    colors = ['salmon', 'lightblue', 'palegreen']
+    labels = [f'$U_x$ {M_S}', f'$U_y$ {M_S}', f'$p$ {M2_S2}']
+
+    plot_barh(ax, 'Average relative error', *args, labels, colors)
+
+    fig.tight_layout()
+    plt.show()
+

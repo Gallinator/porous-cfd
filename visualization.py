@@ -147,3 +147,21 @@ def plot_errors(*args):
     fig.tight_layout()
     plt.show()
 
+
+def plot_residuals(*args):
+    fig, ax = plt.subplots()
+    colors = ['salmon', 'lightblue']
+    labels = ['PINN', 'OpenFoam']
+    ax.set_title('Absolute average residuals (trimmed)', pad=10)
+    w = 0.01
+    x = np.array([x * 0.03 for x in range(len(args[0]))])
+
+    for i, d in enumerate(args):
+        rects = ax.bar(x + i * w, d, w, color=colors[i], label=labels[i])
+        ax.bar_label(rects, fmt='%.3f', padding=10)
+
+    ax.legend()
+    ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
+    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Continuity'])
+    fig.tight_layout()
+    plt.show()

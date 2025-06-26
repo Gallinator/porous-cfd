@@ -60,6 +60,10 @@ class FoamData(torch_geometric.data.Data):
         return self.data[..., 5:6]
 
     @property
+    def pde(self):
+        return PdeData(self.y)
+
+    @property
     def obs_ux(self) -> Tensor | np.ndarray:
         return self.pde.ux.gather(1, self.obs_samples)
 

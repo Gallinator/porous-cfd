@@ -93,6 +93,10 @@ class FoamDataset(InMemoryDataset):
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
+    @property
+    def processed_file_names(self):
+        return ['data.pt']
+
     def check_sample_size(self):
         data_min_points = self.meta['Min points']['Internal']
         if self.n_internal > data_min_points:

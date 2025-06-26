@@ -57,7 +57,7 @@ class FoamData(torch_geometric.data.Data):
 
     @property
     def zones_ids(self) -> Tensor | np.ndarray:
-        return self.data[..., 5:6]
+        return self.x
 
     @property
     def pde(self):
@@ -74,18 +74,6 @@ class FoamData(torch_geometric.data.Data):
     @property
     def obs_p(self) -> Tensor | np.ndarray:
         return self.pde.p.gather(1, self.obs_samples)
-
-    @property
-    def mom_x(self):
-        return self.data[..., 6:7]
-
-    @property
-    def mom_y(self):
-        return self.data[..., 7:8]
-
-    @property
-    def div(self):
-        return self.data[..., -1:]
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])

@@ -12,11 +12,11 @@ class LossLogger:
         self.loss_labels = loss_labels
         self.module = module
 
-    def log(self, *losses):
+    def log(self, batch_size, *losses):
         if len(losses) != len(self.loss_labels):
             print('Mismatching losses!')
         for label, loss in zip(self.loss_labels, losses):
-            self.module.log(label, loss, on_step=False, on_epoch=True)
+            self.module.log(label, loss, on_step=False, on_epoch=True, batch_size=batch_size)
 
 
 class MomentumLoss(nn.Module):

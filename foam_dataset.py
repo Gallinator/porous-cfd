@@ -101,9 +101,6 @@ class FoamDataset(InMemoryDataset):
         if self.n_boundary > data_min_points:
             raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
 
-    def __len__(self):
-        return len(self.samples)
-
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
 
@@ -126,5 +123,3 @@ class FoamDataset(InMemoryDataset):
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor]:
-        return self.data[item]

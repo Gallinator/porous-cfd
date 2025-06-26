@@ -120,6 +120,8 @@ class FoamDataset(InMemoryDataset):
         # Do not standardize zones indices
         data[:, 0:-1] = self.standard_scaler.transform(data[:, 0:-1])
 
-        return (tensor(data, dtype=torch.float),
-                tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))
+        return (tensor(data[..., 0:2], dtype=torch.float),
+                tensor(data[..., -1:], dtype=torch.float),
+                tensor(data[..., 2:5], dtype=torch.float),
+                tensor(obs_samples, dtype=torch.int64))
 

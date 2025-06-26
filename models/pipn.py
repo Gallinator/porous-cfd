@@ -155,7 +155,7 @@ class Pipn(L.LightningModule):
                 obs_ux_loss * self.d +
                 obs_uy_loss * self.d)
 
-        self.training_loss_togger.log(loss,
+        self.training_loss_togger.log(len(in_data.batch), loss,
                                       cont_loss,
                                       mom_loss_x,
                                       mom_loss_y,
@@ -209,4 +209,4 @@ class Pipn(L.LightningModule):
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
-            return self.forward(in_data.points, in_data.zones_ids)
+            return self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)

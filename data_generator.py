@@ -98,8 +98,8 @@ def generate_meta(data_dir: str):
     elapse_times = []
 
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_data = parse_boundary(case, ['U'], ['p'])
-        i_data = parse_internal_mesh(case, "U", "p")
+        b_data = parse_boundary(f'{case}', ['U'], ['p'])
+        i_data = parse_internal_mesh(f'{case}', "U", "p")
         n_porous = np.count_nonzero(b_data[..., -1] > 0) + np.count_nonzero(i_data[..., -1] > 0)
 
         boundary_num_points.append(len(b_data))
@@ -131,6 +131,6 @@ clean_dir('assets/generated-meshes')
 
 for d in os.listdir('assets/meshes'):
     generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
-    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}')
-    generate_data(f'data/{d}')
-    generate_meta(f'data/{d}')
+    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}/raw')
+    generate_data(f'data/{d}/raw')
+    generate_meta(f'data/{d}/raw')

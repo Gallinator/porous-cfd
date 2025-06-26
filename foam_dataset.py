@@ -4,6 +4,8 @@ import torch
 import torch_geometric
 from torch import tensor, Tensor
 from torch_geometric.data import InMemoryDataset
+from torch_geometric.transforms import RadiusGraph
+
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
@@ -106,21 +108,20 @@ class FoamDataset(InMemoryDataset):
         return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
 
     def load_case(self, case_dir):
-        b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        b_data = parse_boundary(case_dir, ['U'], ['p'])
         b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 
-        i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))
+        i_data = (parse_internal_mesh(case_dir, 'U', 'p'))
         i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
 
         data = np.concatenate((i_data, b_data))
-        data = self.reorder_data(data)
 
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
-        data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
+        data[:, 0:-1] = self.standard_scaler.transform(data[:, 0:-1])
 
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))

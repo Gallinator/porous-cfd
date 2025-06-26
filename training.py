@@ -1,6 +1,7 @@
 from lightning.pytorch.callbacks import RichProgressBar
-from torch.utils.data import DataLoader
+from torch_geometric.data import DataLoader
 from foam_dataset import FoamDataset
+from foam_dataset import FoamData
 from models.pipn import Pipn
 import lightning as L
 

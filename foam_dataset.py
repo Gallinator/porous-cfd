@@ -92,6 +92,7 @@ class FoamDataset(InMemoryDataset):
         )
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
+        super().__init__(data_dir, transform=RadiusGraph(r=0.1))
 
     @property
     def processed_file_names(self):

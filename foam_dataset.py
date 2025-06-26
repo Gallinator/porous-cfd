@@ -125,3 +125,12 @@ class FoamDataset(InMemoryDataset):
                 tensor(data[..., 2:5], dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64))
 
+    def process(self):
+        data = []
+        for case in Path(self.raw_dir).iterdir():
+            if not case.is_dir():
+                continue
+            pos, x, y, obs_ids = self.load_case(case)
+            data.append(FoamData(pos, x, y, obs_ids))
+
+        self.save(data, self.processed_paths[0])

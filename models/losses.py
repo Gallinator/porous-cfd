@@ -47,7 +47,7 @@ class MomentumLoss(nn.Module):
 
     def forward(self, *args):
         res = self.f(*args)
-        res = res[:, :self.n_internal, :]
+        res = res[..., :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
 
@@ -64,7 +64,7 @@ class ContinuityLoss(nn.Module):
 
     def forward(self, *args):
         res = self.f(*args)
-        res = res[:, :self.n_internal, :]
+        res = res[..., :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
 
@@ -74,4 +74,4 @@ class BoundaryLoss(nn.Module):
         self.n_internal = n_internal
 
     def forward(self, input: Tensor, target: Tensor):
-        return mse_loss(input[:, self.n_internal:, :], target[:, self.n_internal:, :])
+        return mse_loss(input[..., self.n_internal:, :], target[..., self.n_internal:, :])

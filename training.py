@@ -12,7 +12,7 @@ N_OBS = 500
 
 train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY, N_OBS)
 train_loader = DataLoader(train_data, BATCH_SIZE, True, num_workers=8)
-val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY, N_OBS, 'data/train')
+val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY, N_OBS, 'data/train/raw')
 val_loader = DataLoader(val_data, BATCH_SIZE, False, num_workers=8, pin_memory=True)
 
 scalers = {'U': train_data.standard_scaler[2:4],

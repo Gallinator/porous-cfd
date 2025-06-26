@@ -1,9 +1,9 @@
 from pathlib import Path
 import numpy as np
 import torch
-from rich.progress import track
+import torch_geometric
 from torch import tensor, Tensor
-from torch.utils.data import Dataset
+from torch_geometric.data import InMemoryDataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
@@ -76,8 +76,7 @@ class FoamData(torch_geometric.data.Data):
         return self.pde.p[self.obs_samples, :]
 
 
-
-class FoamDataset(Dataset):
+class FoamDataset(InMemoryDataset):
     def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal

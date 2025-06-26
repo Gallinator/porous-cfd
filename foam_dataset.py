@@ -50,11 +50,10 @@ class PdeData:
         return PdeData(self.data.numpy(force=True))
 
 
-class FoamData:
-    def __init__(self, batch: tuple | list):
-        self.data, self.obs_samples = batch
-        self.points = self.data[..., 0:2]
-        self.pde = PdeData(self.data[..., 2:5])
+class FoamData(torch_geometric.data.Data):
+    def __init__(self, pos=None, x=None, y=None, obs_index=None):
+        super().__init__(pos=pos, x=x, y=y)
+        self.obs_index = obs_index
 
     @property
     def zones_ids(self) -> Tensor | np.ndarray:

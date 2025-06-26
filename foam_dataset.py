@@ -73,10 +73,8 @@ class FoamData(torch_geometric.data.Data):
 
     @property
     def obs_p(self) -> Tensor | np.ndarray:
-        return self.pde.p.gather(1, self.obs_samples)
+        return self.pde.p[self.obs_samples, :]
 
-    def numpy(self):
-        return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
 
 
 class FoamDataset(Dataset):

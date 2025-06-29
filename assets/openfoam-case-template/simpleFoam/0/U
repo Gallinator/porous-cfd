@@ -35,7 +35,7 @@ boundaryField
 
     walls
     {
-        type            noSlip;
+        type            slip;
     }
 
     front

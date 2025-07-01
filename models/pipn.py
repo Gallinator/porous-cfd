@@ -10,26 +10,26 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.local_feature = nn.Sequential(
-            nn.Conv1d(3, 64, 1),
+            nn.Linear(3, 64),
             nn.Tanh(),
-            nn.Conv1d(64, 64, 1),
+            nn.Linear(64, 64),
             nn.Tanh()
         )
         self.global_feature = nn.Sequential(
-            nn.Conv1d(65, 96, 1),
+            nn.Linear(65, 96),
             nn.Tanh(),
-            nn.Conv1d(96, 128, 1),
+            nn.Linear(96, 128),
             nn.Tanh(),
-            nn.Conv1d(128, 1024, 1),
+            nn.Linear(128, 1024),
             nn.Tanh()
         )
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        x = torch.cat([x, zones_ids], dim=1)
+        x = torch.cat([x, zones_ids], dim=2)
         local_features = self.local_feature(x)
-        local_features = torch.concatenate([local_features, zones_ids], dim=1)
+        local_features = torch.concatenate([local_features, zones_ids], dim=2)
         global_feature = self.global_feature(local_features)
-        global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
+        global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
 
@@ -37,17 +37,17 @@ class Decoder(nn.Module):
     def __init__(self, n_pde: int):
         super().__init__()
         self.decoder = nn.Sequential(
-            nn.Conv1d(1089, 512, 1),
+            nn.Linear(1089, 512),
             nn.Tanh(),
-            nn.Conv1d(512, 256, 1),
+            nn.Linear(512, 256),
             nn.Tanh(),
-            nn.Conv1d(256, 128, 1),
+            nn.Linear(256, 128),
             nn.Tanh(),
-            nn.Conv1d(128, n_pde, 1)
+            nn.Linear(128, n_pde)
         )
 
     def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
-        x = torch.concatenate([local_features, global_feature], 1)
+        x = torch.concatenate([local_features, global_feature], 2)
         return self.decoder(x)
 
 
@@ -91,15 +91,14 @@ class Pipn(L.LightningModule):
         self.verbose_predict = False
 
     def forward(self, x: Tensor, porous: Tensor) -> Tensor:
-        x = x.transpose(dim0=1, dim1=2)
-
-        local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
-
+        local_features, global_feature = self.encoder.forward(x, porous)
         # Expand global feature
         exp_global = global_feature.repeat(1, 1, local_features.shape[-1])
 
         pde = self.decoder.forward(local_features, exp_global)
         return pde.transpose(dim0=1, dim1=2)
+        exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
+        return self.decoder.forward(local_features, exp_global)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)

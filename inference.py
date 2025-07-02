@@ -1,7 +1,7 @@
 import numpy as np
 from lightning import Trainer
 from matplotlib import pyplot as plt
-from torch.utils.data import DataLoader
+from torch_geometric.loader import DataLoader
 
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData

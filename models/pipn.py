@@ -166,9 +166,9 @@ class Pipn(L.LightningModule):
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
-                obs_p_loss * self.d +
-                obs_ux_loss * self.d +
-                obs_uy_loss * self.d)
+                obs_p_loss * 1000 +
+                obs_ux_loss * 1000 +
+                obs_uy_loss * 1000)
 
         self.training_loss_togger.log(len(in_data.batch), loss,
                                       cont_loss,

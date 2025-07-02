@@ -119,7 +119,9 @@ class FoamDataset(InMemoryDataset):
             raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
+        points, moment, pde, div = data[..., 0:2], data[..., 2:4], data[..., 4:7], data[..., 7:8]
+        zones = data[..., 8:]
+        return np.concatenate([points, pde, zones, moment, div], axis=-1)
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
@@ -139,6 +141,7 @@ class FoamDataset(InMemoryDataset):
 
         ohe, uniques = self.one_hot_encode(data[:, -1])
         data = np.concatenate([data[:, 0:-1], ohe], axis=1)
+        data = self.reorder_data(data)
 
         return (tensor(data[..., 0:2], dtype=torch.float),
                 tensor(data[..., -uniques:], dtype=torch.float),

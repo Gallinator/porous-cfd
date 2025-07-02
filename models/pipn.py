@@ -197,8 +197,8 @@ class Pipn(L.LightningModule):
         ux_error = l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
                            self.u_scaler[0].inverse_transform(in_data.pde.ux))
         uy_error = l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
-        self.val_loss_logger.log(p_error, ux_error, uy_error)
                            self.u_scaler[1].inverse_transform(in_data.pde.uy))
+        self.val_loss_logger.log(len(in_data.batch), p_error, ux_error, uy_error)
 
     def predict_step(self, in_data: FoamData) -> tuple[Tensor, Tensor] | Tensor:
         if self.verbose_predict:

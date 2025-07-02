@@ -52,8 +52,9 @@ class PdeData:
 
 
 class FoamData(torch_geometric.data.Data):
-    def __init__(self, pos=None, x=None, y=None, obs_index=None):
+    def __init__(self, pos=None, x=None, y=None, obs_index=None, residuals=None):
         super().__init__(pos=pos, x=x, y=y)
+        self.residuals = residuals
         self.obs_index = obs_index
 
     @property
@@ -75,6 +76,18 @@ class FoamData(torch_geometric.data.Data):
     @property
     def obs_p(self) -> Tensor | np.ndarray:
         return self.pde.p[self.obs_samples, :]
+
+    @property
+    def mom_x(self):
+        return self.residuals[..., 0:1]
+
+    @property
+    def mom_y(self):
+        return self.residuals[..., 1:2]
+
+    @property
+    def div(self):
+        return self.residuals[..., -1:]
 
 
 class FoamDataset(InMemoryDataset):

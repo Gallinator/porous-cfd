@@ -2,53 +2,78 @@ import torch
 from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
-from foam_dataset import PdeData, FoamData, StandardScaler
+from torch_cluster import radius
+from torch_geometric.nn import global_max_pool, PointNetConv, fps, knn_interpolate, MLP
+
+from foam_dataset import PdeData, FoamData, StandardScaler, FoamDataset
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger, BoundaryLoss
 
 
-class Encoder(nn.Module):
+class SetAbstraction(torch.nn.Module):
+    def __init__(self, ratio: float, r: float, mlp):
+        super().__init__()
+        self.ratio = ratio
+        self.r = r
+        self.conv = PointNetConv(mlp)
+
+    def forward(self, x, pos, batch):
+        idx = fps(pos, batch, ratio=self.ratio)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx])
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        return x, pos, batch
+
+
+class GlobalSetAbstraction(torch.nn.Module):
+    def __init__(self, mlp):
+        super().__init__()
+        self.nn = mlp
+
+    def forward(self, x, pos, batch):
+        x = self.nn(torch.cat([x, pos], dim=1))
+        x = global_max_pool(x, batch)
+        pos = pos.new_zeros((x.size(0), 2))
+        batch = torch.arange(x.size(0), device=batch.device)
+        return x, pos, batch
+
+
+class FeaturePropagation(torch.nn.Module):
+    def __init__(self, k: int, mlp):
+        super().__init__()
+        self.k = k
+        self.mlp = mlp
+
+    def forward(self, x, pos, batch, x_skip, pos_skip, batch_skip):
+        x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.mlp(x)
+        return x, pos_skip, batch_skip
+
+
+class PointNetPP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.local_feature = nn.Sequential(
-            nn.Conv1d(3, 64, 1),
-            nn.Tanh(),
-            nn.Conv1d(64, 64, 1),
-            nn.Tanh()
-        )
-        self.global_feature = nn.Sequential(
-            nn.Conv1d(65, 96, 1),
-            nn.Tanh(),
-            nn.Conv1d(96, 128, 1),
-            nn.Tanh(),
-            nn.Conv1d(128, 1024, 1),
-            nn.Tanh()
-        )
+        self.conv1 = SetAbstraction(0.5, 0.2, MLP([8 + 2, 64, 128], act=nn.Tanh(), norm=None))
+        self.conv2 = SetAbstraction(0.25, 0.4, MLP([128 + 2, 128, 256], act=nn.Tanh(), norm=None))
+        self.conv3 = GlobalSetAbstraction(MLP([256 + 2, 256, 1024], act=nn.Tanh(), norm=None))
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        x = torch.cat([x, zones_ids], dim=1)
-        local_features = self.local_feature(x)
-        local_features = torch.concatenate([local_features, zones_ids], dim=1)
-        global_feature = self.global_feature(local_features)
-        global_feature = torch.max(global_feature, dim=2, keepdim=True)[0]
-        return local_features, global_feature
+        self.propagate3 = FeaturePropagation(4, MLP([1024 + 256, 256], act=nn.Tanh(), norm=None))
+        self.propagate2 = FeaturePropagation(8, MLP([256 + 128, 128], act=nn.Tanh(), norm=None))
+        self.propagate1 = FeaturePropagation(16, MLP([128 + 8, 128, 128, 3], act=nn.Tanh(), norm=None))
 
+    def forward(self, x: Tensor, pos: Tensor, batch: Tensor) -> Tensor:
+        x = torch.cat([x, pos], dim=1)
+        in_f = (x, pos, batch)
+        abs1 = self.conv1(*in_f)
+        abs2 = self.conv2(*abs1)
+        abs3 = self.conv3(*abs2)
 
-class Decoder(nn.Module):
-    def __init__(self, n_pde: int):
-        super().__init__()
-        self.decoder = nn.Sequential(
-            nn.Conv1d(1089, 512, 1),
-            nn.Tanh(),
-            nn.Conv1d(512, 256, 1),
-            nn.Tanh(),
-            nn.Conv1d(256, 128, 1),
-            nn.Tanh(),
-            nn.Conv1d(128, n_pde, 1)
-        )
-
-    def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
-        x = torch.concatenate([local_features, global_feature], 1)
-        return self.decoder(x)
+        prop3 = self.propagate3(*abs3, *abs2)
+        prop2 = self.propagate2(*prop3, *abs1)
+        out, _, _ = self.propagate1(*prop2, *in_f)
+        return out
 
 
 class Pipn(L.LightningModule):
@@ -57,8 +82,7 @@ class Pipn(L.LightningModule):
         self.save_hyperparameters()
         self.n_internal = n_internal
         self.n_boundary = n_boundary
-        self.encoder = Encoder()
-        self.decoder = Decoder(3)
+        self.pointnet_pp = PointNetPP()
         self.mu = 0.01  # As rho=1 mu and nu are the same
         self.d = 1000
         self.training_loss_togger = LossLogger(self, 'Train loss',
@@ -90,16 +114,8 @@ class Pipn(L.LightningModule):
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
 
-    def forward(self, x: Tensor, porous: Tensor) -> Tensor:
-        x = x.transpose(dim0=1, dim1=2)
-
-        local_features, global_feature = self.encoder.forward(x, porous.transpose(dim0=1, dim1=2))
-
-        # Expand global feature
-        exp_global = global_feature.repeat(1, 1, local_features.shape[-1])
-
-        pde = self.decoder.forward(local_features, exp_global)
-        return pde.transpose(dim0=1, dim1=2)
+    def forward(self, x: Tensor, pos: Tensor, edge_index: Tensor, batch: Tensor) -> Tensor:
+        return self.pointnet_pp(x, pos, batch)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)

@@ -33,26 +33,24 @@ errors, pred_residuals, cfd_residuals = [], [], []
 pde_scaler = val_data.standard_scaler[2:5].to_torch()
 for p, t in zip(pred, val_loader):
     pred_data, phys_data = p
-    tgt_data = FoamData(t)
     error = l1_loss(pde_scaler.inverse_transform(pred_data),
-                    pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
+                    pde_scaler.inverse_transform(t.pde.data), reduction='none')
     errors.extend(error.numpy(force=True))
 
-    pred_residuals.extend(phys_data[:, :N_INTERNAL, :].numpy(force=True))
-    cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=2)
-    cfd_residuals.extend(cfd_res[:N_INTERNAL, :].numpy(force=True))
+    pred_residuals.extend(phys_data[..., :val_data.n_internal, :].numpy(force=True))
+    cfd_res = torch.cat([t.mom_x, t.mom_y, t.div], dim=-1)
+    cfd_residuals.extend(cfd_res[..., :val_data.n_internal, :].numpy(force=True))
 
-errors = np.concatenate(errors)
-error_data = PdeData(errors)
+error_data = PdeData(np.array(errors))
 plot_data_dist('Absolute error distribution', error_data.u, error_data.p, None)
 
 mae = np.average(errors, axis=0)
 plot_errors(mae.tolist())
 
-pred_residuals = np.concatenate(pred_residuals)
-cfd_residuals = np.concatenate(cfd_residuals)
-plot_data_dist('Absolute residuals', np.abs(pred_residuals[:, 0:2]), np.abs(pred_residuals[:, 2:3]), None)
+pred_residuals = np.array(pred_residuals)
+plot_data_dist('Absolute residuals', np.abs(pred_residuals[..., 0:2]), np.abs(pred_residuals[..., 2:3]), None)
 
+cfd_residuals = np.array(cfd_residuals)
 pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
 cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
 plot_residuals(pred_res_avg, cfd_res_avg)

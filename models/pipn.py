@@ -132,23 +132,22 @@ class Pipn(L.LightningModule):
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[..., j:j + 1]
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
-    def training_step(self, batch: list, batch_idx: int):
-        in_data = FoamData(batch)
-        in_data.points.requires_grad = True
+    def training_step(self, in_data: FoamData, batch_idx: int):
+        in_data.pos.requires_grad = True
 
-        pred = self.forward(in_data.points, in_data.zones_ids)
+        pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
         pred_data = PdeData(pred)
         # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
+        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.pos, pred_data.ux, 0, 1)
         # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
+        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.pos, pred_data.uy, 1, 0)
 
-        d_p = self.calculate_gradients(pred_data.p, in_data.points)
+        d_p = self.calculate_gradients(pred_data.p, in_data.pos)
         d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
-        obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples), in_data.obs_ux)
-        obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples), in_data.obs_uy)
-        obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples), in_data.obs_p)
+        obs_ux_loss = mse_loss(pred_data.ux[in_data.obs_index, :], in_data.pde.ux[in_data.obs_index, :])
+        obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.pde.uy[in_data.obs_index, :])
+        obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.pde.p[in_data.obs_index, :])
 
         boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
         boundary_ux_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
@@ -190,24 +189,22 @@ class Pipn(L.LightningModule):
 
         return loss
 
-    def validation_step(self, batch: list):
-        batch_data = FoamData(batch)
-        pred = self.forward(batch_data.points, batch_data.zones_ids)
+    def validation_step(self, in_data: FoamData):
+        pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
-                          self.p_scaler.inverse_transform(batch_data.pde.p))
+                          self.p_scaler.inverse_transform(in_data.pde.p))
         ux_error = l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
-                           self.u_scaler[0].inverse_transform(batch_data.pde.ux))
+                           self.u_scaler[0].inverse_transform(in_data.pde.ux))
         uy_error = l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
-                           self.u_scaler[1].inverse_transform(batch_data.pde.uy))
         self.val_loss_logger.log(p_error, ux_error, uy_error)
+                           self.u_scaler[1].inverse_transform(in_data.pde.uy))
 
-    def predict_step(self, batch: Tensor) -> tuple[Tensor, Tensor] | Tensor:
-        in_data = FoamData(batch)
+    def predict_step(self, in_data: FoamData) -> tuple[Tensor, Tensor] | Tensor:
         if self.verbose_predict:
             torch.set_grad_enabled(True)
-            in_data.points.requires_grad = True
-            pred = self.forward(in_data.points, in_data.zones_ids)
+            in_data.pos.requires_grad = True
+            pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
             pred_data = PdeData(pred)
 
             # i=0 is x, j=1 is y

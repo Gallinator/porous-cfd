@@ -4,7 +4,7 @@ import torch
 from lightning import Trainer
 from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
-from torch.utils.data import DataLoader
+from torch_geometric.loader import DataLoader
 from data_parser import parse_meta
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData

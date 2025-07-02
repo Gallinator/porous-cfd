@@ -159,7 +159,7 @@ class FoamDataset(InMemoryDataset):
         for case in Path(self.raw_dir).iterdir():
             if not case.is_dir():
                 continue
-            pos, x, y, obs_ids = self.load_case(case)
-            data.append(FoamData(pos, x, y, obs_ids))
+            pos, x, y, residuals, obs_ids = self.load_case(case)
+            data.append(FoamData(pos, x, y, obs_ids, residuals))
 
         self.save(data, self.processed_paths[0])

@@ -127,9 +127,9 @@ class Pipn(L.LightningModule):
 
     def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         d_ui = self.calculate_gradients(ui, points)
-        d_ui_i, d_ui_j = d_ui[:, :, i:i + 1], d_ui[:, :, j:j + 1]
-        dd_ui_i = self.calculate_gradients(d_ui_i, points)[:, :, i:i + 1]
-        dd_ui_j = self.calculate_gradients(d_ui_j, points)[:, :, j:j + 1]
+        d_ui_i, d_ui_j = d_ui[..., i:i + 1], d_ui[..., j:j + 1]
+        dd_ui_i = self.calculate_gradients(d_ui_i, points)[..., i:i + 1]
+        dd_ui_j = self.calculate_gradients(d_ui_j, points)[..., j:j + 1]
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
     def training_step(self, batch: list, batch_idx: int):
@@ -144,7 +144,7 @@ class Pipn(L.LightningModule):
         d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
 
         d_p = self.calculate_gradients(pred_data.p, in_data.points)
-        d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+        d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
         obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples), in_data.obs_ux)
         obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples), in_data.obs_uy)
@@ -156,10 +156,10 @@ class Pipn(L.LightningModule):
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                          in_data.zones_ids)
+                                          in_data.zones_ids[..., 1:2])
 
         mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                          in_data.zones_ids)
+                                          in_data.zones_ids[..., 1:2])
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -215,7 +215,7 @@ class Pipn(L.LightningModule):
             # i=1 is y, j=0 is x
             d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
             d_p = self.calculate_gradients(pred_data.p, in_data.points)
-            d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+            d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
             momentum_x = self.momentum_x_loss.f(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
                                                 in_data.zones_ids)

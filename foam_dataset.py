@@ -4,7 +4,6 @@ import torch
 import torch_geometric
 from torch import tensor, Tensor
 from torch_geometric.data import InMemoryDataset
-from torch_geometric.transforms import RadiusGraph
 
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
@@ -91,7 +90,7 @@ class FoamDataset(InMemoryDataset):
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
 
-        super().__init__(data_dir, transform=RadiusGraph(r=0.1))
+        super().__init__(data_dir)
         self.load(self.processed_paths[0])
 
     @property

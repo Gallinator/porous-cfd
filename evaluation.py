@@ -16,7 +16,7 @@ N_INTERNAL = 1000
 model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True
 
-val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
+val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train/raw')
 val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
 trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
@@ -25,7 +25,7 @@ start_time = time.perf_counter()
 pred = trainer.predict(model, dataloaders=val_loader)
 inference_time = time.perf_counter() - start_time
 avg_inference_time = inference_time / len(val_data)
-val_timing = parse_meta('data/val_unseen')['Timing']
+val_timing = parse_meta('data/val/raw')['Timing']
 plot_timing([inference_time, val_timing['Total'] / 1e3],
             [avg_inference_time, val_timing['Average'] / 1e3])
 

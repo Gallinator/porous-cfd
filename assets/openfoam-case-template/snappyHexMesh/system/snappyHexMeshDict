@@ -73,7 +73,7 @@ castellatedMeshControls
     ((0.0001 0.0001 0.0001) mesh)
     );
 
-    allowFreeStandingZoneFaces true;
+    allowFreeStandingZoneFaces false;
 }
 
 snapControls

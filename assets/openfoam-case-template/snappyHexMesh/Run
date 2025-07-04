@@ -6,4 +6,6 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 cleanCase
 blockMesh
-snappyHexMesh -overwrite
+decomposePar
+mpirun -np 4 snappyHexMesh -overwrite -parallel > ./lpg.txt
+reconstructParMesh -constant -allRegions -noZero

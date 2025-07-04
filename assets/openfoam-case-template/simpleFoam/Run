@@ -9,6 +9,10 @@ extrudeMesh
 splitMeshRegions -cellZonesOnly -overwrite -detectOnly
 
 start=$(date +%s%N)
-$(getApplication)
+
+decomposePar
+mpirun -np 4 $(getApplication) -parallel
+reconstructPar
+
 end=end=$(date +%s%N)
 echo "$(($end-$start))" > ./timing.txt

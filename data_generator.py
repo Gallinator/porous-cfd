@@ -17,6 +17,10 @@ from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
 OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
 
 
+def import_obj(mesh: str):
+    ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
+
+
 def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
@@ -25,9 +29,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
-            ops.wm.obj_import(filepath=f'{meshes_dir}/{mesh}',
-                              forward_axis='Y',
-                              up_axis='Z')
+            import_obj(f'{meshes_dir}/{mesh}')
             for t in transforms:
                 for r in t["rotation"]:
                     ops.object.select_all(action='SELECT')

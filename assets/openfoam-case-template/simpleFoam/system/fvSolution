@@ -19,10 +19,9 @@ solvers
     p
     {
         solver          GAMG;
-        tolerance       1e-08;
+        tolerance       1e-07;
         relTol          0.01;
         smoother        GaussSeidel;
-        nCellsInCoarsestLevel 20;
     }
 
     "(U)"
@@ -36,7 +35,7 @@ solvers
 
 SIMPLE
 {
-    nNonOrthogonalCorrectors 0;
+    nNonOrthogonalCorrectors 3;
     consistent      yes;
 
     residualControl
@@ -50,7 +49,7 @@ relaxationFactors
 {
     equations
     {
-        U               0.1; // 0.9 is more stable but 0.95 more convergent
+        U               0.9; // 0.9 is more stable but 0.95 more convergent
         ".*"            0.9; // 0.9 is more stable but 0.95 more convergent
     }
 }

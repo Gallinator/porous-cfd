@@ -101,7 +101,7 @@ def generate_data(cases_dir: str):
         process.communicate(f"{case}/snappyHexMesh/Run")
         process.wait()
         if process.returncode != 0:
-            raise RuntimeError(f'Failed to run {case}')
+            raise RuntimeError(f'Failed to generate mesh for {case}')
 
     for case in track(glob.glob(f"{cases_dir}/*"), description="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,

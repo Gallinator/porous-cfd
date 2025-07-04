@@ -8,6 +8,7 @@ import subprocess
 import mathutils
 import bpy
 import numpy as np
+from foamlib import FoamFile
 from rich.progress import track
 from bpy import ops
 from welford import Welford
@@ -61,14 +62,38 @@ def clean_dir(directory: str):
             shutil.rmtree(os.path.join(root, d))
 
 
+def get_location_inside(mesh: str):
+    bpy.ops.wm.read_homefile(use_empty=True)
+    import_obj(mesh)
+    ops.object.select_all(action='SELECT')
+    ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME')
+    location = bpy.context.object.location
+    bpy.ops.wm.read_homefile(use_empty=True)
+    return location[0:2]
+
+
+def get_location_outside():
+    return -3.14 + 1e-5, -3.14 + 1e-5
+
+
+def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):
+    snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
+    locations_in_mesh = snappy_dict['castellatedMeshControls']['locationsInMesh']
+    locations_in_mesh[0][0][0:2] = loc_out_mesh
+    locations_in_mesh[1][0][0:2] = loc_in_mesh
+    snappy_dict['castellatedMeshControls']['locationsInMesh'] = locations_in_mesh
+
+
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     meshes = glob.glob(f"{meshes_dir}/*.obj")
     for m in meshes:
+        location_inside, location_outside = get_location_inside(m), get_location_outside()
         case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
         shutil.copytree('assets/openfoam-case-template', case_path)
         shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+        write_locations_in_mesh(f'{case_path}/snappyHexMesh', location_inside, location_outside)
 
 
 def generate_data(cases_dir: str):

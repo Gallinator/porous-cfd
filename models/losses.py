@@ -20,11 +20,10 @@ class LossLogger:
 
 
 class MomentumLoss(nn.Module):
-    def __init__(self, i: int, j: int, mu, d, n_internal,
+    def __init__(self, i: int, j: int, mu, n_internal,
                  u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler):
         super().__init__()
         self.mu = mu
-        self.d = d
         self.n_internal = n_internal
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
@@ -32,18 +31,19 @@ class MomentumLoss(nn.Module):
         self.i = i
         self.j = j
 
-    def f(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids):
+    def f(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids, d):
         i, j = self.i, self.j
         norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
+        d_i = d[...,i:i + 1]
 
         return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
                 norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
                 (self.p_stats.std / self.points_scaler.std[i]) * d_p_i +
-                (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
+                (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * d_i * self.mu * zones_ids)
 
     def forward(self, *args):
         res = self.f(*args)

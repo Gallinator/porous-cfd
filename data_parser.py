@@ -42,7 +42,10 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np
             vector_values[v].extend(values)
     vector_values = [np.array(vector_values[v]) for v in vectors]
     scalar_values = [np.array(scalar_values[s]) for s in scalars]
-    return np.concatenate([np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])], axis=1)
+    return np.concatenate([np.array(faces),
+                           *vector_values,
+                           *scalar_values,
+                           np.zeros((len(faces), 3))], axis=1)
 
 
 def make_at_most_2d(field) -> np.array:

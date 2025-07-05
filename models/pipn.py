@@ -83,10 +83,8 @@ class Pipn(L.LightningModule):
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
 
-        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.d, n_internal,
-                                            self.u_scaler, self.points_scaler, self.p_scaler)
-        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.d, n_internal,
-                                            self.u_scaler, self.points_scaler, self.p_scaler)
+        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, n_internal, self.u_scaler, self.points_scaler, self.p_scaler)
+        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, n_internal, self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False

@@ -78,7 +78,11 @@ def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
 
     porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))
 
-    return np.concatenate([domain_points] + fields_values + [porous_points], axis=1)
+    d = parse_d(case_path)
+    d = np.array([d]).repeat(len(porous_points), axis=0)
+    d = make_at_most_2d(d)
+
+    return np.concatenate([domain_points, *fields_values, porous_points, d * porous_points], axis=1)
 
 
 def parse_meta(data_dir: str) -> dict:

@@ -1,4 +1,5 @@
 import glob
+import itertools
 import json
 import math
 import os
@@ -164,6 +165,6 @@ clean_dir('assets/generated-meshes')
 
 for d in os.listdir('assets/meshes'):
     generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
-    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}')
+    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}', f'assets/cases/{d}')
     generate_data(f'data/{d}')
     generate_meta(f'data/{d}')

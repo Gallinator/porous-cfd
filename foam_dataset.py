@@ -59,15 +59,15 @@ class FoamData:
 
     @property
     def mom_x(self):
-        return self.data[..., 6:7]
+        return self.data[..., 8:9]
 
     @property
     def mom_y(self):
-        return self.data[..., 7:8]
+        return self.data[..., 9:10]
 
     @property
     def div(self):
-        return self.data[..., -1:]
+        return self.data[..., 10:11]
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
@@ -119,7 +119,9 @@ class FoamDataset(Dataset):
         return len(self.samples)
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
+        points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]
+        moment, div = data[..., 2:4], data[..., 7:8]
+        return np.concatenate([points, pde, zones, d, moment, div], axis=1)
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
@@ -136,7 +138,7 @@ class FoamDataset(Dataset):
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
-        data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
+        data[:, 0:-6] = self.standard_scaler.transform(data[:, 0:-6])
 
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))

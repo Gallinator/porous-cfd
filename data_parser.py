@@ -59,6 +59,11 @@ def make_column(field) -> np.array:
     return f
 
 
+def parse_d(case_dir: str):
+    fv_options = FoamFile(f'{case_dir}/system/fvOptions')
+    return fv_options['porousFilter']['explicitPorositySourceCoeffs']['d']
+
+
 def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
     case = FoamCase(case_path)
     last_step = case[-1]

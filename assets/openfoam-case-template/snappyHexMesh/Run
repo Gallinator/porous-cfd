@@ -8,4 +8,5 @@ cleanCase &&
 blockMesh &&
 decomposePar &&
 mpirun -np 8 snappyHexMesh -overwrite -parallel &&
-reconstructParMesh -constant -allRegions -noZero
+reconstructParMesh -constant -allRegions -noZero &&
+changeDictionary -constant

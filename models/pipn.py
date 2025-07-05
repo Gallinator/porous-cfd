@@ -89,8 +89,8 @@ class Pipn(L.LightningModule):
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> Tensor:
-        local_features, global_feature = self.encoder.forward(x, zones_ids)
+    def forward(self, x: Tensor, porous: Tensor, d: Tensor) -> Tensor:
+        local_features, global_feature = self.encoder.forward(x, porous, d)
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         return self.decoder.forward(local_features, exp_global)
 
@@ -113,7 +113,7 @@ class Pipn(L.LightningModule):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True
 
-        pred = self.forward(in_data.points, in_data.zones_ids)
+        pred = self.forward(in_data.points, in_data.zones_ids, in_data.d)
         pred_data = PdeData(pred)
         # i=0 is x, j=1 is y
         d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
@@ -169,7 +169,7 @@ class Pipn(L.LightningModule):
 
     def validation_step(self, batch: list):
         batch_data = FoamData(batch)
-        pred = self.forward(batch_data.points, batch_data.zones_ids)
+        pred = self.forward(batch_data.points, batch_data.zones_ids, batch_data.d)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(batch_data.pde.p))
@@ -184,7 +184,7 @@ class Pipn(L.LightningModule):
         if self.verbose_predict:
             torch.set_grad_enabled(True)
             in_data.points.requires_grad = True
-            pred = self.forward(in_data.points, in_data.zones_ids)
+            pred = self.forward(in_data.points, in_data.zones_ids, in_data.d)
             pred_data = PdeData(pred)
 
             # i=0 is x, j=1 is y
@@ -202,4 +202,4 @@ class Pipn(L.LightningModule):
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
-            return self.forward(in_data.points, in_data.zones_ids)
+            return self.forward(in_data.points, in_data.zones_ids, in_data.d)

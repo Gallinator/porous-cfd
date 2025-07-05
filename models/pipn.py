@@ -24,10 +24,10 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        x = torch.cat([x, zones_ids], dim=2)
+    def forward(self, x: Tensor, zones_ids: Tensor, d: Tensor) -> tuple[Tensor, Tensor]:
+        x = torch.cat([x, zones_ids, d], dim=-1)
         local_features = self.local_feature(x)
-        local_features = torch.concatenate([local_features, zones_ids], dim=2)
+        local_features = torch.concatenate([local_features, zones_ids], dim=-1)
         global_feature = self.global_feature(local_features)
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature

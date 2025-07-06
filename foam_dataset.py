@@ -125,6 +125,8 @@ class FoamDataset(Dataset):
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+
+        b_data = np.concatenate(list(b_data.values()))
         b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 

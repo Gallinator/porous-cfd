@@ -21,7 +21,7 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
     boundaries_path = f"{case_path}/postProcessing"
     b_dict = {}
 
-    for b in os.listdir(boundaries_path):
+    for b in sorted(os.listdir(boundaries_path)):
         scalar_values, vector_values = [], []
         intermediate_dir = list(os.listdir(f"{boundaries_path}/{b}/surface/{last_step}"))[0]
         coords = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/faceCentres")[None]
@@ -41,7 +41,7 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
             values = make_at_most_2d(values)
             vector_values.append(values)
 
-        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 3))],axis=-1)
+        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 3))], axis=-1)
 
     return b_dict
 

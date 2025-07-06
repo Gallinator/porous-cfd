@@ -59,15 +59,15 @@ class FoamData:
 
     @property
     def mom_x(self):
-        return self.data[..., 8:9]
-
-    @property
-    def mom_y(self):
         return self.data[..., 9:10]
 
     @property
-    def div(self):
+    def mom_y(self):
         return self.data[..., 10:11]
+
+    @property
+    def div(self):
+        return self.data[..., 11:12]
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
@@ -121,18 +121,33 @@ class FoamDataset(Dataset):
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]
         moment, div = data[..., 2:4], data[..., 7:8]
-        return np.concatenate([points, pde, zones, d, moment, div], axis=1)
+        inlet = data[..., 11:12]
+        return np.concatenate([points, pde, zones, d, inlet, moment, div], axis=1)
+
+    def extract_inlet_conditions(self, boundary_data: dict[str:np.ndarray]) -> np.ndarray:
+        inlet_data = []
+        for key in boundary_data.keys():
+            if key == 'inlet':
+                inlet_ux = boundary_data[key][..., 4:5]
+                inlet_ux = self.standard_scaler[2:3].transform(inlet_ux)
+                inlet_data.append(inlet_ux)
+            else:
+                inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
+        return np.concatenate(inlet_data)
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
-
+        inlet_data = self.extract_inlet_conditions(b_data)
         b_data = np.concatenate(list(b_data.values()))
+        b_data = np.concatenate([b_data, inlet_data], axis=-1)
+
         b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 
         i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))
         i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
+        i_data = np.concatenate([i_data, np.zeros((len(i_data), 1))], axis=-1)
 
         data = np.concatenate((i_data, b_data))
         data = self.reorder_data(data)
@@ -140,7 +155,7 @@ class FoamDataset(Dataset):
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
-        data[:, 0:-6] = self.standard_scaler.transform(data[:, 0:-6])
+        data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
 
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))

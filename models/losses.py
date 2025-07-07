@@ -50,9 +50,8 @@ class MomentumLoss(nn.Module):
 
 
 class ContinuityLoss(nn.Module):
-    def __init__(self, n_internal, u_scaler: StandardScaler, points_scaler: StandardScaler):
+    def __init__(self, u_scaler: StandardScaler, points_scaler: StandardScaler):
         super().__init__()
-        self.n_internal = n_internal
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
 
@@ -62,7 +61,6 @@ class ContinuityLoss(nn.Module):
 
     def forward(self, *args):
         res = self.f(*args)
-        res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
 

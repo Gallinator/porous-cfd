@@ -12,11 +12,13 @@ from visualization import plot_data_dist, plot_timing, plot_errors, plot_residua
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
 N_INTERNAL = 1000
+N_BOUNDARY = 200
+N_OBS = 500
 
 model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True
 
-val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
+val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY, N_OBS, 'data/train')
 val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
 trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)

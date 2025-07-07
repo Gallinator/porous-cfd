@@ -24,8 +24,9 @@ def get_domain_map(n_internal, n_boundary):
 
 
 class PdeData:
-    def __init__(self, data: Tensor | np.ndarray):
+    def __init__(self, data: Tensor | np.ndarray, domain_dict=None):
         self.data = data
+        self.domain_dict = domain_dict
 
     @property
     def u(self) -> Tensor | np.ndarray:
@@ -42,6 +43,11 @@ class PdeData:
     @property
     def p(self) -> Tensor | np.ndarray:
         return self.data[..., 2:3]
+
+    def __getitem__(self, item):
+        if self.domain_dict is None:
+            raise NotImplementedError('Subdomain indexing is not available')
+        return PdeData(self.data[..., self.domain_dict[item], :])
 
     def numpy(self):
         return PdeData(self.data.numpy(force=True))

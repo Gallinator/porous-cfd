@@ -84,43 +84,20 @@ class PdeData:
         return PdeData(self.data.numpy(force=True))
 
 
-class FoamData:
-    def __init__(self, batch: tuple | list):
-        self.data, self.obs_samples = batch
-        self.points = self.data[..., 0:2]
-        self.pde = PdeData(self.data[..., 2:5])
+class FoamData(DomainData):
+    def __init__(self, batch: list, domain_dict=None):
+        super().__init__(batch[0])
+        self.obs_samples = batch[1]
+        self.domain_dict = domain_dict
 
     @property
-    def zones_ids(self) -> Tensor | np.ndarray:
-        return self.data[..., 5:6]
+    def obs(self):
+        return DomainData(torch.gather(self.data, 1, self.obs_samples))
 
-    @property
-    def d(self) -> Tensor | np.ndarray:
-        return self.data[..., 6:8]
-
-    @property
-    def obs_ux(self) -> Tensor | np.ndarray:
-        return self.pde.ux.gather(1, self.obs_samples)
-
-    @property
-    def obs_uy(self) -> Tensor | np.ndarray:
-        return self.pde.uy.gather(1, self.obs_samples)
-
-    @property
-    def obs_p(self) -> Tensor | np.ndarray:
-        return self.pde.p.gather(1, self.obs_samples)
-
-    @property
-    def mom_x(self):
-        return self.data[..., 9:10]
-
-    @property
-    def mom_y(self):
-        return self.data[..., 10:11]
-
-    @property
-    def div(self):
-        return self.data[..., 11:12]
+    def __getitem__(self, item):
+        if self.domain_dict is None:
+            raise NotImplementedError('Subdomain indexing is not available')
+        return DomainData(self.data[..., self.domain_dict[item], :])
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])

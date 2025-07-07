@@ -152,9 +152,10 @@ class FoamDataset(Dataset):
         return samples
 
     def load_case(self, case_dir):
-        b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
-        inlet_data = self.extract_inlet_conditions(b_data)
-        b_data = np.concatenate(list(b_data.values()))
+        b_dict = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        inlet_data = self.extract_inlet_conditions(b_dict)
+
+        b_data = np.concatenate(list(b_dict.values()))
         b_data = np.concatenate([b_data, inlet_data], axis=-1)
 
         b_samples = self.get_boundaries_samples(b_dict)

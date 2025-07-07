@@ -85,7 +85,6 @@ class Pipn(L.LightningModule):
         self.momentum_x_loss = MomentumLoss(0, 1, self.mu, n_internal, self.u_scaler, self.points_scaler, self.p_scaler)
         self.momentum_y_loss = MomentumLoss(1, 0, self.mu, n_internal, self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
-        self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
 
     def forward(self, x: Tensor, porous: Tensor, d: Tensor) -> Tensor:
@@ -126,9 +125,9 @@ class Pipn(L.LightningModule):
         obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples), in_data.obs_uy)
         obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples), in_data.obs_p)
 
-        boundary_p_loss = self.boundary_loss(pred_data.p, in_data.pde.p)
-        boundary_ux_loss = self.boundary_loss(pred_data.ux, in_data.pde.ux)
-        boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
+        boundary_p_loss = mse_loss(pred_data['boundary'].p, in_data['boundary'].pde.p)
+        boundary_ux_loss = mse_loss(pred_data['boundary'].ux, in_data['boundary'].pde.ux)
+        boundary_uy_loss = mse_loss(pred_data['boundary'].uy, in_data['boundary'].pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,

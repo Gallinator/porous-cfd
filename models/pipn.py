@@ -3,7 +3,7 @@ from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
 from foam_dataset import PdeData, FoamData, StandardScaler
-from models.losses import MomentumLoss, ContinuityLoss, LossLogger, BoundaryLoss
+from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 
 
 class Encoder(nn.Module):
@@ -160,9 +160,9 @@ class Pipn(L.LightningModule):
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
-                obs_p_loss * 1000 +
-                obs_ux_loss * 1000 +
-                obs_uy_loss * 1000)
+                obs_p_loss * 100 +
+                obs_ux_loss * 100 +
+                obs_uy_loss * 100)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,

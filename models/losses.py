@@ -20,11 +20,10 @@ class LossLogger:
 
 
 class MomentumLoss(nn.Module):
-    def __init__(self, i: int, j: int, mu, n_internal,
+    def __init__(self, i: int, j: int, mu,
                  u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler):
         super().__init__()
         self.mu = mu
-        self.n_internal = n_internal
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
         self.p_stats = p_scaler
@@ -37,7 +36,7 @@ class MomentumLoss(nn.Module):
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
-        d_i = d[...,i:i + 1]
+        d_i = d[..., i:i + 1]
 
         return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
                 norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
@@ -47,7 +46,6 @@ class MomentumLoss(nn.Module):
 
     def forward(self, *args):
         res = self.f(*args)
-        res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 
 

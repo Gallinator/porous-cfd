@@ -118,27 +118,41 @@ class Pipn(L.LightningModule):
         pred_data = PdeData(pred, self.domain_dict)
 
         # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
+        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1)
         # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
+        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0)
 
-        d_p = self.calculate_gradients(pred_data.p, in_data.points)
+        d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
         d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-        obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples), in_data.obs_ux)
-        obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples), in_data.obs_uy)
-        obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples), in_data.obs_p)
+        obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.ux)
+        obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uy)
+        obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.p)
 
         boundary_p_loss = mse_loss(pred_data['boundary'].p, in_data['boundary'].pde.p)
         boundary_ux_loss = mse_loss(pred_data['boundary'].ux, in_data['boundary'].pde.ux)
         boundary_uy_loss = mse_loss(pred_data['boundary'].uy, in_data['boundary'].pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
-        mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                          in_data.zones_ids, in_data.d)
+        mom_loss_x = self.momentum_x_loss(pred_data['internal'].ux,
+                                          d_ux_x,
+                                          d_ux_y,
+                                          pred_data['internal'].uy,
+                                          dd_ux_x,
+                                          dd_ux_y,
+                                          d_p_x,
+                                          in_data['internal'].zones_ids,
+                                          in_data['internal'].d)
 
-        mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                          in_data.zones_ids, in_data.d)
+        mom_loss_y = self.momentum_y_loss(pred_data['internal'].uy,
+                                          d_uy_y,
+                                          d_uy_x,
+                                          pred_data['internal'].ux,
+                                          dd_uy_y,
+                                          dd_uy_x,
+                                          d_p_y,
+                                          in_data['internal'].zones_ids,
+                                          in_data['internal'].d)
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -185,21 +199,35 @@ class Pipn(L.LightningModule):
         in_data = FoamData(batch, self.domain_dict)
         if self.verbose_predict:
             torch.set_grad_enabled(True)
-            in_data.points.requires_grad = True
-            pred = self.forward(in_data.points, in_data.zones_ids, in_data.d)
-            pred_data = PdeData(pred)
+            internal_points = in_data['internal'].points
+            internal_points.requires_grad = True
+            pred = self.forward(torch.cat(in_data.points), in_data.zones_ids, in_data.d)
+            pred_data = PdeData(pred, self.domain_dict)
 
             # i=0 is x, j=1 is y
-            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
+            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1)
             # i=1 is y, j=0 is x
-            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
-            d_p = self.calculate_gradients(pred_data.p, in_data.points)
+            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data['internal'].uy, 1, 0)
+            d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
             d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-            momentum_x = self.momentum_x_loss.f(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                                in_data.zones_ids, in_data.d)
-            momentum_y = self.momentum_y_loss.f(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                                in_data.zones_ids, in_data.d)
+            momentum_x = self.momentum_x_loss.f(pred_data['internal'].ux,
+                                                d_ux_x,
+                                                d_ux_y,
+                                                pred_data['internal'].uy,
+                                                dd_ux_x,
+                                                dd_ux_y,
+                                                d_p_x,
+                                                in_data['internal'].zones_ids,
+                                                in_data['internal'].d)
+            momentum_y = self.momentum_y_loss.f(pred_data['internal'].uy,
+                                                d_uy_y,
+                                                d_uy_x,
+                                                pred_data['internal'].ux,
+                                                dd_uy_y,
+                                                dd_uy_x,
+                                                d_p_y,
+                                                in_data['internal'].zones_ids, in_data['internal'].d)
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)

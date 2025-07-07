@@ -62,12 +62,3 @@ class ContinuityLoss(nn.Module):
     def forward(self, *args):
         res = self.f(*args)
         return mse_loss(res, torch.zeros_like(res))
-
-
-class BoundaryLoss(nn.Module):
-    def __init__(self, n_internal: int):
-        super().__init__()
-        self.n_internal = n_internal
-
-    def forward(self, input: Tensor, target: Tensor):
-        return mse_loss(input[:, self.n_internal:, :], target[:, self.n_internal:, :])

@@ -157,7 +157,7 @@ class FoamDataset(Dataset):
         b_data = np.concatenate(list(b_data.values()))
         b_data = np.concatenate([b_data, inlet_data], axis=-1)
 
-        b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_samples = self.get_boundaries_samples(b_dict)
         b_data = b_data[b_samples]
 
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')

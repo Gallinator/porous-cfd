@@ -169,12 +169,12 @@ class FoamDataset(Dataset):
         data = self.reorder_data(data)
 
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
+        obs_samples = self.extend_gather_indices(obs_samples, data.shape[-1])
 
         # Do not standardize zones indices
         data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
 
-        return (tensor(data, dtype=torch.float),
-                tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))
+        return tensor(data, dtype=torch.float), obs_samples
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor]:
         return self.data[item]

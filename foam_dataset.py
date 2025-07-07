@@ -135,6 +135,9 @@ class FoamDataset(Dataset):
                 inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
         return np.concatenate(inlet_data)
 
+    def extend_gather_indices(self, index, n_features: int) -> torch.Tensor:
+        return tensor(index, dtype=torch.int64).unsqueeze(dim=1).repeat(1, n_features)
+
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
         inlet_data = self.extract_inlet_conditions(b_data)

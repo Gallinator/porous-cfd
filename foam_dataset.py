@@ -23,6 +23,37 @@ def get_domain_map(n_internal, n_boundary):
     }
 
 
+class DomainData:
+    def __init__(self, data: Tensor):
+        self.data = data
+        self.points = self.data[..., 0:2]
+        self.pde = PdeData(self.data[..., 2:5])
+
+    @property
+    def zones_ids(self) -> Tensor | np.ndarray:
+        return self.data[..., 5:6]
+
+    @property
+    def d(self) -> Tensor | np.ndarray:
+        return self.data[..., 6:8]
+
+    @property
+    def inlet_ux(self):
+        return self.data[..., 8:9]
+
+    @property
+    def mom_x(self):
+        return self.data[..., 9:10]
+
+    @property
+    def mom_y(self):
+        return self.data[..., 10:11]
+
+    @property
+    def div(self):
+        return self.data[..., 11:12]
+
+
 class PdeData:
     def __init__(self, data: Tensor | np.ndarray, domain_dict=None):
         self.data = data

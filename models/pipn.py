@@ -108,11 +108,15 @@ class Pipn(L.LightningModule):
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
     def training_step(self, batch: list, batch_idx: int):
-        in_data = FoamData(batch)
-        in_data.points.requires_grad = True
+        in_data = FoamData(batch, self.domain_dict)
 
-        pred = self.forward(in_data.points, in_data.zones_ids, in_data.d)
-        pred_data = PdeData(pred)
+        internal_points = in_data['internal'].points
+        internal_points.requires_grad = True
+        in_points = torch.cat([internal_points, in_data['boundary'].points], dim=-2)
+
+        pred = self.forward(in_points, in_data.zones_ids, in_data.d)
+        pred_data = PdeData(pred, self.domain_dict)
+
         # i=0 is x, j=1 is y
         d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
         # i=1 is y, j=0 is x
@@ -178,7 +182,7 @@ class Pipn(L.LightningModule):
         self.val_loss_logger.log(p_error, ux_error, uy_error)
 
     def predict_step(self, batch: Tensor) -> tuple[Tensor, Tensor] | Tensor:
-        in_data = FoamData(batch)
+        in_data = FoamData(batch, self.domain_dict)
         if self.verbose_predict:
             torch.set_grad_enabled(True)
             in_data.points.requires_grad = True

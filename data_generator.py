@@ -1,3 +1,4 @@
+import argparse
 import glob
 import itertools
 import json
@@ -6,6 +7,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+from argparse import ArgumentParser
 import mathutils
 import bpy
 import numpy as np
@@ -16,7 +18,7 @@ from welford import Welford
 
 from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
 
-OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
+OPENFOAM_COMMAND = ""
 
 
 def import_obj(mesh: str):
@@ -160,11 +162,20 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-clean_dir('data')
-clean_dir('assets/generated-meshes')
+def build_arg_parser() -> ArgumentParser:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--openfoam-dir', type=str,
+                            help='OpenFOAM installation directory')
+    return arg_parser
 
-for d in os.listdir('assets/meshes'):
-    generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
-    generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}', f'assets/cases/{d}')
-    generate_data(f'data/{d}')
-    generate_meta(f'data/{d}')
+
+if __name__ == '__main__':
+    OPENFOAM_COMMAND = f'{build_arg_parser().parse_args().openfoam_dir}/etc/openfoam'
+    clean_dir('data')
+    clean_dir('assets/generated-meshes')
+
+    for d in os.listdir('assets/meshes'):
+        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+        generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}', f'assets/cases/{d}')
+        generate_data(f'data/{d}')
+        generate_meta(f'data/{d}')

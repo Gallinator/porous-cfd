@@ -199,12 +199,16 @@ def build_arg_parser() -> ArgumentParser:
 
 
 if __name__ == '__main__':
-    OPENFOAM_COMMAND = f'{build_arg_parser().parse_args().openfoam_dir}/etc/openfoam'
+    args = build_arg_parser().parse_args()
+    OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
     clean_dir('data')
     clean_dir('assets/generated-meshes')
 
     for d in os.listdir('assets/meshes'):
         generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
-        generate_openfoam_cases(f'assets/generated-meshes/{d}', f'data/{d}', f'assets/cases/{d}')
+        generate_openfoam_cases(f'assets/generated-meshes/{d}',
+                                f'data/{d}',
+                                f'assets/cases/{d}',
+                                args.openfoam_procs)
         generate_data(f'data/{d}')
         generate_meta(f'data/{d}')

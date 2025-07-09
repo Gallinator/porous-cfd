@@ -110,7 +110,7 @@ def set_decompose_par(case_path: str, n_proc: int):
     set_run_n_proc(f'{case_path}/Run', n_proc)
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str,n_proc:int):
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     meshes = glob.glob(f"{meshes_dir}/*.obj")
@@ -120,6 +120,9 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str,n_proc:int):
         shutil.copytree('assets/openfoam-case-template', case_path)
         shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
         write_locations_in_mesh(f'{case_path}/snappyHexMesh', location_inside, location_outside)
+
+        set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
+        set_decompose_par(f'{case_path}/simpleFoam', n_proc)
 
 
 def generate_data(cases_dir: str):

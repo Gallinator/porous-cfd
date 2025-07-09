@@ -11,7 +11,7 @@ splitMeshRegions -cellZonesOnly -overwrite -detectOnly &&
 start=$(date +%s%N) &&
 
 decomposePar &&
-mpirun -np 8 $(getApplication) -parallel &&
+mpirun -np $n_proc $(getApplication) -parallel &&
 reconstructPar &&
 
 end=end=$(date +%s%N) &&

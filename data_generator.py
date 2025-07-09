@@ -122,8 +122,8 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc):
         shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
         write_locations_in_mesh(f'{case_path}/snappyHexMesh', location_inside, location_outside)
 
-                set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
-                set_decompose_par(f'{case_path}/simpleFoam', n_proc)
+        set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
+        set_decompose_par(f'{case_path}/simpleFoam', n_proc)
 
 
 def generate_data(cases_dir: str):

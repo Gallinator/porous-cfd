@@ -1,9 +1,11 @@
 import argparse
 import glob
+import itertools
 import json
 import math
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 from argparse import ArgumentParser
@@ -85,7 +87,31 @@ def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):
     snappy_dict['castellatedMeshControls']['locationsInMesh'] = locations_in_mesh
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
+def set_par_dict_coeffs(coeffs, n_proc: int):
+    proc_y = int(n_proc / 2)
+    proc_x = n_proc - proc_y
+    coeffs['n'] = [proc_x, proc_y, 1]
+
+
+def set_run_n_proc(run_path: str, n_proc: int):
+    with open(run_path, 'r') as f:
+        data = f.read()
+        data = re.sub('\$n_proc', str(n_proc), data, re.MULTILINE)
+    with open(run_path, 'w') as f:
+        f.write(data)
+
+
+def set_decompose_par(case_path: str, n_proc: int):
+    if n_proc % 2 != 0:
+        raise ValueError('n_proc must be an even number!')
+    par_dict = FoamFile(f'{case_path}/system/decomposeParDict')
+    par_dict['numberOfSubdomains'] = n_proc
+    set_par_dict_coeffs(par_dict['simpleCoeffs'], n_proc)
+    set_par_dict_coeffs(par_dict['hierarchicalCoeffs'], n_proc)
+    set_run_n_proc(f'{case_path}/Run', n_proc)
+
+
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     meshes = glob.glob(f"{meshes_dir}/*.obj")

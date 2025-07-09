@@ -129,6 +129,9 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                 fv_options = FoamFile(f'{case_path}/simpleFoam/system/fvOptions')
                 fv_options['porousFilter']['explicitPorositySourceCoeffs']['d'] = darcy
 
+                set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
+                set_decompose_par(f'{case_path}/simpleFoam', n_proc)
+
 
 def generate_data(cases_dir: str):
     for case in track(glob.glob(f"{cases_dir}/*"), description="Generating geometries"):

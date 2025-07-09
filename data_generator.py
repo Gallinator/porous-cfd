@@ -192,6 +192,9 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--openfoam-dir', type=str,
                             help='OpenFOAM installation directory')
+    arg_parser.add_argument('--openfoam-procs', type=int,
+                            help='the number of processors to use for OpenFoam simulations',
+                            default=2)
     return arg_parser
 
 

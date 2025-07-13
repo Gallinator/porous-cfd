@@ -55,13 +55,13 @@ class FeaturePropagation(torch.nn.Module):
 class PointNetPP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = SetAbstraction(0.5, 0.2, MLP([8 + 2, 64, 128], act=nn.Tanh(), norm=None))
+        self.conv1 = SetAbstraction(0.5, 0.2, MLP([3 + 2, 64, 128], act=nn.Tanh(), norm=None))
         self.conv2 = SetAbstraction(0.25, 0.4, MLP([128 + 2, 128, 256], act=nn.Tanh(), norm=None))
         self.conv3 = GlobalSetAbstraction(MLP([256 + 2, 256, 1024], act=nn.Tanh(), norm=None))
 
         self.propagate3 = FeaturePropagation(4, MLP([1024 + 256, 256], act=nn.Tanh(), norm=None))
         self.propagate2 = FeaturePropagation(8, MLP([256 + 128, 128], act=nn.Tanh(), norm=None))
-        self.propagate1 = FeaturePropagation(16, MLP([128 + 8, 128, 128, 3], act=nn.Tanh(), norm=None))
+        self.propagate1 = FeaturePropagation(16, MLP([128 + 3, 128, 128, 3], act=nn.Tanh(), norm=None))
 
     def forward(self, x: Tensor, pos: Tensor, batch: Tensor) -> Tensor:
         x = torch.cat([x, pos], dim=1)
@@ -164,7 +164,7 @@ class Pipn(L.LightningModule):
                                           self.add_batch_dim(dd_ux_x),
                                           self.add_batch_dim(dd_ux_y),
                                           self.add_batch_dim(d_p_x),
-                                          self.add_batch_dim(in_data.zones_ids[..., 1:2]))
+                                          self.add_batch_dim(in_data.zones_ids))
 
         mom_loss_y = self.momentum_y_loss(self.add_batch_dim(pred_data.uy),
                                           self.add_batch_dim(d_uy_y),
@@ -173,7 +173,7 @@ class Pipn(L.LightningModule):
                                           self.add_batch_dim(dd_uy_y),
                                           self.add_batch_dim(dd_uy_x),
                                           self.add_batch_dim(d_p_y),
-                                          self.add_batch_dim(in_data.zones_ids[..., 1:2]))
+                                          self.add_batch_dim(in_data.zones_ids))
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -237,7 +237,7 @@ class Pipn(L.LightningModule):
                                                 self.add_batch_dim(dd_ux_x),
                                                 self.add_batch_dim(dd_ux_y),
                                                 self.add_batch_dim(d_p_x),
-                                                self.add_batch_dim(in_data.zones_ids[..., 1:2]))
+                                                self.add_batch_dim(in_data.zones_ids))
 
             momentum_y = self.momentum_y_loss.f(self.add_batch_dim(pred_data.uy),
                                                 self.add_batch_dim(d_uy_y),
@@ -246,7 +246,7 @@ class Pipn(L.LightningModule):
                                                 self.add_batch_dim(dd_uy_y),
                                                 self.add_batch_dim(dd_uy_x),
                                                 self.add_batch_dim(d_p_y),
-                                                self.add_batch_dim(in_data.zones_ids[..., 1:2]))
+                                                self.add_batch_dim(in_data.zones_ids))
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:

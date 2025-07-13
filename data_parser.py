@@ -33,6 +33,9 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
                     f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
             else:
                 values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")[None]
+            if np.max(values) > 100:
+                values = parse_scalar_field(
+                    f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
             values = make_column(values)
             scalar_values.append(values)
 

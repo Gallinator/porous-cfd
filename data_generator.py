@@ -221,6 +221,7 @@ if __name__ == '__main__':
         generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}/raw',
+                                f'assets/cases/{d}',
                                 args.openfoam_procs)
         generate_data(f'data/{d}/raw')
         generate_meta(f'data/{d}/raw')

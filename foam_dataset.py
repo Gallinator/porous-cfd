@@ -122,6 +122,26 @@ class StandardScaler:
         return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))
 
 
+class Normalizer:
+    def __init__(self, min, max):
+        super().__init__()
+        self.min = min
+        self.max = max
+        self.range = max - min
+
+    def transform(self, data):
+        return (data - self.min) / self.range
+
+    def inverse_transform(self, data):
+        return self.min + self.range * data
+
+    def __getitem__(self, item):
+        return Normalizer(self.min[item], self.max[item])
+
+    def to_torch(self, device=None):
+        return StandardScaler(torch.tensor(self.min, device=device), torch.tensor(self.max, device=device))
+
+
 class FoamDataset(Dataset):
     def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
         self.n_boundary = n_boundary

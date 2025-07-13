@@ -10,7 +10,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.local_feature = nn.Sequential(
-            nn.Linear(5, 64),
+            nn.Linear(6, 64),
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh()
@@ -24,8 +24,8 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: Tensor, zones_ids: Tensor, d: Tensor) -> tuple[Tensor, Tensor]:
-        x = torch.cat([x, zones_ids, d], dim=-1)
+    def forward(self, x: Tensor, zones_ids: Tensor, d: Tensor, inlet_ux: Tensor) -> tuple[Tensor, Tensor]:
+        x = torch.cat([x, zones_ids, d, inlet_ux], dim=-1)
         local_features = self.local_feature(x)
         local_features = torch.concatenate([local_features, zones_ids], dim=-1)
         global_feature = self.global_feature(local_features)
@@ -49,7 +49,7 @@ class Decoder(nn.Module):
         )
 
     def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
-        x = torch.concatenate([local_features, global_feature], 2)
+        x = torch.concatenate([local_features, global_feature], -1)
         return self.decoder(x)
 
 
@@ -87,8 +87,8 @@ class Pipn(L.LightningModule):
         self.continuity_loss = ContinuityLoss(self.u_scaler, self.points_scaler)
         self.verbose_predict = False
 
-    def forward(self, x: Tensor, porous: Tensor, d: Tensor) -> Tensor:
-        local_features, global_feature = self.encoder.forward(x, porous, d)
+    def forward(self, x: Tensor, porous: Tensor, d: Tensor, inlet_ux: Tensor) -> Tensor:
+        local_features, global_feature = self.encoder.forward(x, porous, d, inlet_ux)
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         return self.decoder.forward(local_features, exp_global)
 
@@ -114,7 +114,7 @@ class Pipn(L.LightningModule):
         internal_points.requires_grad = True
         in_points = torch.cat([internal_points, in_data['boundary'].points], dim=-2)
 
-        pred = self.forward(in_points, in_data.zones_ids, in_data.d)
+        pred = self.forward(in_points, in_data.zones_ids, in_data.d, in_data.inlet_ux)
         pred_data = PdeData(pred, self.domain_dict)
 
         # i=0 is x, j=1 is y
@@ -185,7 +185,7 @@ class Pipn(L.LightningModule):
 
     def validation_step(self, batch: list):
         batch_data = FoamData(batch)
-        pred = self.forward(batch_data.points, batch_data.zones_ids, batch_data.d)
+        pred = self.forward(batch_data.points, batch_data.zones_ids, batch_data.d, batch_data.inlet_ux)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(batch_data.pde.p))
@@ -203,7 +203,7 @@ class Pipn(L.LightningModule):
             internal_points.requires_grad = True
             in_points = torch.cat([internal_points, in_data['boundary'].points], dim=-2)
 
-            pred = self.forward(in_points, in_data.zones_ids, in_data.d)
+            pred = self.forward(in_points, in_data.zones_ids, in_data.d, in_data.inlet_ux)
             pred_data = PdeData(pred, self.domain_dict)
 
             # i=0 is x, j=1 is y
@@ -234,4 +234,4 @@ class Pipn(L.LightningModule):
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
-            return self.forward(in_data.points, in_data.zones_ids, in_data.d)
+            return self.forward(in_data.points, in_data.zones_ids, in_data.d, in_data.inlet_ux)

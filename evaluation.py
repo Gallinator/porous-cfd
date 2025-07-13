@@ -7,13 +7,13 @@ from torch.nn.functional import l1_loss
 from torch_geometric.loader import DataLoader
 from data_parser import parse_meta
 from foam_dataset import FoamDataset, PdeData
-from models.pipn import Pipn, FoamData
+from models.pipn_pp import PipnPP, FoamData
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
 N_INTERNAL = 1000
 
-model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
+model = PipnPP.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True
 
 val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train/raw')

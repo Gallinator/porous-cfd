@@ -4,12 +4,12 @@ from matplotlib import pyplot as plt
 from torch_geometric.loader import DataLoader
 
 from foam_dataset import FoamDataset, PdeData
-from models.pipn import Pipn, FoamData
+from models.pipn_pp import PipnPP, FoamData
 from visualization import plot_fields
 
 CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt'
 
-model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
+model = PipnPP.load_from_checkpoint(CHECKPOINT_PATH)
 
 val_data = FoamDataset('data/val_unseen', 1000, 200, 500, 'data/train/raw')
 val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)

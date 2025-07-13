@@ -76,7 +76,7 @@ class PointNetPP(nn.Module):
         return out
 
 
-class Pipn(L.LightningModule):
+class PipnPP(L.LightningModule):
     def __init__(self, n_internal: int, n_boundary: int, scalers: dict[str, StandardScaler]):
         super().__init__()
         self.save_hyperparameters()

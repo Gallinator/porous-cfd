@@ -67,15 +67,15 @@ class FoamData(torch_geometric.data.Data):
 
     @property
     def obs_ux(self) -> Tensor | np.ndarray:
-        return self.pde.ux[self.obs_samples, :]
+        return self.pde.ux[self.obs_index, :]
 
     @property
     def obs_uy(self) -> Tensor | np.ndarray:
-        return self.pde.uy[self.obs_samples, :]
+        return self.pde.uy[self.obs_index, :]
 
     @property
     def obs_p(self) -> Tensor | np.ndarray:
-        return self.pde.p[self.obs_samples, :]
+        return self.pde.p[self.obs_index, :]
 
     @property
     def mom_x(self):

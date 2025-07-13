@@ -4,22 +4,28 @@ import lightning as L
 from torch.nn.functional import l1_loss, mse_loss
 from torchvision.ops import MLP
 
-from foam_dataset import StandardScaler, FoamData, PdeData, get_domain_map
+from foam_dataset import StandardScaler, FoamData, PdeData
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 
 
 class Branch(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP(4, [256, 256, 256], activation_layer=nn.Tanh)
+        self.linear = MLP(5, [256, 256, 256], activation_layer=nn.Tanh)
 
-    def forward(self, points: Tensor, d: Tensor):
+    def forward(self, d_points: Tensor, d: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
         """
-        :param points: Coordinates (B, M, 2)
-        :param d: Darcy cofficients (B, M, 2)
+        :param d_points: Coordinates of darcy boundary points(B, M, 2)
+        :param d: Darcy coefficients (B, M, 2)
+        :param inlet_points: Coordinates of inlet boundary points(B, N, 2)
+        :param inlet_ux: inlet velocity along x (B, N, 1)
         :return: Parameter embedding (B, 1, 64)
         """
-        x = torch.cat([points, d], dim=-1)
+        points = torch.cat([d_points, inlet_points], dim=-2)
+        x = torch.zeros((points.shape[0], points.shape[1], d.shape[-1] + inlet_ux.shape[-1]), device=points.device)
+        x[..., :d.shape[-2], 0:2] = d
+        x[..., d.shape[-2]:, 2:3] = inlet_ux
+        x = torch.cat([points, x], dim=-1)
         y = self.linear(x)
         return torch.max(y, dim=1, keepdim=True)[0]
 
@@ -98,9 +104,15 @@ class PiGano(L.LightningModule):
                                           'Val error uy')
         self.save_hyperparameters()
 
-    def forward(self, pred_points: Tensor, zones_ids: Tensor, par_points: Tensor, par_d: Tensor) -> Tensor:
+    def forward(self,
+                pred_points: Tensor,
+                zones_ids: Tensor,
+                par_d_points: Tensor,
+                par_d: Tensor,
+                par_inlet_points: Tensor,
+                par_inlet_ux: Tensor) -> Tensor:
         geom_embedding = self.geometry_encoder.forward(pred_points.detach(), zones_ids)
-        par_embedding = self.branch.forward(par_points, par_d)
+        par_embedding = self.branch.forward(par_d_points, par_d, par_inlet_points, par_inlet_ux)
         local_embedding = self.points_encoder.forward(pred_points)
 
         geom_embedding = geom_embedding.repeat((1, local_embedding.shape[-2], 1))
@@ -137,7 +149,10 @@ class PiGano(L.LightningModule):
         pred = self.forward(in_points,
                             in_data.zones_ids,
                             in_data['internal'].points,
-                            in_data['internal'].d)
+                            in_data['internal'].d,
+                            in_data['inlet'].points,
+                            in_data['inlet'].inlet_ux)
+
         pred_data = PdeData(pred, self.domain_dict)
 
         # i=0 is x, j=1 is y
@@ -211,7 +226,9 @@ class PiGano(L.LightningModule):
         pred = self.forward(batch_data.points,
                             batch_data.zones_ids,
                             batch_data['internal'].points,
-                            batch_data['internal'].d)
+                            batch_data['internal'].d,
+                            batch_data['inlet'].points,
+                            batch_data['inlet'].inlet_ux)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(batch_data.pde.p))
@@ -232,7 +249,9 @@ class PiGano(L.LightningModule):
             pred = self.forward(in_points,
                                 in_data.zones_ids,
                                 in_data['internal'].points,
-                                in_data['internal'].d)
+                                in_data['internal'].d,
+                                in_data['inlet'].points,
+                                in_data['inlet'].inlet_ux)
             pred_data = PdeData(pred, self.domain_dict)
 
             # i=0 is x, j=1 is y
@@ -266,4 +285,6 @@ class PiGano(L.LightningModule):
             return self.forward(in_data.points,
                                 in_data.zones_ids,
                                 in_data['internal'].points,
-                                in_data['internal'].d)
+                                in_data['internal'].d,
+                                in_data['inlet'].points,
+                                in_data['inlet'].inlet_ux)

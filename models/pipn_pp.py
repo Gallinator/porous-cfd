@@ -148,9 +148,9 @@ class PipnPP(L.LightningModule):
         d_p = self.calculate_gradients(pred_data.p, in_data.pos)
         d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
-        obs_ux_loss = mse_loss(pred_data.ux[in_data.obs_index, :], in_data.pde.ux[in_data.obs_index, :])
-        obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.pde.uy[in_data.obs_index, :])
-        obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.pde.p[in_data.obs_index, :])
+        obs_ux_loss = mse_loss(pred_data.ux[in_data.obs_index, :], in_data.obs_ux)
+        obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.obs_uy)
+        obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.obs_p)
 
         boundary_p_loss = self.boundary_loss(self.add_batch_dim(pred_data.p), self.add_batch_dim(in_data.pde.p))
         boundary_ux_loss = self.boundary_loss(self.add_batch_dim(pred_data.ux), self.add_batch_dim(in_data.pde.ux))

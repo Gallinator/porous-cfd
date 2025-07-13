@@ -136,23 +136,17 @@ class FoamDataset(InMemoryDataset):
 
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
-        ohe, uniques = self.one_hot_encode(data[:, -1])
-        data = np.concatenate([data[:, 0:-1], ohe], axis=1)
         data = self.reorder_data(data)
 
         # Do not standardize zones indices and residuals
-        data[:, 0:-(uniques + 3)] = self.standard_scaler.transform(data[:, 0:-(uniques + 3)])
+        data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
         data = tensor(data, dtype=torch.float)
 
         return (data[..., 0:2],  # pos
-                data[..., -(uniques + 3):-3],  # zones
+                data[..., 5:6],  # zones
                 data[..., 2:5],  # y-pde
                 data[..., -3:],  # residuals
                 tensor(obs_samples, dtype=torch.int64))
-
-    def one_hot_encode(self, zones: np.ndarray) -> tuple[np.ndarray, int]:
-        n = len(np.unique(zones))
-        return np.eye(n)[zones.flatten().astype(int)], n
 
     def process(self):
         data = []

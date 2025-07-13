@@ -121,7 +121,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
                 location_inside, location_outside = get_location_inside(m), get_location_outside()
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
+                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{darcy[0]}-{darcy[1]}_in{inlet_ux}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 

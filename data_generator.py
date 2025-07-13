@@ -8,6 +8,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 from argparse import ArgumentParser
 import mathutils
 import bpy
@@ -158,6 +159,7 @@ def generate_data(cases_dir: str):
 
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points, porous_num_points = [], [], []
+    d_max = np.ones(2) * sys.float_info.min
     running_stats = Welford()
     elapse_times = []
 
@@ -169,6 +171,9 @@ def generate_meta(data_dir: str):
         boundary_num_points.append(len(b_data))
         internal_num_points.append(len(i_data))
         porous_num_points.append(n_porous)
+
+        d = np.max(i_data[:, -2:], axis=0)
+        d_max = np.maximum(d, d_max)
 
         data = np.concatenate((i_data, b_data))
 
@@ -183,8 +188,13 @@ def generate_meta(data_dir: str):
     std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
     mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}
     timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
+    darcy_meta = {'Min': [0, 0], 'Max': d_max.tolist()}
 
-    meta_dict = {"Min points": min_points_meta, 'Mean': mean_meta, 'Std': std_meta, 'Timing': timing_meta}
+    meta_dict = {"Min points": min_points_meta,
+                 'Mean': mean_meta,
+                 'Std': std_meta,
+                 'Darcy': darcy_meta,
+                 'Timing': timing_meta}
 
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))

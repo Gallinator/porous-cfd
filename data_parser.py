@@ -20,9 +20,8 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np
     last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
     faces = []
-    zones = []
     scalar_values, vector_values = {s: [] for s in scalars}, {v: [] for v in vectors}
-    for i, b in enumerate(os.listdir(boundaries_path)):
+    for b in os.listdir(boundaries_path):
         intermediate_dir = list(os.listdir(f"{boundaries_path}/{b}/surface/{last_step}"))[0]
         coords = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/faceCentres")[None]
         coords = make_at_most_2d(coords)
@@ -41,10 +40,9 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np
             values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/vectorField/{v}")[None]
             values = make_at_most_2d(values)
             vector_values[v].extend(values)
-        zones.extend(np.ones(shape=(len(coords), 1)) * (i + 2))
     vector_values = [np.array(vector_values[v]) for v in vectors]
     scalar_values = [np.array(scalar_values[s]) for s in scalars]
-    return np.concatenate([np.array(faces)] + vector_values + scalar_values + [np.array(zones)], axis=1)
+    return np.concatenate([np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])], axis=1)
 
 
 def make_at_most_2d(field) -> np.array:

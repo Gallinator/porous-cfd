@@ -154,6 +154,7 @@ class FoamDataset(Dataset):
             np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
+        self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
@@ -224,6 +225,7 @@ class FoamDataset(Dataset):
 
         # Do not standardize zones indices
         data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
+        data[:, 6:8] = self.d_normalizer.transform(data[:, 6:8])
 
         return tensor(data, dtype=torch.float), obs_samples
 

@@ -245,6 +245,7 @@ class FoamDataset(InMemoryDataset):
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
         i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
+        i_data = np.concatenate([i_data, np.zeros((len(i_data), 1))], axis=-1)
 
         data = np.concatenate((i_data, b_data))
 

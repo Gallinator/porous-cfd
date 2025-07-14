@@ -213,6 +213,19 @@ class FoamDataset(InMemoryDataset):
                 inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
         return np.concatenate(inlet_data)
 
+    def get_boundaries_samples(self, boundary_dict: dict):
+        samples = []
+        cur_start = 0
+        if self.n_boundary % 5 != 0:
+            print(
+                f'Warning: attempting to sample {self.n_boundary} boundary points but it is only possible to sample {self.n_boundary - self.n_boundary % 5} points')
+        for k, b in boundary_dict.items():
+            n = self.n_boundary * (2 if k == 'walls' else 1) / 5
+            index = np.random.choice(len(b), replace=False, size=int(n)) + cur_start
+            samples.extend(index.tolist())
+            cur_start += len(b)
+        return samples
+
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, moment, pde, div = data[..., 0:2], data[..., 2:4], data[..., 4:7], data[..., 7:8]
         zones = data[..., 8:]

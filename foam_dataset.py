@@ -1,10 +1,9 @@
 from pathlib import Path
 import numpy as np
 import torch
-import torch_geometric
+from torch_geometric.utils import unbatch
 from torch import tensor, Tensor
-from torch_geometric.data import InMemoryDataset
-
+from torch_geometric.data import InMemoryDataset, Data
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 

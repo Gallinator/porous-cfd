@@ -7,22 +7,6 @@ from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
-def get_domain_map(n_internal, n_boundary):
-    boundary_subdomain_size = int(n_boundary / 5)
-    inlet_start = n_internal
-    interface_start = inlet_start + boundary_subdomain_size
-    outlet_start = interface_start + boundary_subdomain_size
-    walls_start = outlet_start + boundary_subdomain_size
-    return {
-        'internal': slice(None, n_internal),
-        'boundary': slice(n_internal, None),
-        'inlet': slice(inlet_start, interface_start),
-        'interface': slice(interface_start, outlet_start),
-        'outlet': slice(outlet_start, walls_start),
-        'walls': slice(walls_start, None)
-    }
-
-
 class DomainData:
     def __init__(self, data: Tensor):
         self.data = data
@@ -155,6 +139,7 @@ class FoamDataset(Dataset):
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
         self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
+        self.domain_dict = self.get_domain_map()
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
@@ -168,6 +153,21 @@ class FoamDataset(Dataset):
 
     def __len__(self):
         return len(self.samples)
+
+    def get_domain_map(self):
+        boundary_subdomain_size = int(self.n_boundary / 5)
+        inlet_start = self.n_internal
+        interface_start = inlet_start + boundary_subdomain_size
+        outlet_start = interface_start + boundary_subdomain_size
+        walls_start = outlet_start + boundary_subdomain_size
+        return {
+            'internal': slice(None, self.n_internal),
+            'boundary': slice(self.n_internal, None),
+            'inlet': slice(inlet_start, interface_start),
+            'interface': slice(interface_start, outlet_start),
+            'outlet': slice(outlet_start, walls_start),
+            'walls': slice(walls_start, None)
+        }
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]

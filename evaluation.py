@@ -37,7 +37,7 @@ for p, t in zip(pred, val_loader):
                     pde_scaler.inverse_transform(t.pde.data), reduction='none')
     errors.extend(error.numpy(force=True))
 
-    pred_residuals.extend(phys_data[..., :val_data.n_internal, :].numpy(force=True))
+    pred_residuals.extend(phys_data.numpy(force=True))
     cfd_res = torch.cat([t.mom_x, t.mom_y, t.div], dim=-1)
     cfd_residuals.extend(cfd_res[..., :val_data.n_internal, :].numpy(force=True))
 

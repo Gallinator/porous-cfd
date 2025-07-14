@@ -4,9 +4,10 @@ from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
 from torch_cluster import radius
 from torch_geometric.nn import global_max_pool, PointNetConv, fps, knn_interpolate, MLP
+from torch_geometric.utils import unbatch
 
-from foam_dataset import PdeData, FoamData, StandardScaler, FoamDataset
-from models.losses import MomentumLoss, ContinuityLoss, LossLogger, BoundaryLoss
+from foam_dataset import PdeData, FoamData, StandardScaler
+from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 
 
 class SetAbstraction(torch.nn.Module):
@@ -128,44 +129,53 @@ class PipnPP(L.LightningModule):
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
     def training_step(self, in_data: FoamData, batch_idx: int):
-        in_data.pos.requires_grad = True
+        in_data.domain_dict = self.domain_dict
 
-        pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
-        pred_data = PdeData(pred)
+        internal_pos = in_data.slice('internal').pos
+        internal_pos.requires_grad = True
+        unb_pos = torch.stack(unbatch(internal_pos, in_data.slice('internal').batch))
+        boundary_pos = torch.stack(unbatch(in_data.slice('boundary').pos, in_data.slice('boundary').batch))
+        in_pos = torch.cat([unb_pos, boundary_pos], dim=-2)
+        in_pos = torch.cat([*in_pos])
+
+        pred = self.forward(in_data.zones_ids, in_pos, in_data.edge_index, in_data.batch)
+        pred_data = PdeData(pred, in_data.batch, self.domain_dict)
         # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.pos, pred_data.ux, 0, 1)
+        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_pos, pred_data.slice('internal').ux, 0, 1)
         # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.pos, pred_data.uy, 1, 0)
+        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_pos, pred_data.slice('internal').uy, 1, 0)
 
-        d_p = self.calculate_gradients(pred_data.p, in_data.pos)
+        d_p = self.calculate_gradients(pred_data.slice('internal').p, internal_pos)
         d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
-        obs_ux_loss = mse_loss(pred_data.ux[in_data.obs_index, :], in_data.obs_ux)
-        obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.obs_uy)
-        obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.obs_p)
+        obs_ux_loss = mse_loss(pred_data.ux[in_data.obs_index, :], in_data.obs.pde.ux)
+        obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.obs.pde.uy)
+        obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.obs.pde.p)
 
         boundary_p_loss = mse_loss(pred_data.slice('boundary').p, in_data.slice('boundary').pde.p)
         boundary_ux_loss = mse_loss(pred_data.slice('boundary').ux, in_data.slice('boundary').pde.ux)
         boundary_uy_loss = mse_loss(pred_data.slice('boundary').uy, in_data.slice('boundary').pde.uy)
 
-        cont_loss = self.continuity_loss(self.add_batch_dim(d_ux_x), self.add_batch_dim(d_uy_y))
-        mom_loss_x = self.momentum_x_loss(self.add_batch_dim(pred_data.ux),
-                                          self.add_batch_dim(d_ux_x),
-                                          self.add_batch_dim(d_ux_y),
-                                          self.add_batch_dim(pred_data.uy),
-                                          self.add_batch_dim(dd_ux_x),
-                                          self.add_batch_dim(dd_ux_y),
-                                          self.add_batch_dim(d_p_x),
-                                          self.add_batch_dim(in_data.zones_ids))
+        cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
+        mom_loss_x = self.momentum_x_loss(pred_data.slice('internal').ux,
+                                          d_ux_x,
+                                          d_ux_y,
+                                          pred_data.slice('internal').uy,
+                                          dd_ux_x,
+                                          dd_ux_y,
+                                          d_p_x,
+                                          in_data.slice('internal').zones_ids,
+                                          in_data.slice('internal').d)
 
-        mom_loss_y = self.momentum_y_loss(self.add_batch_dim(pred_data.uy),
-                                          self.add_batch_dim(d_uy_y),
-                                          self.add_batch_dim(d_uy_x),
-                                          self.add_batch_dim(pred_data.ux),
-                                          self.add_batch_dim(dd_uy_y),
-                                          self.add_batch_dim(dd_uy_x),
-                                          self.add_batch_dim(d_p_y),
-                                          self.add_batch_dim(in_data.zones_ids))
+        mom_loss_y = self.momentum_y_loss(pred_data.slice('internal').uy,
+                                          d_uy_y,
+                                          d_uy_x,
+                                          pred_data.slice('internal').ux,
+                                          dd_uy_y,
+                                          dd_uy_x,
+                                          d_p_y,
+                                          in_data.slice('internal').zones_ids,
+                                          in_data.slice('internal').d)
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -197,8 +207,10 @@ class PipnPP(L.LightningModule):
         return loss
 
     def validation_step(self, in_data: FoamData):
-        pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
-        pred_data = PdeData(pred)
+        in_data.domain_dict = self.domain_dict
+
+        pred = self.forward(in_data.zones_ids, in_data.pos, in_data.edge_index, in_data.batch)
+        pred_data = PdeData(pred, in_data.batch, self.domain_dict)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(in_data.pde.p))
         ux_error = l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
@@ -208,38 +220,51 @@ class PipnPP(L.LightningModule):
         self.val_loss_logger.log(len(in_data.batch), p_error, ux_error, uy_error)
 
     def predict_step(self, in_data: FoamData) -> tuple[Tensor, Tensor] | Tensor:
+        in_data.domain_dict = self.domain_dict
+
         if self.verbose_predict:
             torch.set_grad_enabled(True)
-            in_data.pos.requires_grad = True
-            pred = self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
-            pred_data = PdeData(pred)
+
+            internal_pos = in_data.slice('internal').pos
+            internal_pos.requires_grad = True
+            unb_pos = torch.stack(unbatch(internal_pos, in_data.slice('internal').batch))
+            boundary_pos = torch.stack(unbatch(in_data.slice('boundary').pos, in_data.slice('boundary').batch))
+            in_pos = torch.cat([unb_pos, boundary_pos], dim=-2)
+            in_pos = torch.concatenate([*in_pos])
+
+            pred = self.forward(in_data.zones_ids, in_pos, in_data.edge_index, in_data.batch)
+            pred_data = PdeData(pred, in_data.batch, self.domain_dict)
 
             # i=0 is x, j=1 is y
-            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.pos, pred_data.ux, 0, 1)
+            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_pos,
+                                                                        pred_data.slice('internal').ux, 0, 1)
             # i=1 is y, j=0 is x
-            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.pos, pred_data.uy, 1, 0)
-            d_p = self.calculate_gradients(pred_data.p, in_data.pos)
+            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_pos,
+                                                                        pred_data.slice('internal').uy, 1, 0)
+            d_p = self.calculate_gradients(pred_data.slice('internal').p, internal_pos)
             d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
-            cont = self.continuity_loss.f(self.add_batch_dim(d_ux_x), self.add_batch_dim(d_uy_y))
-            momentum_x = self.momentum_x_loss.f(self.add_batch_dim(pred_data.ux),
-                                                self.add_batch_dim(d_ux_x),
-                                                self.add_batch_dim(d_ux_y),
-                                                self.add_batch_dim(pred_data.uy),
-                                                self.add_batch_dim(dd_ux_x),
-                                                self.add_batch_dim(dd_ux_y),
-                                                self.add_batch_dim(d_p_x),
-                                                self.add_batch_dim(in_data.zones_ids))
+            cont = self.continuity_loss.f(d_ux_x, d_uy_y)
+            momentum_x = self.momentum_x_loss.f(pred_data.slice('internal').ux,
+                                                d_ux_x,
+                                                d_ux_y,
+                                                pred_data.slice('internal').uy,
+                                                dd_ux_x,
+                                                dd_ux_y,
+                                                d_p_x,
+                                                in_data.slice('internal').zones_ids,
+                                                in_data.slice('internal').d)
 
-            momentum_y = self.momentum_y_loss.f(self.add_batch_dim(pred_data.uy),
-                                                self.add_batch_dim(d_uy_y),
-                                                self.add_batch_dim(d_uy_x),
-                                                self.add_batch_dim(pred_data.ux),
-                                                self.add_batch_dim(dd_uy_y),
-                                                self.add_batch_dim(dd_uy_x),
-                                                self.add_batch_dim(d_p_y),
-                                                self.add_batch_dim(in_data.zones_ids))
+            momentum_y = self.momentum_y_loss.f(pred_data.slice('internal').uy,
+                                                d_uy_y,
+                                                d_uy_x,
+                                                pred_data.slice('internal').ux,
+                                                dd_uy_y,
+                                                dd_uy_x,
+                                                d_p_y,
+                                                in_data.slice('internal').zones_ids,
+                                                in_data.slice('internal').d)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:
-            return self.forward(in_data.x, in_data.pos, in_data.edge_index, in_data.batch)
+            return self.forward(in_data.zones_ids, in_data.pos, in_data.edge_index, in_data.batch)

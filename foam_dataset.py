@@ -138,10 +138,9 @@ class PdeData:
         return PdeData(self.data.numpy(force=True))
 
 
-class FoamData(torch_geometric.data.Data):
-    def __init__(self, pos=None, x=None, y=None, obs_index=None, residuals=None):
-        super().__init__(pos=pos, x=x, y=y)
-        self.residuals = residuals
+class FoamData(DomainData):
+    def __init__(self, pos=None, x=None, y=None, residuals=None, obs_index=None, domain_dict: dict = None):
+        super().__init__(pos=pos, x=x, y=y, residuals=residuals, domain_dict=domain_dict)
         self.obs_index = obs_index
 
     @property

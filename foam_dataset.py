@@ -242,7 +242,7 @@ class FoamDataset(InMemoryDataset):
         b_samples = self.get_boundaries_samples(b_dict)
         b_data = b_data[b_samples]
 
-        i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))
+        i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
         i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
 

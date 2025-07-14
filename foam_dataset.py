@@ -250,7 +250,7 @@ class FoamDataset(InMemoryDataset):
         data = self.reorder_data(data)
 
         # Do not standardize zones indices and residuals
-        data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
+        data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
         data = tensor(data, dtype=torch.float)
 
         return (data[..., 0:2],  # pos

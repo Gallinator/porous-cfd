@@ -202,6 +202,17 @@ class FoamDataset(InMemoryDataset):
         if self.n_boundary > data_min_points:
             raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
 
+    def extract_inlet_conditions(self, boundary_data: dict[str:np.ndarray]) -> np.ndarray:
+        inlet_data = []
+        for key in boundary_data.keys():
+            if key == 'inlet':
+                inlet_ux = boundary_data[key][..., 4:5]
+                inlet_ux = self.standard_scaler[2:3].transform(inlet_ux)
+                inlet_data.append(inlet_ux)
+            else:
+                inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
+        return np.concatenate(inlet_data)
+
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, moment, pde, div = data[..., 0:2], data[..., 2:4], data[..., 4:7], data[..., 7:8]
         zones = data[..., 8:]

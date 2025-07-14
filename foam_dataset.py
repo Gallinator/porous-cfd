@@ -251,6 +251,8 @@ class FoamDataset(InMemoryDataset):
 
         # Do not standardize zones indices and residuals
         data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
+        data[:, 6:8] = self.d_normalizer.transform(data[:, 6:8])
+
         data = tensor(data, dtype=torch.float)
 
         return (data[..., 0:2],  # pos

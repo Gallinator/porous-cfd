@@ -154,9 +154,6 @@ class PdeData:
 
         return PdeData(data[..., :-1], sliced_batch.to(dtype=torch.int64), self.domain_dict)
 
-    def numpy(self):
-        return PdeData(self.data.numpy(force=True))
-
 
 class FoamData(DomainData):
     def __init__(self, pos=None, x=None, y=None, residuals=None, obs_index=None, domain_dict: dict = None):

@@ -127,9 +127,6 @@ class PipnPP(L.LightningModule):
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[..., j:j + 1]
         return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
 
-    def add_batch_dim(self, x):
-        return x.reshape((-1, self.n_internal + self.n_boundary, x.shape[-1]))
-
     def training_step(self, in_data: FoamData, batch_idx: int):
         in_data.pos.requires_grad = True
 

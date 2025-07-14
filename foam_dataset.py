@@ -185,6 +185,7 @@ class FoamDataset(InMemoryDataset):
             np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
+        self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
 
         super().__init__(data_dir)
         self.load(self.processed_paths[0])

@@ -16,7 +16,7 @@ val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
 trainer = Trainer(logger=False, enable_checkpointing=False)
 pred = trainer.predict(model, dataloaders=val_loader)[0]
-pred = PdeData(pred).numpy()
+pred = PdeData(pred)
 
 tgt = val_data[0]
 

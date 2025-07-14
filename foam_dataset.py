@@ -164,36 +164,13 @@ class FoamData(DomainData):
         self.obs_index = obs_index
 
     @property
-    def zones_ids(self) -> Tensor | np.ndarray:
-        return self.x
-
-    @property
-    def pde(self):
-        return PdeData(self.y)
-
-    @property
-    def obs_ux(self) -> Tensor | np.ndarray:
-        return self.pde.ux[self.obs_index, :]
-
-    @property
-    def obs_uy(self) -> Tensor | np.ndarray:
-        return self.pde.uy[self.obs_index, :]
-
-    @property
-    def obs_p(self) -> Tensor | np.ndarray:
-        return self.pde.p[self.obs_index, :]
-
-    @property
-    def mom_x(self):
-        return self.residuals[..., 0:1]
-
-    @property
-    def mom_y(self):
-        return self.residuals[..., 1:2]
-
-    @property
-    def div(self):
-        return self.residuals[..., -1:]
+    def obs(self):
+        return DomainData(self.pos[self.obs_index, :],
+                          self.x[self.obs_index, :],
+                          self.y[self.obs_index, :],
+                          self.residuals[self.obs_index, :],
+                          self.domain_dict,
+                          self.batch)
 
 
 class FoamDataset(InMemoryDataset):

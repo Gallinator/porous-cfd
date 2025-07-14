@@ -144,9 +144,9 @@ class PipnPP(L.LightningModule):
         obs_uy_loss = mse_loss(pred_data.uy[in_data.obs_index, :], in_data.obs_uy)
         obs_p_loss = mse_loss(pred_data.p[in_data.obs_index, :], in_data.obs_p)
 
-        boundary_p_loss = self.boundary_loss(self.add_batch_dim(pred_data.p), self.add_batch_dim(in_data.pde.p))
-        boundary_ux_loss = self.boundary_loss(self.add_batch_dim(pred_data.ux), self.add_batch_dim(in_data.pde.ux))
-        boundary_uy_loss = self.boundary_loss(self.add_batch_dim(pred_data.uy), self.add_batch_dim(in_data.pde.uy))
+        boundary_p_loss = mse_loss(pred_data.slice('boundary').p, in_data.slice('boundary').pde.p)
+        boundary_ux_loss = mse_loss(pred_data.slice('boundary').ux, in_data.slice('boundary').pde.ux)
+        boundary_uy_loss = mse_loss(pred_data.slice('boundary').uy, in_data.slice('boundary').pde.uy)
 
         cont_loss = self.continuity_loss(self.add_batch_dim(d_ux_x), self.add_batch_dim(d_uy_y))
         mom_loss_x = self.momentum_x_loss(self.add_batch_dim(pred_data.ux),

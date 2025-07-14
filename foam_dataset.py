@@ -43,6 +43,26 @@ class StandardScaler:
         return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))
 
 
+class Normalizer:
+    def __init__(self, min, max):
+        super().__init__()
+        self.min = min
+        self.max = max
+        self.range = max - min
+
+    def transform(self, data):
+        return (data - self.min) / self.range
+
+    def inverse_transform(self, data):
+        return self.min + self.range * data
+
+    def __getitem__(self, item):
+        return Normalizer(self.min[item], self.max[item])
+
+    def to_torch(self, device=None):
+        return StandardScaler(torch.tensor(self.min, device=device), torch.tensor(self.max, device=device))
+
+
 class DomainData(Data):
     def __init__(self, pos=None, x=None, y=None, residuals=None, domain_dict=None, batch=None):
         super().__init__(pos=pos, x=x, y=y)

@@ -7,22 +7,6 @@ from torch_geometric.data import InMemoryDataset, Data
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
-def get_domain_dict(n_internal, n_boundary):
-    boundary_subdomain_size = int(n_boundary / 5)
-    inlet_start = n_internal
-    interface_start = inlet_start + boundary_subdomain_size
-    outlet_start = interface_start + boundary_subdomain_size
-    walls_start = outlet_start + boundary_subdomain_size
-    return {
-        'internal': slice(None, n_internal),
-        'boundary': slice(n_internal, None),
-        'inlet': slice(inlet_start, interface_start),
-        'interface': slice(interface_start, outlet_start),
-        'outlet': slice(outlet_start, walls_start),
-        'walls': slice(walls_start, None)
-    }
-
-
 class StandardScaler:
     def __init__(self, std, mean):
         super().__init__()
@@ -182,6 +166,7 @@ class FoamDataset(InMemoryDataset):
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
         self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
+        self.domain_dict = self.get_domain_dict()
 
         super().__init__(data_dir)
         self.load(self.processed_paths[0])
@@ -189,6 +174,21 @@ class FoamDataset(InMemoryDataset):
     @property
     def processed_file_names(self):
         return ['data.pt']
+
+    def get_domain_dict(self):
+        boundary_subdomain_size = int(self.n_boundary / 5)
+        inlet_start = self.n_internal
+        interface_start = inlet_start + boundary_subdomain_size
+        outlet_start = interface_start + boundary_subdomain_size
+        walls_start = outlet_start + boundary_subdomain_size
+        return {
+            'internal': slice(None, self.n_internal),
+            'boundary': slice(self.n_internal, None),
+            'inlet': slice(inlet_start, interface_start),
+            'interface': slice(interface_start, outlet_start),
+            'outlet': slice(outlet_start, walls_start),
+            'walls': slice(walls_start, None)
+        }
 
     def check_sample_size(self):
         data_min_points = self.meta['Min points']['Internal']

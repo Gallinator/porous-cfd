@@ -83,7 +83,6 @@ class PipnPP(L.LightningModule):
         self.domain_dict = domain_dict
         self.pointnet_pp = PointNetPP()
         self.mu = 0.01  # As rho=1 mu and nu are the same
-        self.d = 1000
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',

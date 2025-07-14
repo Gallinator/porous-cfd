@@ -254,9 +254,9 @@ class FoamDataset(InMemoryDataset):
         data = tensor(data, dtype=torch.float)
 
         return (data[..., 0:2],  # pos
-                data[..., 5:6],  # zones
+                data[..., 5:9],  # zones-d-inlet
                 data[..., 2:5],  # y-pde
-                data[..., -3:],  # residuals
+                data[..., 9:],  # residuals
                 tensor(obs_samples, dtype=torch.int64))
 
     def process(self):

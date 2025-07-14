@@ -20,9 +20,9 @@ pred = PdeData(pred)
 
 tgt = val_data[0]
 
-points_scaler = val_data.standard_scaler[0:2]
-u_scaler = val_data.standard_scaler[2:4]
-p_scaler = val_data.standard_scaler[4]
+points_scaler = val_data.standard_scaler[0:2].to_torch()
+u_scaler = val_data.standard_scaler[2:4].to_torch()
+p_scaler = val_data.standard_scaler[4].to_torch()
 
 raw_points = points_scaler.inverse_transform(tgt.pos.numpy(force=True))
 ids = tgt.zones_ids.numpy(force=True)

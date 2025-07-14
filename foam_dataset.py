@@ -121,6 +121,19 @@ class PdeData:
     def p(self) -> Tensor | np.ndarray:
         return self.data[..., 2:3]
 
+    def slice(self, item):
+        if self.batch is not None:
+            data = torch.cat([self.data, self.batch.unsqueeze(1)], dim=-1)
+            batched_data = torch.stack(unbatch(data, self.batch))
+            sliced_data = batched_data[..., self.domain_dict[item], :]
+            data = torch.cat([*sliced_data])
+            sliced_batch = data[..., -1]
+        else:
+            data = self.data[..., self.domain_dict[item], :]
+            sliced_batch = self.batch
+
+        return PdeData(data[..., :-1], sliced_batch.to(dtype=torch.int64), self.domain_dict)
+
     def numpy(self):
         return PdeData(self.data.numpy(force=True))
 

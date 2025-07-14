@@ -53,36 +53,83 @@ class FeaturePropagation(torch.nn.Module):
         return x, pos_skip, batch_skip
 
 
-class PointNetPP(nn.Module):
+class EncoderPp(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = SetAbstraction(0.5, 0.2, MLP([3 + 2, 64, 128], act=nn.Tanh(), norm=None))
         self.conv2 = SetAbstraction(0.25, 0.4, MLP([128 + 2, 128, 256], act=nn.Tanh(), norm=None))
-        self.conv3 = GlobalSetAbstraction(MLP([256 + 2, 256, 1024], act=nn.Tanh(), norm=None))
+        self.conv3 = GlobalSetAbstraction(MLP([256 + 2, 256, 512], act=nn.Tanh(), norm=None))
 
-        self.propagate3 = FeaturePropagation(4, MLP([1024 + 256, 256], act=nn.Tanh(), norm=None))
-        self.propagate2 = FeaturePropagation(8, MLP([256 + 128, 128], act=nn.Tanh(), norm=None))
-        self.propagate1 = FeaturePropagation(16, MLP([128 + 3, 128, 128, 3], act=nn.Tanh(), norm=None))
-
-    def forward(self, x: Tensor, pos: Tensor, batch: Tensor) -> Tensor:
+    def forward(self, x: Tensor, pos: Tensor, batch: Tensor):
         x = torch.cat([x, pos], dim=1)
         in_f = (x, pos, batch)
         abs1 = self.conv1(*in_f)
         abs2 = self.conv2(*abs1)
         abs3 = self.conv3(*abs2)
+        return abs3, (in_f, abs1, abs2)
 
-        prop3 = self.propagate3(*abs3, *abs2)
-        prop2 = self.propagate2(*prop3, *abs1)
-        out, _, _ = self.propagate1(*prop2, *in_f)
+
+class DecoderPp(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.propagate3 = FeaturePropagation(4, MLP([512 + 256, 256], act=nn.Tanh(), norm=None))
+        self.propagate2 = FeaturePropagation(8, MLP([256 + 128, 128], act=nn.Tanh(), norm=None))
+        self.propagate1 = FeaturePropagation(16, MLP([128 + 3, 128, 128, 3], act=nn.Tanh(), norm=None))
+
+    def forward(self, x: Tensor, pos: Tensor, batch: Tensor, skip) -> Tensor:
+        prop3 = self.propagate3(x, pos, batch, *skip[2])
+        prop2 = self.propagate2(*prop3, *skip[1])
+        out, _, _ = self.propagate1(*prop2, *skip[0])
         return out
 
 
-class PipnPP(L.LightningModule):
+class Branch(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = MLP([5, 256, 256, 512], act=nn.Tanh(), norm=None)
+
+    def forward(self, d_points: Tensor, d: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
+        """
+        :param d_points: Coordinates of darcy boundary points(B, M, 2)
+        :param d: Darcy coefficients (B, M, 2)
+        :param inlet_points: Coordinates of inlet boundary points(B, N, 2)
+        :param inlet_ux: inlet velocity along x (B, N, 1)
+        :return: Parameter embedding (B, 1, 512)
+        """
+        points = torch.cat([d_points, inlet_points], dim=-2)
+        x = torch.zeros((points.shape[0], points.shape[1], d.shape[-1] + inlet_ux.shape[-1]), device=points.device)
+        x[..., :d.shape[-2], 0:2] = d
+        x[..., d.shape[-2]:, 2:3] = inlet_ux
+        x = torch.cat([points, x], dim=-1)
+        y = self.linear(x)
+        return torch.max(y, dim=1, keepdim=True)[0].squeeze()
+
+
+class NeuralOperator(nn.Module):
+    def __init__(self, in_channels, out_channels, dropout=False):
+        super().__init__()
+        self.linear = nn.Sequential(
+            nn.Linear(in_channels, out_channels),
+            nn.Tanh()
+        )
+        if dropout:
+            self.linear.append(nn.Dropout(0.05))
+
+    def forward(self, x: Tensor, par_embedding: Tensor):
+        return self.linear(x) * par_embedding
+
+
+class PiGanoPP(L.LightningModule):
     def __init__(self, domain_dict: dict, scalers: dict[str, StandardScaler]):
         super().__init__()
         self.save_hyperparameters()
         self.domain_dict = domain_dict
-        self.pointnet_pp = PointNetPP()
+        self.encoder = EncoderPp()
+        self.decoder = DecoderPp()
+        self.branch = Branch()
+        self.neural_op1 = NeuralOperator(512, 512)
+        self.neural_op2 = NeuralOperator(512, 512)
+
         self.mu = 0.01  # As rho=1 mu and nu are the same
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
@@ -110,8 +157,24 @@ class PipnPP(L.LightningModule):
         self.continuity_loss = ContinuityLoss(self.u_scaler, self.points_scaler)
         self.verbose_predict = False
 
-    def forward(self, x: Tensor, pos: Tensor, edge_index: Tensor, batch: Tensor) -> Tensor:
-        return self.pointnet_pp(x, pos, batch)
+    def forward(self, x: Tensor,
+                pos: Tensor,
+                edge_index: Tensor,
+                batch: Tensor,
+                par_d_points: Tensor,
+                par_d: Tensor,
+                par_inlet_points: Tensor,
+                par_inlet_ux: Tensor) -> Tensor:
+        par_embedding = self.branch(par_d_points, par_d, par_inlet_points, par_inlet_ux)
+        par_embedding = torch.stack([*par_embedding])
+
+        out, skip = self.encoder(x, pos, batch)
+        out_x, out_pos, out_batch = out
+
+        out = self.neural_op1(out_x, par_embedding)
+        out = self.neural_op1(out, par_embedding)
+
+        return self.decoder(out, out_pos, out_batch, skip)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)
@@ -131,14 +194,23 @@ class PipnPP(L.LightningModule):
     def training_step(self, in_data: FoamData, batch_idx: int):
         in_data.domain_dict = self.domain_dict
 
+        internal_batch = in_data.slice('internal').batch
         internal_pos = in_data.slice('internal').pos
         internal_pos.requires_grad = True
-        unb_pos = torch.stack(unbatch(internal_pos, in_data.slice('internal').batch))
+        unb_pos = torch.stack(unbatch(internal_pos, internal_batch))
         boundary_pos = torch.stack(unbatch(in_data.slice('boundary').pos, in_data.slice('boundary').batch))
         in_pos = torch.cat([unb_pos, boundary_pos], dim=-2)
         in_pos = torch.cat([*in_pos])
 
-        pred = self.forward(in_data.zones_ids, in_pos, in_data.edge_index, in_data.batch)
+        pred = self.forward(in_data.zones_ids,
+                            in_pos,
+                            in_data.edge_index,
+                            in_data.batch,
+                            torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
+                            torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
+
         pred_data = PdeData(pred, in_data.batch, self.domain_dict)
         # i=0 is x, j=1 is y
         d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_pos, pred_data.slice('internal').ux, 0, 1)
@@ -209,7 +281,16 @@ class PipnPP(L.LightningModule):
     def validation_step(self, in_data: FoamData):
         in_data.domain_dict = self.domain_dict
 
-        pred = self.forward(in_data.zones_ids, in_data.pos, in_data.edge_index, in_data.batch)
+        internal_batch = in_data.slice('internal').batch
+        pred = self.forward(in_data.zones_ids,
+                            in_data.pos,
+                            in_data.edge_index,
+                            in_data.batch,
+                            torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
+                            torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
+
         pred_data = PdeData(pred, in_data.batch, self.domain_dict)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(in_data.pde.p))
@@ -221,6 +302,7 @@ class PipnPP(L.LightningModule):
 
     def predict_step(self, in_data: FoamData) -> tuple[Tensor, Tensor] | Tensor:
         in_data.domain_dict = self.domain_dict
+        internal_batch = in_data.slice('internal').batch
 
         if self.verbose_predict:
             torch.set_grad_enabled(True)
@@ -232,7 +314,14 @@ class PipnPP(L.LightningModule):
             in_pos = torch.cat([unb_pos, boundary_pos], dim=-2)
             in_pos = torch.concatenate([*in_pos])
 
-            pred = self.forward(in_data.zones_ids, in_pos, in_data.edge_index, in_data.batch)
+            pred = self.forward(in_data.zones_ids,
+                                in_pos,
+                                in_data.edge_index,
+                                in_data.batch,
+                                torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
+                                torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
             pred_data = PdeData(pred, in_data.batch, self.domain_dict)
 
             # i=0 is x, j=1 is y
@@ -267,4 +356,11 @@ class PipnPP(L.LightningModule):
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:
-            return self.forward(in_data.zones_ids, in_data.pos, in_data.edge_index, in_data.batch)
+            return self.forward(in_data.zones_ids,
+                                in_data.pos,
+                                in_data.edge_index,
+                                in_data.batch,
+                                torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
+                                torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))

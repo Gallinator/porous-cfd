@@ -100,8 +100,10 @@ class DomainData(Data):
 
 
 class PdeData:
-    def __init__(self, data: Tensor | np.ndarray):
+    def __init__(self, data: Tensor | np.ndarray, batch=None, domain_dict=None):
         self.data = data
+        self.domain_dict = domain_dict
+        self.batch = batch
 
     @property
     def u(self) -> Tensor | np.ndarray:

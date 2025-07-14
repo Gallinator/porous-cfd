@@ -233,10 +233,13 @@ class FoamDataset(InMemoryDataset):
         return np.concatenate([points, pde, zones, d, inlet, moment, div], axis=1)
 
     def load_case(self, case_dir):
-        b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        b_dict = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        inlet_data = self.extract_inlet_conditions(b_dict)
 
-        b_data = np.concatenate(list(b_data.values()))
-        b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_data = np.concatenate(list(b_dict.values()))
+        b_data = np.concatenate([b_data, inlet_data], axis=-1)
+
+        b_samples = self.get_boundaries_samples(b_dict)
         b_data = b_data[b_samples]
 
         i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))

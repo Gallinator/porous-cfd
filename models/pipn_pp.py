@@ -77,11 +77,10 @@ class PointNetPP(nn.Module):
 
 
 class PipnPP(L.LightningModule):
-    def __init__(self, n_internal: int, n_boundary: int, scalers: dict[str, StandardScaler]):
+    def __init__(self, domain_dict: dict, scalers: dict[str, StandardScaler]):
         super().__init__()
         self.save_hyperparameters()
-        self.n_internal = n_internal
-        self.n_boundary = n_boundary
+        self.domain_dict = domain_dict
         self.pointnet_pp = PointNetPP()
         self.mu = 0.01  # As rho=1 mu and nu are the same
         self.d = 1000

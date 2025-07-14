@@ -27,6 +27,62 @@ class StandardScaler:
         return StandardScaler(torch.tensor(self.std, device=device), torch.tensor(self.mean, device=device))
 
 
+class DomainData(Data):
+    def __init__(self, pos=None, x=None, y=None, residuals=None, domain_dict=None, batch=None):
+        super().__init__(pos=pos, x=x, y=y)
+        self.residuals = residuals
+        self.domain_dict = domain_dict
+        self.batch = batch
+
+    @property
+    def pde(self):
+        return PdeData(self.y, self.batch if hasattr(self, 'batch') else None,
+                       self.domain_dict if hasattr(self, 'domain_dict') else None)
+
+    @property
+    def zones_ids(self):
+        return self.x[..., 0:1]
+
+    @property
+    def d(self):
+        return self.x[..., 1:3]
+
+    @property
+    def inlet_ux(self):
+        return self.x[..., 3:4]
+
+    @property
+    def mom_x(self):
+        return self.residuals[..., 0:1]
+
+    @property
+    def mom_y(self):
+        return self.residuals[..., 1:2]
+
+    @property
+    def div(self):
+        return self.residuals[..., 2:]
+
+    def slice(self, item):
+        data = torch.cat([self.pos, self.x, self.y, self.residuals], dim=-1)
+        if self.batch is not None:
+            data = torch.cat([data, self.batch.unsqueeze(1)], dim=-1)
+            batched_data = torch.stack(unbatch(data, self.batch))
+            sliced_data = batched_data[..., self.domain_dict[item], :]
+            data = torch.cat([*sliced_data])
+            sliced_batch = data[..., -1]
+        else:
+            data = data[..., self.domain_dict[item], :]
+            sliced_batch = self.batch
+
+        return DomainData(data[..., 0:2],  # pos
+                          data[..., 2:6],  # zones
+                          data[..., 6:9],  # y-pde
+                          data[..., 9:],  # residuals,
+                          self.domain_dict,
+                          sliced_batch.to(dtype=torch.int64))
+
+
 class PdeData:
     def __init__(self, data: Tensor | np.ndarray):
         self.data = data

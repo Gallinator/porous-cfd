@@ -125,6 +125,11 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
         set_decompose_par(f'{case_path}/simpleFoam', n_proc)
 
 
+def raise_with_log_text(case_path, text):
+    with open(f'{case_path}/log.txt') as log:
+        raise RuntimeError(f'{text} {case_path}\n\n {log.read()}')
+
+
 def generate_data(cases_dir: str):
     for case in track(glob.glob(f"{cases_dir}/*"), description="Generating geometries"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -132,7 +137,7 @@ def generate_data(cases_dir: str):
         process.communicate(f"{case}/snappyHexMesh/Run")
         process.wait()
         if process.returncode != 0:
-            raise RuntimeError(f'Failed to generate mesh for {case}')
+            raise_with_log_text(f'{case}/snappyHexMesh', 'Failed to generate mesh for case ')
 
     for case in track(glob.glob(f"{cases_dir}/*"), description="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -140,7 +145,8 @@ def generate_data(cases_dir: str):
         process.communicate(f"{case}/simpleFoam/Run")
         process.wait()
         if process.returncode != 0:
-            raise RuntimeError(f'Failed to run {case}')
+            raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
+
         clean_dir(f"{case}/snappyHexMesh")
         os.rmdir(f"{case}/snappyHexMesh")
         shutil.move(f"{case}/simpleFoam", 'tmp')

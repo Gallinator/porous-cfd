@@ -4,9 +4,27 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
 . ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions
 
-cleanCase &&
-blockMesh &&
-decomposePar &&
-mpirun -np $n_proc snappyHexMesh -overwrite -parallel &&
-reconstructParMesh -constant -allRegions -noZero &&
-changeDictionary -constant
+log_output(){
+  if [ $1 != 0 ]; then
+  echo "$2">"./log.txt";
+  exit  1;
+fi
+}
+out=$(cleanCase 2>&1 >/dev/null)
+log_output $? "$out"
+
+
+out=$(blockMesh 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(decomposePar 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(mpirun -np $n_proc snappyHexMesh -overwrite -parallel 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(reconstructParMesh -constant -allRegions -noZero >/dev/null)
+log_output $? "$out"
+
+out=$(changeDictionary -constant >/dev/null)
+log_output $? "$out"

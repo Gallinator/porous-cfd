@@ -139,6 +139,8 @@ class FoamDataset(Dataset):
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
         self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
+
+        with open(Path(data_dir).parent / 'min_points.json') as f:  self.min_points = json.load(f)
         self.domain_dict = self.get_domain_map()
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]

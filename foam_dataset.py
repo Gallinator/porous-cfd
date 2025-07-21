@@ -193,11 +193,10 @@ class FoamDataset(Dataset):
     def get_boundaries_samples(self, boundary_dict: dict):
         samples = []
         cur_start = 0
-        if self.n_boundary % 5 != 0:
-            print(
-                f'Warning: attempting to sample {self.n_boundary} boundary points but it is only possible to sample {self.n_boundary - self.n_boundary % 5} points')
+        tot = sum([self.min_points[k] for k in boundary_dict.keys()])
+
         for k, b in boundary_dict.items():
-            n = self.n_boundary * (2 if k == 'walls' else 1) / 5
+            n = self.n_boundary * self.min_points[k] / tot
             index = np.random.choice(len(b), replace=False, size=int(n)) + cur_start
             samples.extend(index.tolist())
             cur_start += len(b)

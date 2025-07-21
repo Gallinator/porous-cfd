@@ -68,15 +68,15 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
 
 def plot_case(path: str):
-    boundary_c, boundary_u, boundary_p, boundary_porous = data_parser.parse_boundary(path, ['U'], ['p'])
-    mesh_c, mesh_p, mesh_u, mesh_porous = parse_internal_mesh(path, "p", "U")
-    porous = np.vstack([boundary_porous, mesh_porous])
+    b_data = data_parser.parse_boundary(path, ['U'], ['p'])
+    i_data = parse_internal_mesh(path, "U", "p")
+    data = np.vstack([b_data, i_data])
 
     plot_fields(Path(path).stem,
-                np.vstack([boundary_c, mesh_c]),
-                np.vstack([boundary_u, mesh_u]),
-                np.vstack([boundary_p, mesh_p]),
-                porous)
+                data[..., 0:2],
+                data[..., 2:4],
+                data[..., 4:5],
+                data[..., 5:6])
 
 
 def plot_histogram(ax, data, color: str, title: str, bins=100):

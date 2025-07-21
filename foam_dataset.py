@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import numpy as np
 import torch
@@ -166,7 +167,9 @@ class FoamDataset(InMemoryDataset):
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
         self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
-        self.domain_dict = self.get_domain_dict()
+
+        with open(Path(data_dir).parent / 'min_points.json') as f:  self.min_points = json.load(f)
+        self.domain_dict = self.get_domain_map()
 
         super().__init__(data_dir)
         self.load(self.processed_paths[0])

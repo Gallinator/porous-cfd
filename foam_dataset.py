@@ -178,20 +178,18 @@ class FoamDataset(InMemoryDataset):
     def processed_file_names(self):
         return ['data.pt']
 
-    def get_domain_dict(self):
-        boundary_subdomain_size = int(self.n_boundary / 5)
-        inlet_start = self.n_internal
-        interface_start = inlet_start + boundary_subdomain_size
-        outlet_start = interface_start + boundary_subdomain_size
-        walls_start = outlet_start + boundary_subdomain_size
-        return {
-            'internal': slice(None, self.n_internal),
-            'boundary': slice(self.n_internal, None),
-            'inlet': slice(inlet_start, interface_start),
-            'interface': slice(interface_start, outlet_start),
-            'outlet': slice(outlet_start, walls_start),
-            'walls': slice(walls_start, None)
-        }
+    def get_domain_map(self):
+        min_tot = sum([self.min_points[k] for k in self.min_points.keys() if k != 'internal'])
+        domain_map = {'internal': slice(None, self.n_internal), 'boundary': slice(self.n_internal, None)}
+
+        exclude_keys = domain_map.keys()
+        prev_start = self.n_internal
+        for k, m in self.min_points.items():
+            if k in exclude_keys: continue
+            next_start = prev_start + int(self.n_boundary * m / min_tot)
+            domain_map[k] = slice(prev_start, next_start)
+            prev_start = next_start
+        return domain_map
 
     def check_sample_size(self):
         data_min_points = self.meta['Min points']['Internal']

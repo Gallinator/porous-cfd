@@ -84,7 +84,7 @@ class FoamData(DomainData):
         return DomainData(self.data[..., self.domain_dict[item], :])
 
     def numpy(self):
-        return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])
+        return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)], self.domain_dict)
 
 
 class StandardScaler:

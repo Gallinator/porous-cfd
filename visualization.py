@@ -165,6 +165,3 @@ def plot_residuals(*args):
     ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Continuity'])
     fig.tight_layout()
     plt.show()
-
-
-plot_case('data/train/raw/s1-1_r60_rectangle_d100-100_in0.35')

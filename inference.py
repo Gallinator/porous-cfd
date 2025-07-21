@@ -7,18 +7,18 @@ from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
 from visualization import plot_fields
 
-CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt'
+CHECKPOINT_PATH = 'lightning_logs/version_63/checkpoints/epoch=1458-step=2918.ckpt'
 
 model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
 
-val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
+val_data = FoamDataset('data/val_unseen', 1000, 200, 500, 'data/train')
 val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
 trainer = Trainer(logger=False, enable_checkpointing=False)
-pred = trainer.predict(model, dataloaders=val_loader)[0]
+pred = trainer.predict(model, dataloaders=val_loader)[1]
 pred = PdeData(pred).numpy()
 
-tgt = FoamData(val_data[0]).numpy()
+tgt = FoamData(val_data[1]).numpy()
 
 points_scaler = val_data.standard_scaler[0:2]
 u_scaler = val_data.standard_scaler[2:4]

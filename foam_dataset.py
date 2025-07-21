@@ -133,7 +133,6 @@ class FoamDataset(Dataset):
         self.n_obs = n_obs
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
         self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
-        self.check_sample_size()
         self.standard_scaler = StandardScaler(
             np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
@@ -145,6 +144,7 @@ class FoamDataset(Dataset):
 
         self.domain_dict = self.get_domain_map()
 
+        self.check_sample_size()
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
     def check_sample_size(self):

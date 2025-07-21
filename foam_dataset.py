@@ -141,17 +141,18 @@ class FoamDataset(Dataset):
         self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
 
         with open(Path(data_dir).parent / 'min_points.json') as f:  self.min_points = json.load(f)
+        self.min_boundary = sum(list(self.min_points.values())[1:])
+
         self.domain_dict = self.get_domain_map()
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
     def check_sample_size(self):
-        data_min_points = self.meta['Min points']['Internal']
-        if self.n_internal > data_min_points:
-            raise ValueError(f'Cannot sample {self.n_internal} points from {data_min_points} points!')
-        data_min_points = self.meta['Min points']['Boundary']
-        if self.n_boundary > data_min_points:
-            raise ValueError(f'Cannot sample {self.n_boundary} points from {data_min_points} points!')
+        min_points = self.min_points['internal']
+        if self.n_internal > min_points:
+            raise ValueError(f'Cannot sample {self.n_internal} points from {min_points} points!')
+        if self.n_boundary > self.min_boundary:
+            raise ValueError(f'Cannot sample {self.n_boundary} points from {self.min_boundary} points!')
 
     def __len__(self):
         return len(self.samples)

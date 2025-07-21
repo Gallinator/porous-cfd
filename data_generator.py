@@ -164,20 +164,19 @@ def generate_data(cases_dir: str):
 
 
 def generate_meta(data_dir: str):
-    boundary_num_points, internal_num_points, porous_num_points = [], [], []
+    internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 4
     d_max = np.ones(2) * sys.float_info.min
     running_stats = Welford()
     elapse_times = []
 
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
         b_data = parse_boundary(case, ['U'], ['p'])
+        boundary_min = [min(boundary_min[i], len(d)) for i, d in enumerate(b_data.values())]
+
         b_data = np.concatenate(list(b_data.values()))
         i_data = parse_internal_mesh(case, "U", "p")
-        n_porous = np.count_nonzero(b_data[..., -3:-2] > 0) + np.count_nonzero(i_data[..., -3:-2] > 0)
 
-        boundary_num_points.append(len(b_data))
-        internal_num_points.append(len(i_data))
-        porous_num_points.append(n_porous)
+        internal_min = min(internal_min, len(i_data))
 
         d = np.max(i_data[:, -2:], axis=0)
         d_max = np.maximum(d, d_max)
@@ -188,9 +187,11 @@ def generate_meta(data_dir: str):
 
         elapse_times.append(parse_elapsed_time(case) / 1e6)
 
-    min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
-                       "Internal": int(np.min(internal_num_points)),
-                       'Porous': int(np.min(porous_num_points))}
+    min_points_meta = {"internal": internal_min,
+                       "inlet": boundary_min[0],
+                       "interface": boundary_min[1],
+                       "outlet": boundary_min[2],
+                       "walls": boundary_min[3]}
     features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
     std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
     mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}

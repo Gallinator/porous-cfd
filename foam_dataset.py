@@ -158,19 +158,17 @@ class FoamDataset(Dataset):
         return len(self.samples)
 
     def get_domain_map(self):
-        boundary_subdomain_size = int(self.n_boundary / 5)
-        inlet_start = self.n_internal
-        interface_start = inlet_start + boundary_subdomain_size
-        outlet_start = interface_start + boundary_subdomain_size
-        walls_start = outlet_start + boundary_subdomain_size
-        return {
-            'internal': slice(None, self.n_internal),
-            'boundary': slice(self.n_internal, None),
-            'inlet': slice(inlet_start, interface_start),
-            'interface': slice(interface_start, outlet_start),
-            'outlet': slice(outlet_start, walls_start),
-            'walls': slice(walls_start, None)
-        }
+        min_tot = sum([self.min_points[k] for k in self.min_points.keys() if k != 'internal'])
+        domain_map = {'internal': slice(None, self.n_internal), 'boundary': slice(self.n_internal, None)}
+
+        exclude_keys = domain_map.keys()
+        prev_start = self.n_internal
+        for k, m in self.min_points.items():
+            if k in exclude_keys: continue
+            next_start = prev_start + int(self.n_boundary * m / min_tot)
+            domain_map[k] = slice(prev_start, next_start)
+            prev_start = next_start
+        return domain_map
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]

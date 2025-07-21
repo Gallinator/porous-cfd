@@ -1,19 +1,32 @@
 import json
 import os
+import re
 from pathlib import Path
 
 import numpy as np
 from foamlib import FoamCase, FoamFile
 
 
-def parse_scalar_field(path: str):
-    """This is a temporary workaround as foamlib cannot read boundary scalar fields"""
-    centers = []
+def parse_post_process_fields(path: str):
+    """This is a temporary workaround as foamlib cannot read post processed fields"""
+
+    def parse_content(content: str):
+        if content[0] == '(':
+            return [float(v) for v in content[1:-2].split()]
+        else:
+            return float(content)
+
     with open(path, 'r') as f:
         lines = f.readlines()
+        if (m := re.match('(\d+){(.+)}', lines[0])) is not None:
+            n = m.groups()[0]
+            v = parse_content(m.groups()[1])
+            return [v] * int(n)
+
+        data = []
         for l in lines[3:-1]:
-            centers.append(float(l))
-    return centers
+            data.append(parse_content(l))
+    return data
 
 
 def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np.ndarray:
@@ -28,16 +41,14 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np
         faces.extend(coords)
 
         for s in scalars:
-            if s == 'div(phi)':
-                values = parse_scalar_field(
-                    f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
-            else:
-                values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")[None]
+            values = parse_post_process_fields(
+                f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
             values = make_column(values)
             scalar_values[s].extend(values)
-            np.array(scalar_values[s])
+
         for v in vectors:
-            values = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/vectorField/{v}")[None]
+            values = parse_post_process_fields(
+                f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/vectorField/{v}")
             values = make_at_most_2d(values)
             vector_values[v].extend(values)
     vector_values = [np.array(vector_values[v]) for v in vectors]

@@ -75,7 +75,7 @@ def get_location_inside(mesh: str):
 
 
 def get_location_outside():
-    return -3.14 + 1e-5, -3.14 + 1e-5
+    return -0.3 + 1e-6, -0.3 + 1e-6
 
 
 def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):

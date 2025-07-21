@@ -208,6 +208,20 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
+def generate_min_points(data_parent: str):
+    dicts = []
+    for split in glob.glob(f'{data_parent}/*'):
+        with open(f'{split}/raw/meta.json', 'r') as f:
+            dicts.append(json.load(f)['Min points'])
+
+    out = dict.fromkeys(dicts[0].keys(), sys.float_info.max)
+    for d in dicts:
+        out = {k: min(out[k], d[k]) for k in d.keys()}
+
+    with open(f'{data_parent}/min_points.json', 'w') as f:
+        f.write(json.dumps(out))
+
+
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--openfoam-dir', type=str,
@@ -232,3 +246,4 @@ if __name__ == '__main__':
                                 args.openfoam_procs)
         generate_data(f'data/{d}/raw')
         generate_meta(f'data/{d}/raw')
+    generate_min_points('data')

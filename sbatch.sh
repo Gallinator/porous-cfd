@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --partition=ulow
 # RESOURCES
-#SBATCH --ntasks=1
+#SBATCH --ntasks=8
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --gres=gpu:0
@@ -30,7 +30,7 @@ conda init bash
 conda activate porous-cfd
 
 ### Executable script
-python $HOME/$BASEDIR/data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 4
+python $HOME/$BASEDIR/data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 8
 
 
 

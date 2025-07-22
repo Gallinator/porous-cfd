@@ -11,9 +11,9 @@
 
 ### Definitions
 export BASEDIR="porous-cfd"
-export SHRDIR="/scratch_share/mmsp/`whoami`"
+#export SHRDIR="/scratch_share/mmsp/`whoami`"
 export LOCDIR="/scratch_local"
-export TMPDIR=$SHRDIR/$BASEDIR/tmp_$SLURM_JOB_NAME_$SLURM_JOB_ID
+#export TMPDIR=$SHRDIR/$BASEDIR/tmp_$SLURM_JOB_NAME_$SLURM_JOB_ID
 
 ### File System Setup
 cd $HOME/$BASEDIR                  # use a folder in home directory

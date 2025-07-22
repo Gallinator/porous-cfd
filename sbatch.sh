@@ -30,7 +30,7 @@ conda init bash
 conda activate porous-cfd
 
 ### Executable script
-python $HOME/$BASEDIR/data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 8
+python data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 8
 
 
 

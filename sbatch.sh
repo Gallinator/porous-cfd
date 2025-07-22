@@ -40,4 +40,3 @@ python data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-
 
 ### Footer
 date    #prints last line of output file
-(END)

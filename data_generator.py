@@ -87,10 +87,16 @@ def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):
     snappy_dict['castellatedMeshControls']['locationsInMesh'] = locations_in_mesh
 
 
-def set_par_dict_coeffs(coeffs, n_proc: int):
+def set_par_dict_coeffs(dict_path: str, n_proc: int):
     proc_y = int(n_proc / 2)
     proc_x = n_proc - proc_y
-    coeffs['n'] = [proc_x, proc_y, 1]
+    with open(dict_path) as f:
+        lines = f.read()
+        lines = re.sub('numberOfSubdomains\s+\d+;', f'numberOfSubdomains {n_proc};', lines)
+        lines = re.sub('n\s+\(.+\)', f'n ({proc_x} {proc_y} 1);', lines)
+
+    with open(dict_path, 'w') as f:
+        f.write(lines)
 
 
 def set_run_n_proc(run_path: str, n_proc: int):
@@ -104,10 +110,9 @@ def set_run_n_proc(run_path: str, n_proc: int):
 def set_decompose_par(case_path: str, n_proc: int):
     if n_proc % 2 != 0:
         raise ValueError('n_proc must be an even number!')
-    par_dict = FoamFile(f'{case_path}/system/decomposeParDict')
-    par_dict['numberOfSubdomains'] = n_proc
-    set_par_dict_coeffs(par_dict['simpleCoeffs'], n_proc)
-    set_par_dict_coeffs(par_dict['hierarchicalCoeffs'], n_proc)
+    dict_path = f'{case_path}/system/decomposeParDict'
+    set_par_dict_coeffs(dict_path, n_proc)
+    set_par_dict_coeffs(dict_path, n_proc)
     set_run_n_proc(f'{case_path}/Run', n_proc)
 
 

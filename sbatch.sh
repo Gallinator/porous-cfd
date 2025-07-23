@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=ulow
+#SBATCH --partition=only-one-gpu
 # RESOURCES
 #SBATCH --ntasks=8
 #SBATCH --cpus-per-task=4

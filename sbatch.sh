@@ -4,8 +4,8 @@
 #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
-#SBATCH --gres=gpu:0
-#SBATCH --time=00:15:00
+#SBATCH --gres=gpu:1
+#SBATCH --time=00:45:00
 # OUTPUT FILES
 #SBATCH --output=job_logs/out_%x_%j.log        # Standard output and error log, with job name and id
 

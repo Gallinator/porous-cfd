@@ -31,8 +31,7 @@ conda activate porous-cfd
 
 ### Executable script
 python data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 8
-
-
+python training.py
 
 ### File system cleanup
 #cp $TMPDIR/<output_data> $HOME/$BASEDIR/job_logs/    # copy output data to output folder

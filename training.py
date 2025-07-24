@@ -2,7 +2,7 @@ from lightning.pytorch.callbacks import RichProgressBar
 from torch_geometric.data import DataLoader
 from foam_dataset import FoamDataset
 from foam_dataset import FoamData
-from models.pipn_pp import PipnPP
+from models.pi_gano_pp import PiGanoPP
 import lightning as L
 
 BATCH_SIZE = 13
@@ -19,7 +19,7 @@ scalers = {'U': train_data.standard_scaler[2:4],
            'p': train_data.standard_scaler[4],
            'Points': train_data.standard_scaler[0:2]}
 
-model = PiGanoPP(train_data.domain_dict, scalers)
+    model = PiGanoPP(train_data.domain_dict, scalers)
 
 trainer = L.Trainer(max_epochs=-1,
                     callbacks=[RichProgressBar()],

@@ -4,6 +4,7 @@ from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
 from foam_dataset import PdeData, FoamData, StandardScaler
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger, BoundaryLoss
+from models.utils import PhysicsWarmup
 
 
 class Encoder(nn.Module):
@@ -91,6 +92,7 @@ class Pipn(L.LightningModule):
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
+        self.warmup = PhysicsWarmup(1000, 500)
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> Tensor:
         local_features, global_feature = self.encoder.forward(x, zones_ids)
@@ -141,15 +143,16 @@ class Pipn(L.LightningModule):
         mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
                                           in_data.zones_ids)
 
-        loss = (cont_loss +
-                mom_loss_x +
-                mom_loss_y +
+        phys_w = self.warmup.weight(self.current_epoch)
+        loss = (cont_loss * phys_w +
+                mom_loss_x * phys_w +
+                mom_loss_y * phys_w +
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
-                obs_p_loss * 1000 +
-                obs_ux_loss * 1000 +
-                obs_uy_loss * 1000)
+                obs_p_loss +
+                obs_ux_loss +
+                obs_uy_loss)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,

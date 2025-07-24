@@ -1,8 +1,7 @@
 class PhysicsWarmup:
-    def __init__(self, start_step, n_steps):
-        self.start_step = start_step
-        self.n_steps = n_steps
+    def __init__(self, start_epoch, n_epochs):
+        self.start_epoch = start_epoch
+        self.n_epochs = n_epochs
 
-    @property
-    def weight(self, step):
-        return max(0, min((step - self.start_step) / self.n_steps, 1))
+    def weight(self, epoch):
+        return max(0, min((epoch - self.start_epoch) / self.n_epochs, 1))

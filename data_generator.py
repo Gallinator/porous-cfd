@@ -57,6 +57,14 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
             ops.object.delete()
 
 
+def create_case_template_dirs():
+    """
+    Creates the missing directories in the case template because git does not track directories
+    """
+    pathlib.Path(f'assets/openfoam-case-template/snappyHexMesh/0').mkdir(parents=True, exist_ok=True)
+    pathlib.Path(f'assets/openfoam-case-template/snappyHexMesh/constant/triSurface').mkdir(parents=True, exist_ok=True)
+
+
 def clean_dir(directory: str):
     for root, dirs, files in os.walk(directory):
         for f in files:
@@ -206,6 +214,8 @@ def build_arg_parser() -> ArgumentParser:
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
+
+    create_case_template_dirs()
     clean_dir('data')
     clean_dir('assets/generated-meshes')
 

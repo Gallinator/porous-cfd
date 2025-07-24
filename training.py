@@ -1,24 +1,42 @@
+import argparse
+from argparse import ArgumentParser
+
 from lightning.pytorch.callbacks import RichProgressBar
 from torch.utils.data import DataLoader
 from foam_dataset import FoamDataset
 from models.pipn import Pipn
 import lightning as L
 
-BATCH_SIZE = 13
-N_INTERNAL = 667
-N_BOUNDARY = 168
 
-train_data = FoamDataset('data/train', N_INTERNAL, N_BOUNDARY)
-train_loader = DataLoader(train_data, BATCH_SIZE, True, num_workers=8)
-val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY)
-val_loader = DataLoader(val_data, BATCH_SIZE, False, num_workers=8, pin_memory=True)
+def build_arg_parser() -> ArgumentParser:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--n-internal', type=int,
+                            help='number of internal points to sample', default=667)
+    arg_parser.add_argument('--n-boundary', type=int,
+                            help='number of internal points to sample', default=168)
+    arg_parser.add_argument('--batch-size', type=int, default=13)
+    arg_parser.add_argument('--precision', type=str, default='32-true')
+    return arg_parser
 
-model = Pipn(N_INTERNAL, N_BOUNDARY)
 
-trainer = L.Trainer(max_epochs=-1,
-                    callbacks=[RichProgressBar()],
-                    log_every_n_steps=2,
-                    precision='16',
-                    val_check_interval=2)
+if __name__ == '__main__':
+    args = build_arg_parser().parse_args()
 
-trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    batch_size = args.batch_size
+    n_internal = args.n_internal
+    n_boundary = args.n_boundary
+
+    train_data = FoamDataset('data/train', n_internal, n_boundary)
+    train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
+    val_data = FoamDataset('data/val', n_internal, n_boundary)
+    val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
+
+    model = Pipn(n_internal, n_boundary)
+
+    trainer = L.Trainer(max_epochs=-1,
+                        callbacks=[RichProgressBar()],
+                        log_every_n_steps=2,
+                        precision=args.precision,
+                        val_check_interval=2)
+
+    trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

@@ -37,7 +37,8 @@ if __name__ == '__main__':
 
     scalers = {'U': train_data.standard_scaler[2:4],
                'p': train_data.standard_scaler[4],
-               'Points': train_data.standard_scaler[0:2]}
+               'Points': train_data.standard_scaler[0:2],
+               'd': train_data.d_normalizer}
 
     model = PiGanoPP(train_data.domain_dict, scalers)
 

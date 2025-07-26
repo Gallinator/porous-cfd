@@ -62,7 +62,7 @@ class Pipn(L.LightningModule):
         self.encoder = Encoder()
         self.decoder = Decoder(3)
         self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
-        self.d = 10000
+        self.d = 14000
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',

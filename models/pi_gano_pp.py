@@ -130,7 +130,7 @@ class PiGanoPP(L.LightningModule):
         self.neural_op1 = NeuralOperator(512, 512)
         self.neural_op2 = NeuralOperator(512, 512)
 
-        self.mu = 0.01  # As rho=1 mu and nu are the same
+        self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',

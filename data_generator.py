@@ -95,8 +95,17 @@ def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):
 
 
 def set_par_dict_coeffs(dict_path: str, n_proc: int):
-    proc_y = int(n_proc / 2)
-    proc_x = n_proc - proc_y
+    i, prev = 1, n_proc
+    while True:
+        proc_x = 2 ** i
+        proc_y = n_proc / proc_x
+        if proc_y % 2 != 0 or proc_y <= proc_x:
+            proc_y = int(proc_y)
+            break
+        i += 1
+    proc_x = max(proc_x, proc_y)
+    proc_y = min(proc_x, proc_y)
+
     with open(dict_path) as f:
         lines = f.read()
         lines = re.sub('numberOfSubdomains\s+\d+;', f'numberOfSubdomains {n_proc};', lines)

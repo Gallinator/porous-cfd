@@ -2,8 +2,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn.functional import mse_loss
 import lightning as L
-
-from foam_dataset import StandardScaler
+from foam_dataset import StandardScaler, Normalizer
 
 
 class LossLogger:
@@ -21,12 +20,14 @@ class LossLogger:
 
 class MomentumLoss(nn.Module):
     def __init__(self, i: int, j: int, mu,
-                 u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler):
+                 u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler,
+                 d_scaler: Normalizer):
         super().__init__()
         self.mu = mu
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
         self.p_stats = p_scaler
+        self.d_scaler = d_scaler
         self.i = i
         self.j = j
 
@@ -36,7 +37,7 @@ class MomentumLoss(nn.Module):
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
-        d_i = d[..., i:i + 1]
+        d_i = self.d_scaler[i].inverse_transform(d[..., i:i + 1])
 
         return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
                 norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -

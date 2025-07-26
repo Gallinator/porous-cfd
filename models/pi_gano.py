@@ -79,6 +79,7 @@ class PiGano(L.LightningModule):
         self.u_scaler = scalers['U']
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
+        self.d_scaler = scalers['d']
 
         self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.u_scaler, self.points_scaler, self.p_scaler)
         self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.u_scaler, self.points_scaler, self.p_scaler)

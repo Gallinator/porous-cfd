@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
-from foam_dataset import PdeData, FoamData, StandardScaler
+from foam_dataset import PdeData, FoamData, StandardScaler, Normalizer
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 
 
@@ -54,7 +54,7 @@ class Decoder(nn.Module):
 
 
 class Pipn(L.LightningModule):
-    def __init__(self, domain_dict, scalers: dict[str, StandardScaler]):
+    def __init__(self, domain_dict, scalers: dict[str, StandardScaler | Normalizer]):
         super().__init__()
         self.save_hyperparameters()
         self.domain_dict = domain_dict
@@ -81,9 +81,12 @@ class Pipn(L.LightningModule):
         self.u_scaler = scalers['U']
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
+        self.d_scaler = scalers['d']
 
-        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.u_scaler, self.points_scaler, self.p_scaler)
-        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.u_scaler, self.points_scaler, self.p_scaler)
+        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
+                                            self.d_scaler)
+        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
+                                            self.d_scaler)
         self.continuity_loss = ContinuityLoss(self.u_scaler, self.points_scaler)
         self.verbose_predict = False
 

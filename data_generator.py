@@ -5,6 +5,7 @@ import json
 import math
 import os
 import pathlib
+import random
 import re
 import shutil
 import subprocess
@@ -252,6 +253,24 @@ def generate_meta(data_dir: str):
 
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
+
+
+def generate_split(data_path: str, config_path: str):
+    if not os.path.exists(config_path):
+        return
+    with open(config_path) as f:
+        splits = json.load(f)['splits']
+    cases = list(os.listdir(f"{data_path}"))
+    random.shuffle(cases)
+    n = len(cases)
+    start = 0
+    for s in splits:
+        end = start + int(splits[s] * n)
+        for case in cases[start:end]:
+            shutil.move(f'{data_path}/{case}', f'{pathlib.Path(data_path).parent}/{s}/{case}')
+        start = end
+
+    os.rmdir(data_path)
 
 
 def generate_min_points(data_parent: str):

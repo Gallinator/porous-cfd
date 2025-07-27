@@ -101,7 +101,7 @@ def get_location_inside(mesh: str):
     ops.object.delete()
     import_obj(mesh)
     ops.object.select_all(action='SELECT')
-    ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME')
+    ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
     location = bpy.context.object.location
     ops.object.delete()
     return location[0:2]

@@ -268,5 +268,8 @@ if __name__ == '__main__':
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}/raw',
                                 args.openfoam_procs)
+        generate_split(f'data/{d}', f'assets/meshes/{d}/config.json')
+
+    for d in os.listdir('data'):
         generate_data(f'data/{d}/raw')
         generate_meta(f'data/{d}/raw')

@@ -16,6 +16,9 @@ log_output $? "$out"
 out=$(blockMesh 2>&1 >/dev/null)
 log_output $? "$out"
 
+out=$(surfaceFeatureExtract 2>&1 >/dev/null)
+log_output $? "$out"
+
 out=$(snappyHexMesh -overwrite 2>&1 >/dev/null)
 log_output $? "$out"
 

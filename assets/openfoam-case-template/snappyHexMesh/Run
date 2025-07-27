@@ -13,17 +13,10 @@ fi
 out=$(cleanCase 2>&1 >/dev/null)
 log_output $? "$out"
 
-
 out=$(blockMesh 2>&1 >/dev/null)
 log_output $? "$out"
 
-out=$(decomposePar 2>&1 >/dev/null)
-log_output $? "$out"
-
-out=$(mpirun -np $n_proc snappyHexMesh -overwrite -parallel 2>&1 >/dev/null)
-log_output $? "$out"
-
-out=$(reconstructParMesh -constant -allRegions -noZero >/dev/null)
+out=$(snappyHexMesh -overwrite 2>&1 >/dev/null)
 log_output $? "$out"
 
 out=$(changeDictionary -constant >/dev/null)

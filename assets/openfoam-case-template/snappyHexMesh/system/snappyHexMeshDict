@@ -42,11 +42,10 @@ castellatedMeshControls
 
     features
     (
-        //{
-        //    file "someLine.eMesh";
-        //    //level 2;
-        //    levels ((0.0 2) (1.0 3));
-        //}
+        {
+            file "mesh.eMesh";
+            level 2;
+        }
     );
 
     refinementSurfaces

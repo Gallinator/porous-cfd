@@ -25,6 +25,29 @@ def import_obj(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
+def parse_rotations(rotations_dict: dict):
+    if not rotations_dict:
+        return [0]
+    start, stop, n = rotations_dict[0], rotations_dict[1], rotations_dict[2]
+    return np.linspace(start, stop, n)
+
+
+def parse_scale(scale_dict: dict) -> list:
+    if [] in scale_dict.values():
+        return [(1, 1)]
+
+    def parse_values(data: list):
+        return np.linspace(data[0], data[1], data[2])
+
+    if 'xy' in scale_dict:
+        scales = parse_values(scale_dict['xy'])
+        return list(zip(scales, scales))
+
+    scales_x = parse_values(scale_dict['x'])
+    scales_y = parse_values(scale_dict['y'])
+    return list(itertools.product(scales_x, scales_y))
+
+
 def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
@@ -34,24 +57,23 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
             import_obj(f'{meshes_dir}/{mesh}')
-            for t in transforms:
-                for r in t["rotation"]:
-                    ops.object.select_all(action='SELECT')
-                    ops.object.duplicate(linked=False)
-                    obj = bpy.context.selected_objects[0]
+            rotations = parse_rotations(transforms['rotation'])
+            scales = parse_scale(transforms['scale'])
+            for r, s in itertools.product(rotations, scales):
+                ops.object.select_all(action='SELECT')
+                ops.object.duplicate(linked=False)
+                obj = bpy.context.selected_objects[0]
+                obj.scale = mathutils.Vector((s[0], s[1], 1.0))
 
-                    scale = t["scale"]
-                    obj.scale = mathutils.Vector((scale[0], scale[1], 1.0))
+                obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
 
-                    obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
-
-                    ops.wm.obj_export(filepath=f'{dest_dir}/s{scale[0]}-{scale[1]}_r{r}_{mesh}',
-                                      forward_axis='Y',
-                                      up_axis='Z',
-                                      export_materials=False,
-                                      export_selected_objects=True)
-                    # Delete copy
-                    ops.object.delete()
+                ops.wm.obj_export(filepath=f'{dest_dir}/s{s[0]}-{s[1]}_r{r}_{mesh}',
+                                  forward_axis='Y',
+                                  up_axis='Z',
+                                  export_materials=False,
+                                  export_selected_objects=True)
+                # Delete copy
+                ops.object.delete()
             # Delete original
             ops.object.select_all(action='SELECT')
             ops.object.delete()

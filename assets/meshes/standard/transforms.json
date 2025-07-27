@@ -1,0 +1,46 @@
+{
+  "circle.obj": {
+    "rotation": [],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "semi_circle.obj": {
+    "rotation": [0, 360, 5],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "circle_sector.obj": {
+    "rotation": [0, 360, 5],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "equilateral_triangle.obj": {
+    "rotation": [30, 90, 3],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "equilateral_hexagon.obj": {
+    "rotation": [0, 30, 2],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "equilateral_octagon.obj": {
+    "rotation": [0, 22.5, 2],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "trapezoid.obj": {
+    "rotation": [0, 360, 5],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "square.obj": {
+    "rotation": [0, 90, 4],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "star.obj": {
+    "rotation": [0, 90, 4],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "ellipse.obj": {
+    "rotation": [0, 90, 4],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  },
+  "rectangle.obj": {
+    "rotation": [0, 180, 5],
+    "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
+  }
+}

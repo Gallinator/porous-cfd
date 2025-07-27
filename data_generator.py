@@ -311,6 +311,9 @@ if __name__ == '__main__':
                                 f'data/{d}',
                                 f'assets/cases/{d}',
                                 args.openfoam_procs)
+        generate_split(f'data/{d}', f'assets/meshes/{d}/config.json')
+
+    for d in os.listdir('data'):
         generate_data(f'data/{d}')
         generate_meta(f'data/{d}')
     generate_min_points('data')

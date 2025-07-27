@@ -96,6 +96,8 @@ def clean_dir(directory: str):
 
 
 def get_location_inside(mesh: str):
+    ops.object.select_all(action='SELECT')
+    ops.object.delete()
     import_obj(mesh)
     ops.object.select_all(action='SELECT')
     ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME')

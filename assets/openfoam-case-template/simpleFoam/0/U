@@ -46,10 +46,6 @@ boundaryField
     {
         type            empty;
     }
-    mesh
-    {
-        type            noSlip;
-    }
 }
 
 

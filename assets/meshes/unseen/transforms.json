@@ -1,0 +1,22 @@
+{
+  "circle_cut.obj": {
+    "rotation": [],
+    "scale": {"xy": []}
+  },
+  "angel.obj": {
+    "rotation": [],
+    "scale": {"xy": []}
+  },
+  "cutter.obj": {
+    "rotation": [],
+    "scale": {"xy": []}
+  },
+  "elliptic_octagon.obj": {
+    "rotation": [],
+    "scale": {"xy": []}
+  },
+  "pin.obj": {
+    "rotation": [],
+    "scale": {"xy": []}
+  }
+}

@@ -273,7 +273,7 @@ def generate_split(data_path: str, config_path: str):
             shutil.move(f'{data_path}/{case}', f'{pathlib.Path(data_path).parent}/{s}/{case}')
         start = end
 
-    os.rmdir(data_path)
+    shutil.rmtree(pathlib.Path(data_path).parent)
 
 
 def generate_min_points(data_parent: str):

@@ -259,7 +259,10 @@ def generate_split(data_path: str, config_path: str):
     if not os.path.exists(config_path):
         return
     with open(config_path) as f:
-        splits = json.load(f)['splits']
+        config = json.load(f)
+        if 'splits' not in config.keys():
+            return
+        splits = config['splits']
     cases = list(os.listdir(f"{data_path}"))
     random.shuffle(cases)
     n = len(cases)

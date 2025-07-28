@@ -163,8 +163,8 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
-        config_file = json.load(config)
-        for inlet_ux, darcy in itertools.product(config_file['inlet'], config_file['darcy']):
+        config = json.load(config)['cfd params']
+        for inlet_ux, darcy in itertools.product(config['inlet'], config['darcy']):
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
                 location_inside, location_outside = get_location_inside(m), get_location_outside()
@@ -309,7 +309,7 @@ if __name__ == '__main__':
         generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}/raw',
-                                f'assets/cases/{d}',
+                                f'assets/meshes/{d}',
                                 args.openfoam_procs)
         generate_split(f'data/{d}/raw', f'assets/meshes/{d}/config.json')
 

@@ -1,4 +1,8 @@
 {
+  "cfd params": {
+    "darcy": [[100, 100, 0]],
+    "inlet": [0.35]
+  },
   "splits": {
     "train": 0.6,
     "val": 0.2,

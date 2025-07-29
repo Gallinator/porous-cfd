@@ -12,7 +12,7 @@ def parse_post_process_fields(path: str):
 
     def parse_content(content: str):
         if content[0] == '(':
-            return [float(v) for v in content[1:-2].split()]
+            return [float(v) for v in content[content.find('(') + 1:content.rfind(')')].split()]
         else:
             return float(content)
 

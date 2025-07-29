@@ -5,6 +5,7 @@ from rich.progress import track
 from torch import tensor, Tensor
 from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
+from visualization import plot_fields
 
 
 class PdeData:
@@ -13,7 +14,7 @@ class PdeData:
 
     @property
     def u(self) -> Tensor | np.ndarray:
-        return self.data[..., 0:2]
+        return self.data[..., 0:3]
 
     @property
     def ux(self) -> Tensor | np.ndarray:
@@ -24,8 +25,12 @@ class PdeData:
         return self.data[..., 1:2]
 
     @property
-    def p(self) -> Tensor | np.ndarray:
+    def uz(self) -> Tensor | np.ndarray:
         return self.data[..., 2:3]
+
+    @property
+    def p(self) -> Tensor | np.ndarray:
+        return self.data[..., 3:4]
 
     def numpy(self):
         return PdeData(self.data.numpy(force=True))
@@ -34,12 +39,12 @@ class PdeData:
 class FoamData:
     def __init__(self, batch: tuple | list):
         self.data, self.obs_samples = batch
-        self.points = self.data[..., 0:2]
-        self.pde = PdeData(self.data[..., 2:5])
+        self.points = self.data[..., 0:3]
+        self.pde = PdeData(self.data[..., 3:7])
 
     @property
     def zones_ids(self) -> Tensor | np.ndarray:
-        return self.data[..., 5:6]
+        return self.data[..., 7:8]
 
     @property
     def obs_ux(self) -> Tensor | np.ndarray:
@@ -55,11 +60,15 @@ class FoamData:
 
     @property
     def mom_x(self):
-        return self.data[..., 6:7]
+        return self.data[..., 7:8]
 
     @property
     def mom_y(self):
-        return self.data[..., 7:8]
+        return self.data[..., 8:9]
+
+    @property
+    def mom_z(self):
+        return self.data[..., 9:10]
 
     @property
     def div(self):
@@ -115,7 +124,7 @@ class FoamDataset(Dataset):
         return len(self.samples)
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
+        return np.concatenate((data[:, 0:3], data[:, 6:10], data[:, 11:12], data[:, 3:6], data[:, 10:11]), axis=1)
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
@@ -132,7 +141,7 @@ class FoamDataset(Dataset):
         obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
-        data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
+        data[:, 0:-5] = self.standard_scaler.transform(data[:, 3:-5])
 
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))

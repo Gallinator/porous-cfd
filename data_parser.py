@@ -38,7 +38,6 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
         scalar_values, vector_values = [], []
         intermediate_dir = list(os.listdir(f"{boundaries_path}/{b}/surface/{last_step}"))[0]
         coords = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/faceCentres")[None]
-        coords = make_at_most_2d(coords)
 
         for s in scalars:
             values = parse_post_process_fields(
@@ -49,19 +48,11 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
         for v in vectors:
             values = parse_post_process_fields(
                 f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/vectorField/{v}")
-            values = make_at_most_2d(values)
             vector_values.append(values)
 
-        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 5))], axis=-1)
+        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 7))], axis=-1)
 
     return b_dict
-
-
-def make_at_most_2d(field) -> np.array:
-    f = np.array(field)
-    if len(f.shape) > 1 and f.shape[-1] > 2:
-        return f[:, :2]
-    return f
 
 
 def make_column(field) -> np.array:
@@ -80,12 +71,10 @@ def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
     case = FoamCase(case_path)
     last_step = case[-1]
     domain_points = last_step.cell_centers().internal_field
-    domain_points = make_at_most_2d(domain_points)
     fields_values = []
     for f in fields:
         parsed_field = last_step[f].internal_field
         parsed_field = make_column(parsed_field)
-        parsed_field = make_at_most_2d(parsed_field)
         fields_values.append(parsed_field)
 
     porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))

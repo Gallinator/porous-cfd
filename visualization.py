@@ -18,10 +18,12 @@ M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
     porous_zone = np.nonzero(porous > 0)[0]
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=100, zorder=-1, c='silver',
+    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], points[porous_zone, 2], marker='$\circ$', s=100,
+               zorder=-1, c='silver',
                label='Porous')
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=50, zorder=-1, c='black')
-    plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
+    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], points[porous_zone, 2], marker='$\circ$', s=50,
+               zorder=-1, c='black')
+    plot = ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=value, s=2, cmap='turbo')
     fig.colorbar(plot, ax=ax)
     ax.legend(loc='upper right')
     ax.set_aspect('equal')
@@ -47,10 +49,13 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, plot_streams=True):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None):
     fig = plt.figure(figsize=(12, 10), layout='constrained')
     fig.suptitle(title, fontsize=20)
-    ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
+    ax_u_x, ax_u_y, ax_u_z, ax_p = (fig.add_subplot(2, 2, 1, projection='3d'),
+                                    fig.add_subplot(2, 2, 2, projection='3d'),
+                                    fig.add_subplot(2, 2, 3, projection='3d'),
+                                    fig.add_subplot(2, 2, 4, projection='3d'))
     # Pressure
     plot_scalar_field(f'$p$ {M2_S2}', points, p, porous, fig, ax_p)
 
@@ -59,10 +64,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
     plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y)
 
-    if plot_streams:
-        plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
-    else:
-        plot_scalar_field(f'$U$ {M_S}', points, norm(u, axis=1), porous, fig, ax_u)
+    plot_scalar_field(f'$u_z$ {M_S}', points, u[:, 2], porous, fig, ax_u_z)
 
     plt.show()
 
@@ -73,10 +75,10 @@ def plot_case(path: str):
     data = np.vstack([b_data, i_data])
 
     plot_fields(Path(path).stem,
-                data[..., 0:2],
-                data[..., 2:4],
-                data[..., 4:5],
-                data[..., 5:6])
+                data[..., 0:3],
+                data[..., 3:6],
+                data[..., 6:7],
+                data[..., 7:8])
 
 
 def plot_histogram(ax, data, color: str, title: str, bins=100):

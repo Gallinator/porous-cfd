@@ -252,7 +252,7 @@ def generate_meta(data_dir: str):
 
         data = np.concatenate((i_data, b_data))
 
-        running_stats.add_all(data[..., 0:5])
+        running_stats.add_all(data[..., 0:7])
 
         elapse_times.append(parse_elapsed_time(case) / 1e6)
 
@@ -262,8 +262,8 @@ def generate_meta(data_dir: str):
                        "outlet": boundary_min[2],
                        "walls": boundary_min[3]}
     features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
-    std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
-    mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}
+    std_meta = {'Points': features_std[0:3], 'U': features_std[3:6], 'p': features_std[6]}
+    mean_meta = {'Points': features_mean[0:3], 'U': features_mean[3:6], 'p': features_mean[6]}
     timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
     coefs_meta = {"d": {'Min': [0, 0], 'Max': d_max.tolist()},
                   "f": {'Min': [0, 0], 'Max': f_max.tolist()}}

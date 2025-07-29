@@ -51,7 +51,7 @@ class PdeData:
 
     @property
     def u(self) -> Tensor | np.ndarray:
-        return self.data[..., 0:2]
+        return self.data[..., 0:3]
 
     @property
     def ux(self) -> Tensor | np.ndarray:
@@ -60,6 +60,10 @@ class PdeData:
     @property
     def uy(self) -> Tensor | np.ndarray:
         return self.data[..., 1:2]
+
+    @property
+    def uz(self) -> Tensor | np.ndarray:
+        return self.data[..., 2:3]
 
     @property
     def p(self) -> Tensor | np.ndarray:
@@ -180,17 +184,17 @@ class FoamDataset(Dataset):
         return domain_map
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        points, pde, zones, d, f = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11], data[..., 11:13]
-        moment, div = data[..., 2:4], data[..., 7:8]
-        inlet = data[..., 13:14]
+        points, pde, zones, d, f = data[..., 0:3], data[..., 6:10], data[..., 11:12], data[..., 12:15], data[..., 15:18]
+        moment, div = data[..., 3:6], data[..., 10:11]
+        inlet = data[..., 18:19]
         return np.concatenate([points, pde, zones, d, f, inlet, moment, div], axis=1)
 
     def extract_inlet_conditions(self, boundary_data: dict[str:np.ndarray]) -> np.ndarray:
         inlet_data = []
         for key in boundary_data.keys():
             if key == 'inlet':
-                inlet_ux = boundary_data[key][..., 4:5]
-                inlet_ux = self.standard_scaler[2:3].transform(inlet_ux)
+                inlet_ux = boundary_data[key][..., 5:6]
+                inlet_ux = self.standard_scaler[3:4].transform(inlet_ux)
                 inlet_data.append(inlet_ux)
             else:
                 inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
@@ -233,9 +237,9 @@ class FoamDataset(Dataset):
         obs_samples = self.extend_gather_indices(obs_samples, data.shape[-1])
 
         # Do not standardize zones indices
-        data[:, 0:5] = self.standard_scaler.transform(data[:, 0:5])
-        data[:, 6:8] = self.d_normalizer.transform(data[:, 6:8])
-        data[:, 8:10] = self.f_normalizer.transform(data[:, 8:10])
+        data[:, 0:9] = self.standard_scaler.transform(data[:, 0:9])
+        data[:, 9:12] = self.d_normalizer.transform(data[:, 9:12])
+        data[:, 12:15] = self.f_normalizer.transform(data[:, 12:15])
 
         return tensor(data, dtype=torch.float), obs_samples
 

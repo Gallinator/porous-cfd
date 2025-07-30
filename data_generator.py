@@ -102,10 +102,12 @@ def get_location_inside(mesh: str):
     ops.object.delete()
     import_obj(mesh)
     ops.object.select_all(action='SELECT')
-    ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS')
-    location = bpy.context.object.location
+    obj = bpy.context.object
+    verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    verts = np.array(verts)
+    center = np.sum(verts, axis=0) / len(verts)
     ops.object.delete()
-    return location[0:2]
+    return center[0:2]
 
 
 def get_location_outside():

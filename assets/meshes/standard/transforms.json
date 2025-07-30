@@ -4,11 +4,11 @@
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "semi_circle.obj": {
-    "rotation": [0, 360, 5],
+    "rotation": [0, 315, 5],
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "circle_sector.obj": {
-    "rotation": [0, 360, 5],
+    "rotation": [0, 315, 5],
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "equilateral_triangle.obj": {
@@ -24,7 +24,7 @@
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "trapezoid.obj": {
-    "rotation": [0, 360, 5],
+    "rotation": [0, 315, 5],
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "square.obj": {
@@ -40,7 +40,7 @@
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   },
   "rectangle.obj": {
-    "rotation": [0, 180, 5],
+    "rotation": [0, 135, 5],
     "scale": {"x": [0.75, 1, 2], "y": [0.75, 1, 2]}
   }
 }

@@ -24,7 +24,7 @@ from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
 OPENFOAM_COMMAND = ""
 
 
-def import_obj(mesh: str):
+def import_mesh(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
@@ -59,7 +59,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
-            import_obj(f'{meshes_dir}/{mesh}')
+            import_mesh(f'{meshes_dir}/{mesh}')
             rotations = parse_rotations(transforms['rotation'])
             scales = parse_scale(transforms['scale'])
             for r, s in itertools.product(rotations, scales):
@@ -101,7 +101,7 @@ def clean_dir(directory: str):
 def get_location_inside(mesh: str):
     ops.object.select_all(action='SELECT')
     ops.object.delete()
-    import_obj(mesh)
+    import_mesh(mesh)
     ops.object.select_all(action='SELECT')
     obj = bpy.context.object
     verts = [obj.matrix_world @ v.co for v in obj.data.vertices]

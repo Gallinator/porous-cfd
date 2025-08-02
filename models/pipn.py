@@ -99,6 +99,12 @@ class Pipn(L.LightningModule):
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
 
+    def to(self, *args, **kwargs):
+        super().to(*args, *kwargs)
+        self.u_scaler.to(*args, *kwargs)
+        self.p_scaler.to(*args, *kwargs)
+        self.points_scaler.to(*args, *kwargs)
+
     def forward(self, x: Tensor, zones_ids: Tensor) -> Tensor:
         local_features, global_feature = self.encoder.forward(x, zones_ids)
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)

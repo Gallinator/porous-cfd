@@ -10,7 +10,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.local_feature = nn.Sequential(
-            nn.Linear(3, 64),
+            nn.Linear(4, 64),
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh()
@@ -60,7 +60,7 @@ class Pipn(L.LightningModule):
         self.n_internal = n_internal
         self.n_boundary = n_boundary
         self.encoder = Encoder()
-        self.decoder = Decoder(3)
+        self.decoder = Decoder(4)
         self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
         self.d = 14000
         self.training_loss_togger = LossLogger(self, 'Train loss',

@@ -55,6 +55,10 @@ class FoamData:
         return self.pde.uy.gather(1, self.obs_samples)
 
     @property
+    def obs_uz(self) -> Tensor | np.ndarray:
+        return self.pde.uz.gather(1, self.obs_samples)
+
+    @property
     def obs_p(self) -> Tensor | np.ndarray:
         return self.pde.p.gather(1, self.obs_samples)
 

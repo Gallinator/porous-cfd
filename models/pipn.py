@@ -89,9 +89,11 @@ class Pipn(L.LightningModule):
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
 
-        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.d, n_internal,
+        self.momentum_x_loss = MomentumLoss(0, 1, 2, self.mu, self.d, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
-        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.d, n_internal,
+        self.momentum_y_loss = MomentumLoss(1, 0, 2, self.mu, self.d, n_internal,
+                                            self.u_scaler, self.points_scaler, self.p_scaler)
+        self.momentum_z_loss = MomentumLoss(2, 0, 1, self.mu, self.d, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)
@@ -124,10 +126,12 @@ class Pipn(L.LightningModule):
 
         pred = self.forward(in_data.points, in_data.zones_ids)
         pred_data = PdeData(pred)
-        # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
-        # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
+        # i=0 is x, j=1 is y, k=2 is z
+        d_ux_x, ux_diffs = self.differentiate_field(in_data.points, pred_data.ux, 0, 1, 2)
+        # i=1 is y, j=0 is x, k=2 is z
+        d_uy_y, uy_diffs = self.differentiate_field(in_data.points, pred_data.uy, 1, 0, 2)
+        # i=2 is z, j=0 is x,, k=1 is y
+        d_uz_z, uz_diffs = self.differentiate_field(in_data.points, pred_data.uz, 2, 0, 1)
 
         d_p = self.calculate_gradients(pred_data.p, in_data.points)
         d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
@@ -142,16 +146,18 @@ class Pipn(L.LightningModule):
         boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
         boundary_uz_loss = self.boundary_loss(pred_data.uz, in_data.pde.uz)
 
-        cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
-        mom_loss_x = self.momentum_x_loss(pred_data.ux, d_ux_x, d_ux_y, pred_data.uy, dd_ux_x, dd_ux_y, d_p_x,
-                                          in_data.zones_ids)
-
-        mom_loss_y = self.momentum_y_loss(pred_data.uy, d_uy_y, d_uy_x, pred_data.ux, dd_uy_y, dd_uy_x, d_p_y,
-                                          in_data.zones_ids)
+        cont_loss = self.continuity_loss(d_ux_x, d_uy_y, d_uz_z)
+        mom_loss_x = self.momentum_x_loss(pred_data.ux, pred_data.uy, pred_data.uz, d_p_x, in_data.zones_ids, d_ux_x,
+                                          *ux_diffs)
+        mom_loss_y = self.momentum_y_loss(pred_data.uy, pred_data.ux, pred_data.uz, d_p_y, in_data.zones_ids, d_uy_y,
+                                          *uy_diffs)
+        mom_loss_z = self.momentum_z_loss(pred_data.uz, pred_data.ux, pred_data.uy, d_p_z, in_data.zones_ids, d_uz_z,
+                                          *uz_diffs)
 
         loss = (cont_loss +
                 mom_loss_x +
                 mom_loss_y +
+                mom_loss_z +
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
@@ -165,6 +171,7 @@ class Pipn(L.LightningModule):
                                       cont_loss,
                                       mom_loss_x,
                                       mom_loss_y,
+                                      mom_loss_z,
                                       boundary_p_loss,
                                       boundary_ux_loss,
                                       boundary_uy_loss,

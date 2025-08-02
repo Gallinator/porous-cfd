@@ -19,7 +19,7 @@ class LossLogger:
 
 
 class MomentumLoss(nn.Module):
-    def __init__(self, i: int, j: int, mu,
+    def __init__(self, i, j, k, mu,
                  u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler,
                  d_scaler: Normalizer, f_scaler: Normalizer):
         super().__init__()
@@ -31,6 +31,7 @@ class MomentumLoss(nn.Module):
         self.f_scaler = f_scaler
         self.i = i
         self.j = j
+        self.k = k
 
     def func(self, ui, uj, d_p_i, zones_ids, d, f, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
         i, j = self.i, self.j

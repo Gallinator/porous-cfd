@@ -130,7 +130,7 @@ class Pipn(L.LightningModule):
         d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
 
         d_p = self.calculate_gradients(pred_data.p, in_data.points)
-        d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+        d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
 
         obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples), in_data.obs_ux)
         obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples), in_data.obs_uy)

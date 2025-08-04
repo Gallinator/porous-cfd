@@ -22,5 +22,13 @@ log_output $? "$out"
 out=$(snappyHexMesh -overwrite 2>&1 >/dev/null)
 log_output $? "$out"
 
+out=$(stitchMesh mesh mesh_slave -perfect -overwrite 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(createPatch -overwrite 2>&1 >/dev/null)
+log_output $? "$out"
+
+rm -f 0/meshPhi
+
 out=$(changeDictionary -constant >/dev/null)
 log_output $? "$out"

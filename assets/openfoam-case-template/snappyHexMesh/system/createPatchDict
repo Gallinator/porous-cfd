@@ -12,7 +12,7 @@ FoamFile
     class       dictionary;
     object      createPatchDict;
 }
-# Empty dictionary to force the removal of zero-sized patches
+// Empty dictionary to force the removal of zero-sized patches
 pointSync false;
 patches
 (

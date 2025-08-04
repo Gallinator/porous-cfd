@@ -52,7 +52,14 @@ castellatedMeshControls
     {
         mesh
         {
+            insidePoint (0 0 0);
             level (0 2);
+            patchInfo { type patch; }
+            faceZone mesh;
+            faceType baffle;
+            cellZone mesh;
+            cellZoneInside insidePoint;
+            addBufferLayers false;
         }
     }
 
@@ -67,10 +74,7 @@ castellatedMeshControls
         }
     }
 
-    locationsInMesh (
-    ((3.1001 0.0001 0.0001) internalMesh)
-    ((0.0001 0.0001 0.0001) mesh)
-    );
+    locationInMesh (0.0001 0.0001 0.0001);
 
     allowFreeStandingZoneFaces false;
 }

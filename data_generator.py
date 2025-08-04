@@ -115,7 +115,7 @@ def get_location_outside():
     return -0.3 + 1e-6, -0.3 + 1e-6
 
 
-def write_locations_in_mesh(case_path: str, loc_in_mesh, loc_out_mesh):
+def write_locations_in_mesh(case_path: str, loc_in_mesh):
     snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
     locations_in_mesh = snappy_dict['castellatedMeshControls']['locationsInMesh']
     locations_in_mesh[0][0][0:2] = loc_out_mesh
@@ -169,12 +169,11 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
         for inlet_ux, darcy in itertools.product(config['inlet'], config['darcy']):
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
-                location_inside, location_outside = get_location_inside(m), get_location_outside()
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{darcy[0]}-{darcy[1]}_in{inlet_ux}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 
-                write_locations_in_mesh(f'{case_path}/snappyHexMesh', location_inside, location_outside)
+                write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
                 FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [inlet_ux, 0, 0]
                 fv_options = FoamFile(f'{case_path}/simpleFoam/system/fvOptions')
                 fv_options['porousFilter']['explicitPorositySourceCoeffs']['d'] = darcy

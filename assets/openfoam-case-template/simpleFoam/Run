@@ -17,7 +17,7 @@ log_output $? "$out"
 out=$(extrudeMesh 2>&1 >/dev/null)
 log_output $? "$out"
 
-out=$(splitMeshRegions -cellZonesOnly -overwrite -detectOnly 2>&1 >/dev/null)
+out=$(splitMeshRegions -cellZones -overwrite -detectOnly 2>&1 >/dev/null)
 log_output $? "$out"
 
 start=$(date +%s%N)

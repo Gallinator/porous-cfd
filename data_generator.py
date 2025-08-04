@@ -120,6 +120,7 @@ def write_locations_in_mesh(case_path: str, loc_in_mesh):
     locations_in_mesh = snappy_dict['castellatedMeshControls']['locationInMesh']
     locations_in_mesh[0:2] = loc_in_mesh
     snappy_dict['castellatedMeshControls']['locationInMesh'] = locations_in_mesh
+    snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = locations_in_mesh
 
 
 def set_par_dict_coeffs(dict_path: str, n_proc: int):

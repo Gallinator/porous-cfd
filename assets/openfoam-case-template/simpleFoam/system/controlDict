@@ -123,7 +123,7 @@ functions
         fields          (U p div(phi) momentError);
         operation       none;
         regionType      faceZone;
-        name            internalMesh_to_mesh;
+        name            meshmesh_slaveCutFaceZone;
 
         // Optional (inherited) entries
         writeFields     true;

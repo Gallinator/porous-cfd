@@ -13,7 +13,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-boundary', type=int,
-                            help='number of internal points to sample', default=200)
+                            help='number of boundary points to sample', default=300)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
     arg_parser.add_argument('--batch-size', type=int, default=13)

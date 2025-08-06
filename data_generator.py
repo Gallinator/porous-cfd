@@ -115,10 +115,8 @@ def get_location_outside():
 
 def write_locations_in_mesh(case_path: str, loc_in_mesh):
     snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
-    locations_in_mesh = snappy_dict['castellatedMeshControls']['locationInMesh']
-    locations_in_mesh[0:2] = loc_in_mesh
-    snappy_dict['castellatedMeshControls']['locationInMesh'] = locations_in_mesh
-    snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = locations_in_mesh
+    snappy_dict['castellatedMeshControls']['locationInMesh'] = loc_in_mesh
+    snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = loc_in_mesh
 
 
 def set_par_dict_coeffs(dict_path: str, n_proc: int):

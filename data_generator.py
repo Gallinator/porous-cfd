@@ -185,17 +185,16 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                 f = coeffs['f']
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
-                shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+                shutil.copyfile(m, f"{case_path}/triSurface/mesh.obj")
+                write_locations_in_mesh(f'{case_path}', get_location_inside(m))
 
-                write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
                 FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [inlet_ux, 0, 0]
-                fv_options = f'{case_path}/simpleFoam/system/fvOptions'
 
+                fv_options = f'{case_path}/simpleFoam/system/fvOptions'
                 write_coefs(fv_options, d, 'd')
                 write_coefs(fv_options, f, 'f')
 
-                set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
-                set_decompose_par(f'{case_path}/simpleFoam', n_proc)
+                set_decompose_par(f'{case_path}', n_proc)
 
 
 def raise_with_log_text(case_path, text):

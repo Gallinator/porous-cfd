@@ -164,11 +164,10 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     for m in meshes:
         case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
         shutil.copytree('assets/openfoam-case-template', case_path)
-        shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
-        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
+        shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+        write_locations_in_mesh(f'{case_path}', get_location_inside(m))
 
-        set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
-        set_decompose_par(f'{case_path}/simpleFoam', n_proc)
+        set_decompose_par(f'{case_path}', n_proc)
 
 
 def raise_with_log_text(case_path, text):

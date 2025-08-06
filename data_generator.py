@@ -107,7 +107,7 @@ def get_location_inside(mesh: str):
     verts = np.array(verts)
     center = np.sum(verts, axis=0) / len(verts)
     ops.object.delete()
-    return center[0:2]
+    return center
 
 
 def get_location_outside():

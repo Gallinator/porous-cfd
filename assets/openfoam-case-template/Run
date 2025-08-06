@@ -10,12 +10,30 @@ log_output(){
   exit  1;
 fi
 }
-
 out=$(cleanCase 2>&1 >/dev/null)
 log_output $? "$out"
 
-out=$(extrudeMesh 2>&1 >/dev/null)
+out=$(blockMesh 2>&1 >/dev/null)
 log_output $? "$out"
+
+out=$(surfaceFeatureExtract 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(snappyHexMesh -overwrite 2>&1 >/dev/null)
+log_output $? "$out"
+
+mv 0/U U
+mv 0/p p
+
+out=$(stitchMesh mesh mesh_slave -perfect -overwrite 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(createPatch -overwrite 2>&1 >/dev/null)
+log_output $? "$out"
+
+mv U 0/U
+mv p 0/p
+rm -f 0/meshPhi
 
 out=$(splitMeshRegions -cellZones -overwrite -detectOnly 2>&1 >/dev/null)
 log_output $? "$out"

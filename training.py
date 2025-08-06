@@ -34,9 +34,9 @@ if __name__ == '__main__':
     val_data = FoamDataset('data/val', n_internal, n_boundary, n_obs, 'data/train')
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
-    scalers = {'U': train_data.standard_scaler[2:4],
-               'p': train_data.standard_scaler[4],
-               'Points': train_data.standard_scaler[0:2]}
+    scalers = {'U': train_data.standard_scaler[3:6],
+               'p': train_data.standard_scaler[6],
+               'Points': train_data.standard_scaler[0:3]}
     model = Pipn(n_internal, n_boundary, scalers)
 
     trainer = L.Trainer(max_epochs=-1,

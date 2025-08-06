@@ -89,8 +89,7 @@ def create_case_template_dirs():
     """
     Creates the missing directories in the case template because git does not track directories
     """
-    pathlib.Path(f'assets/openfoam-case-template/snappyHexMesh/0').mkdir(parents=True, exist_ok=True)
-    pathlib.Path(f'assets/openfoam-case-template/snappyHexMesh/constant/triSurface').mkdir(parents=True, exist_ok=True)
+    pathlib.Path(f'assets/openfoam-case-template/constant/triSurface').mkdir(parents=True, exist_ok=True)
 
 
 def clean_dir(directory: str):

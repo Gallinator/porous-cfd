@@ -230,23 +230,23 @@ class PipnPP(L.LightningModule):
             d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
             cont = self.continuity_loss.f(self.add_batch_dim(d_ux_x), self.add_batch_dim(d_uy_y))
-            momentum_x = self.momentum_x_loss.f(self.add_batch_dim(pred_data.ux),
-                                                self.add_batch_dim(d_ux_x),
-                                                self.add_batch_dim(d_ux_y),
-                                                self.add_batch_dim(pred_data.uy),
-                                                self.add_batch_dim(dd_ux_x),
-                                                self.add_batch_dim(dd_ux_y),
-                                                self.add_batch_dim(d_p_x),
-                                                self.add_batch_dim(in_data.zones_ids))
+            momentum_x = self.momentum_x_loss.func(self.add_batch_dim(pred_data.ux),
+                                                   self.add_batch_dim(d_ux_x),
+                                                   self.add_batch_dim(d_ux_y),
+                                                   self.add_batch_dim(pred_data.uy),
+                                                   self.add_batch_dim(dd_ux_x),
+                                                   self.add_batch_dim(dd_ux_y),
+                                                   self.add_batch_dim(d_p_x),
+                                                   self.add_batch_dim(in_data.zones_ids))
 
-            momentum_y = self.momentum_y_loss.f(self.add_batch_dim(pred_data.uy),
-                                                self.add_batch_dim(d_uy_y),
-                                                self.add_batch_dim(d_uy_x),
-                                                self.add_batch_dim(pred_data.ux),
-                                                self.add_batch_dim(dd_uy_y),
-                                                self.add_batch_dim(dd_uy_x),
-                                                self.add_batch_dim(d_p_y),
-                                                self.add_batch_dim(in_data.zones_ids))
+            momentum_y = self.momentum_y_loss.func(self.add_batch_dim(pred_data.uy),
+                                                   self.add_batch_dim(d_uy_y),
+                                                   self.add_batch_dim(d_uy_x),
+                                                   self.add_batch_dim(pred_data.ux),
+                                                   self.add_batch_dim(dd_uy_y),
+                                                   self.add_batch_dim(dd_uy_x),
+                                                   self.add_batch_dim(d_p_y),
+                                                   self.add_batch_dim(in_data.zones_ids))
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:

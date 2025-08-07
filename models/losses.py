@@ -51,7 +51,7 @@ class MomentumLoss(nn.Module):
                 (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
 
     def forward(self, *args):
-        res = self.f(*args)
+        res = self.func(*args)
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 

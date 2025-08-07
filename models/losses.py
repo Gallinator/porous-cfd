@@ -42,13 +42,15 @@ class MomentumLoss(nn.Module):
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
         norm_dd_ui_k = norm_d_ui_j * (1 / self.points_scaler.std[k])
+        ui_raw = ui * self.u_scaler.std[i] + self.u_scaler.mean[i]
+        uj_raw = uj * self.u_scaler.std[j] + self.u_scaler.mean[j]
+        uk_raw = uj * self.u_scaler.std[k] + self.u_scaler.mean[k]
 
-        return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
-                norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) +
-                norm_d_ui_k * d_ui_k * (uk * self.u_scaler.std[k] + self.u_scaler.mean[k]) -
+        source = ui_raw * (self.d * self.mu * zones_ids + 1 / 2 * torch.sqrt(ui ** 2 + uj ** 2 + uk ** 2) * self.f)
+
+        return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw + norm_d_ui_k * d_ui_k * uk_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j + norm_dd_ui_k * dd_ui_k) +
-                (self.p_stats.std / 1) * d_p_i +
-                (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * self.d * self.mu * zones_ids)
+                (self.p_stats.std / 1) * d_p_i + source)
 
     def forward(self, *args):
         res = self.func(*args)

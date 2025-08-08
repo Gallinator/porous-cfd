@@ -87,7 +87,7 @@ class DecoderPp(nn.Module):
 class Branch(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP([5, 256, 256, 512], act=nn.Tanh(), norm=None)
+        self.linear = MLP([7, 256, 256, 512], act=nn.Tanh(), norm=None)
 
     def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
         """

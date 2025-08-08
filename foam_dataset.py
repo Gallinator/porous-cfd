@@ -226,8 +226,9 @@ class FoamDataset(Dataset):
         obs_samples = self.extend_gather_indices(obs_samples, data.shape[-1])
 
         # Do not standardize zones indices
-        data[:, 0:-7] = self.standard_scaler.transform(data[:, 0:-7])
+        data[:, 0:5] = self.standard_scaler.transform(data[:, 0:5])
         data[:, 6:8] = self.d_normalizer.transform(data[:, 6:8])
+        data[:, 8:10] = self.f_normalizer.transform(data[:, 8:10])
 
         return tensor(data, dtype=torch.float), obs_samples
 

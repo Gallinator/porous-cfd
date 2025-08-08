@@ -10,7 +10,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.local_feature = nn.Sequential(
-            nn.Linear(7, 64),
+            nn.Linear(8, 64),
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh()

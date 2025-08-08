@@ -216,23 +216,23 @@ class Pipn(L.LightningModule):
             d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
             d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-            momentum_x = self.momentum_x_loss.f(pred_data['internal'].ux,
-                                                d_ux_x,
-                                                d_ux_y,
-                                                pred_data['internal'].uy,
-                                                dd_ux_x,
-                                                dd_ux_y,
-                                                d_p_x,
-                                                in_data['internal'].zones_ids,
-                                                in_data['internal'].d)
-            momentum_y = self.momentum_y_loss.f(pred_data['internal'].uy,
-                                                d_uy_y,
-                                                d_uy_x,
-                                                pred_data['internal'].ux,
-                                                dd_uy_y,
-                                                dd_uy_x,
-                                                d_p_y,
-                                                in_data['internal'].zones_ids, in_data['internal'].d)
+            momentum_x = self.momentum_x_loss.func(pred_data['internal'].ux,
+                                                   d_ux_x,
+                                                   d_ux_y,
+                                                   pred_data['internal'].uy,
+                                                   dd_ux_x,
+                                                   dd_ux_y,
+                                                   d_p_x,
+                                                   in_data['internal'].zones_ids,
+                                                   in_data['internal'].d)
+            momentum_y = self.momentum_y_loss.func(pred_data['internal'].uy,
+                                                   d_uy_y,
+                                                   d_uy_x,
+                                                   pred_data['internal'].ux,
+                                                   dd_uy_y,
+                                                   dd_uy_x,
+                                                   d_p_y,
+                                                   in_data['internal'].zones_ids, in_data['internal'].d)
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)

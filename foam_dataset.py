@@ -138,7 +138,8 @@ class FoamDataset(Dataset):
             np.array(self.meta['Std']['Points'] + self.meta['Std']['U'] + [self.meta['Std']['p']]),
             np.array(self.meta['Mean']['Points'] + self.meta['Mean']['U'] + [self.meta['Mean']['p']]),
         )
-        self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Darcy']['Max']))
+        self.d_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Coefs']['d']['Max']))
+        self.f_normalizer = Normalizer(np.zeros(2), np.array(self.meta['Coefs']['f']['Max']))
 
         with open(Path(data_dir).parent / 'min_points.json') as f:  self.min_points = json.load(f)
         self.min_boundary = sum(list(self.min_points.values())[1:])

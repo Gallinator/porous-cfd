@@ -175,12 +175,12 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
         config = json.load(config)['cfd params']
-        for inlet_ux, darcy in itertools.product(config['inlet'], config['darcy']):
+        for inlet_ux, coeffs in itertools.product(config['inlet'], config['coeffs']):
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{darcy[0]}-{darcy[1]}_in{inlet_ux}"
                 d = coeffs['d']
                 f = coeffs['f']
+                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}-{f[0]}_in{inlet_ux}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 

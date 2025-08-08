@@ -206,9 +206,9 @@ class Pipn(L.LightningModule):
             pred_data = PdeData(pred, self.domain_dict)
 
             # i=0 is x, j=1 is y
-            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1)
+            d_ux_x, x_diff = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1)
             # i=1 is y, j=0 is x
-            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0)
+            d_uy_y, y_diff = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0)
             d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
             d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 

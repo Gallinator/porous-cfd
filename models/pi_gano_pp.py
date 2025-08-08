@@ -89,21 +89,24 @@ class Branch(nn.Module):
         super().__init__()
         self.linear = MLP([5, 256, 256, 512], act=nn.Tanh(), norm=None)
 
-    def forward(self, d_points: Tensor, d: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
+    def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
         """
-        :param d_points: Coordinates of darcy boundary points(B, M, 2)
+        :param ceof_points: Coordinates of darcy boundary points(B, M, 2)
         :param d: Darcy coefficients (B, M, 2)
+        :param f: Forchheimer coefficients (B, M, 2)
         :param inlet_points: Coordinates of inlet boundary points(B, N, 2)
         :param inlet_ux: inlet velocity along x (B, N, 1)
-        :return: Parameter embedding (B, 1, 512)
+        :return: Parameter embedding (B, 1, 64)
         """
-        points = torch.cat([d_points, inlet_points], dim=-2)
-        x = torch.zeros((points.shape[0], points.shape[1], d.shape[-1] + inlet_ux.shape[-1]), device=points.device)
-        x[..., :d.shape[-2], 0:2] = d
-        x[..., d.shape[-2]:, 2:3] = inlet_ux
+        points = torch.cat([ceof_points, inlet_points], dim=-2)
+        par_dim = d.shape[-1] + f.shape[-1] + inlet_ux.shape[-1]
+        x = torch.zeros((points.shape[0], points.shape[1], par_dim), device=points.device)
+        x[..., 0:ceof_points.shape[-2], 0:2] = d
+        x[..., 0:ceof_points.shape[-2], 2:4] = f
+        x[..., ceof_points.shape[-2]:, 4:5] = inlet_ux
         x = torch.cat([points, x], dim=-1)
         y = self.linear(x)
-        return torch.max(y, dim=1, keepdim=True)[0].squeeze()
+        return torch.max(y, dim=1, keepdim=True)[0]
 
 
 class NeuralOperator(nn.Module):
@@ -165,11 +168,12 @@ class PiGanoPP(L.LightningModule):
                 pos: Tensor,
                 edge_index: Tensor,
                 batch: Tensor,
-                par_d_points: Tensor,
+                par_points: Tensor,
                 par_d: Tensor,
+                par_f: Tensor,
                 par_inlet_points: Tensor,
                 par_inlet_ux: Tensor) -> Tensor:
-        par_embedding = self.branch(par_d_points, par_d, par_inlet_points, par_inlet_ux)
+        par_embedding = self.branch(par_points, par_d, par_f, par_inlet_points, par_inlet_ux)
         par_embedding = torch.stack([*par_embedding])
 
         out, skip = self.encoder(x, pos, batch)
@@ -212,6 +216,7 @@ class PiGanoPP(L.LightningModule):
                             in_data.batch,
                             torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
                             torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('internal').f, internal_batch)),
                             torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
                             torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
 
@@ -288,6 +293,7 @@ class PiGanoPP(L.LightningModule):
                             in_data.batch,
                             torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
                             torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                            torch.stack(unbatch(in_data.slice('internal').f, internal_batch)),
                             torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
                             torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
 
@@ -320,6 +326,7 @@ class PiGanoPP(L.LightningModule):
                                 in_data.batch,
                                 torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
                                 torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('internal').f, internal_batch)),
                                 torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
                                 torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))
             pred_data = PdeData(pred, in_data.batch, self.domain_dict)
@@ -357,5 +364,6 @@ class PiGanoPP(L.LightningModule):
                                 in_data.batch,
                                 torch.stack(unbatch(in_data.slice('internal').pos, internal_batch)),
                                 torch.stack(unbatch(in_data.slice('internal').d, internal_batch)),
+                                torch.stack(unbatch(in_data.slice('internal').f, internal_batch)),
                                 torch.stack(unbatch(in_data.slice('inlet').pos, in_data.slice('inlet').batch)),
                                 torch.stack(unbatch(in_data.slice('inlet').inlet_ux, in_data.slice('inlet').batch)))

@@ -23,20 +23,24 @@ class DomainData:
         return self.data[..., 6:8]
 
     @property
+    def f(self) -> Tensor | np.ndarray:
+        return self.data[..., 8:10]
+
+    @property
     def inlet_ux(self):
-        return self.data[..., 8:9]
-
-    @property
-    def mom_x(self):
-        return self.data[..., 9:10]
-
-    @property
-    def mom_y(self):
         return self.data[..., 10:11]
 
     @property
-    def div(self):
+    def mom_x(self):
         return self.data[..., 11:12]
+
+    @property
+    def mom_y(self):
+        return self.data[..., 12:13]
+
+    @property
+    def div(self):
+        return self.data[..., 13:14]
 
 
 class PdeData:

@@ -226,7 +226,7 @@ def generate_data(cases_dir: str):
 
 def generate_meta(data_dir: str):
     internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 4
-    d_max = np.ones(2) * sys.float_info.min
+    d_max, f_max = np.ones(2) * sys.float_info.min, np.ones(2) * sys.float_info.min
     running_stats = Welford()
     elapse_times = []
 
@@ -239,8 +239,10 @@ def generate_meta(data_dir: str):
 
         internal_min = min(internal_min, len(i_data))
 
-        d = np.max(i_data[:, -2:], axis=0)
+        d = np.max(i_data[:, -4:-2], axis=0)
+        f = np.max(i_data[:, -2:], axis=0)
         d_max = np.maximum(d, d_max)
+        f_max = np.maximum(f, f_max)
 
         data = np.concatenate((i_data, b_data))
 
@@ -257,12 +259,13 @@ def generate_meta(data_dir: str):
     std_meta = {'Points': features_std[0:2], 'U': features_std[2:4], 'p': features_std[4]}
     mean_meta = {'Points': features_mean[0:2], 'U': features_mean[2:4], 'p': features_mean[4]}
     timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
-    darcy_meta = {'Min': [0, 0], 'Max': d_max.tolist()}
+    coefs_meta = {"d": {'Min': [0, 0], 'Max': d_max.tolist()},
+                  "f": {'Min': [0, 0], 'Max': f_max.tolist()}}
 
     meta_dict = {"Min points": min_points_meta,
                  'Mean': mean_meta,
                  'Std': std_meta,
-                 'Darcy': darcy_meta,
+                 'Coefs': coefs_meta,
                  'Timing': timing_meta}
 
     with open(f'{data_dir}/meta.json', 'w') as meta:

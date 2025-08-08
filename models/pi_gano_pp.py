@@ -106,7 +106,7 @@ class Branch(nn.Module):
         x[..., ceof_points.shape[-2]:, 4:5] = inlet_ux
         x = torch.cat([points, x], dim=-1)
         y = self.linear(x)
-        return torch.max(y, dim=1, keepdim=True)[0]
+        return torch.max(y, dim=1, keepdim=True)[0].squeeze()
 
 
 class NeuralOperator(nn.Module):

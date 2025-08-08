@@ -173,10 +173,10 @@ class FoamDataset(Dataset):
         return domain_map
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]
+        points, pde, zones, d, f = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11], data[..., 11:13]
         moment, div = data[..., 2:4], data[..., 7:8]
-        inlet = data[..., 11:12]
-        return np.concatenate([points, pde, zones, d, inlet, moment, div], axis=1)
+        inlet = data[..., 13:14]
+        return np.concatenate([points, pde, zones, d, f, inlet, moment, div], axis=1)
 
     def extract_inlet_conditions(self, boundary_data: dict[str:np.ndarray]) -> np.ndarray:
         inlet_data = []

@@ -52,7 +52,7 @@ def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> di
             values = make_at_most_2d(values)
             vector_values.append(values)
 
-        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 3))], axis=-1)
+        b_dict[b] = np.concatenate([coords, *vector_values, *scalar_values, np.zeros((len(coords), 5))], axis=-1)
 
     return b_dict
 
@@ -71,9 +71,9 @@ def make_column(field) -> np.array:
     return f
 
 
-def parse_d(case_dir: str):
+def parse_coef(case_dir: str, coef: str):
     fv_options = FoamFile(f'{case_dir}/system/fvOptions')
-    return fv_options['porousFilter']['explicitPorositySourceCoeffs']['d']
+    return fv_options['porousFilter']['explicitPorositySourceCoeffs'][coef][0:2]
 
 
 def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
@@ -90,11 +90,10 @@ def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
 
     porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))
 
-    d = parse_d(case_path)
-    d = np.array([d]).repeat(len(porous_points), axis=0)
-    d = make_at_most_2d(d)
+    d = parse_coef(case_path, 'd')
+    f = parse_coef(case_path, 'f')
 
-    return np.concatenate([domain_points, *fields_values, porous_points, d * porous_points], axis=1)
+    return np.concatenate([domain_points, *fields_values, porous_points, d * porous_points, f * porous_points], axis=1)
 
 
 def parse_meta(data_dir: str) -> dict:

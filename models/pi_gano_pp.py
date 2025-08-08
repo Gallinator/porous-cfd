@@ -244,6 +244,7 @@ class PiGanoPP(L.LightningModule):
                                           d_p_x,
                                           in_data.slice('internal').zones_ids,
                                           in_data.slice('internal').d,
+                                          in_data.slice('internal').f,
                                           d_ux_x,
                                           *x_diff)
 
@@ -252,6 +253,7 @@ class PiGanoPP(L.LightningModule):
                                           d_p_y,
                                           in_data.slice('internal').zones_ids,
                                           in_data.slice('internal').d,
+                                          in_data.slice('internal').f,
                                           d_uy_y,
                                           *y_diff)
 
@@ -346,6 +348,7 @@ class PiGanoPP(L.LightningModule):
                                               d_p_x,
                                               in_data.slice('internal').zones_ids,
                                               in_data.slice('internal').d,
+                                              in_data.slice('internal').f,
                                               d_ux_x,
                                               *x_diff)
 
@@ -354,6 +357,7 @@ class PiGanoPP(L.LightningModule):
                                               d_p_y,
                                               in_data.slice('internal').zones_ids,
                                               in_data.slice('internal').d,
+                                              in_data.slice('internal').f,
                                               d_uy_y,
                                               *y_diff)
 

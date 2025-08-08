@@ -21,13 +21,14 @@ class LossLogger:
 class MomentumLoss(nn.Module):
     def __init__(self, i: int, j: int, mu,
                  u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler,
-                 d_scaler: Normalizer):
+                 d_scaler: Normalizer, f_scaler: Normalizer):
         super().__init__()
         self.mu = mu
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
         self.p_stats = p_scaler
         self.d_scaler = d_scaler
+        self.f_scaler = f_scaler
         self.i = i
         self.j = j
 

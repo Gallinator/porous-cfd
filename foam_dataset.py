@@ -68,8 +68,12 @@ class DomainData(Data):
         return self.x[..., 1:3]
 
     @property
+    def f(self):
+        return self.x[..., 3:5]
+
+    @property
     def inlet_ux(self):
-        return self.x[..., 3:4]
+        return self.x[..., 5:6]
 
     @property
     def mom_x(self):
@@ -81,7 +85,7 @@ class DomainData(Data):
 
     @property
     def div(self):
-        return self.residuals[..., 2:]
+        return self.residuals[..., 2:3]
 
     def slice(self, item):
         data = torch.cat([self.pos, self.x, self.y, self.residuals], dim=-1)
@@ -96,9 +100,9 @@ class DomainData(Data):
             sliced_batch = self.batch
 
         return DomainData(data[..., 0:2],  # pos
-                          data[..., 2:6],  # zones
-                          data[..., 6:9],  # y-pde
-                          data[..., 9:],  # residuals,
+                          data[..., 2:8],  # x
+                          data[..., 8:11],  # y
+                          data[..., 11:14],  # residuals
                           self.domain_dict,
                           sliced_batch.to(dtype=torch.int64))
 
@@ -260,9 +264,9 @@ class FoamDataset(InMemoryDataset):
         data = tensor(data, dtype=torch.float)
 
         return (data[..., 0:2],  # pos
-                data[..., 5:9],  # zones-d-inlet
+                data[..., 5:11],  # zones-d-inlet
                 data[..., 2:5],  # y-pde
-                data[..., 9:],  # residuals
+                data[..., 11:],  # residuals
                 tensor(obs_samples, dtype=torch.int64))
 
     def process(self):

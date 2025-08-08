@@ -226,10 +226,10 @@ class FoamDataset(InMemoryDataset):
         return samples
 
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        points, pde, zones, d = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11]
+        points, pde, zones, d, f = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11], data[..., 11:13]
         moment, div = data[..., 2:4], data[..., 7:8]
-        inlet = data[..., 11:12]
-        return np.concatenate([points, pde, zones, d, inlet, moment, div], axis=1)
+        inlet = data[..., 13:14]
+        return np.concatenate([points, pde, zones, d, f, inlet, moment, div], axis=1)
 
     def load_case(self, case_dir):
         b_dict = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])

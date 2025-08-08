@@ -244,8 +244,8 @@ class PiGanoPP(L.LightningModule):
         mom_loss_y = self.momentum_y_loss(pred_data.slice('internal').uy,
                                           pred_data.slice('internal').ux,
                                           d_p_y,
-                                          in_data['internal'].zones_ids,
-                                          in_data['internal'].d,
+                                          in_data.slice('internal').zones_ids,
+                                          in_data.slice('internal').d,
                                           d_uy_y,
                                           *y_diff)
 
@@ -344,8 +344,8 @@ class PiGanoPP(L.LightningModule):
             momentum_y = self.momentum_y_loss(pred_data.slice('internal').uy,
                                               pred_data.slice('internal').ux,
                                               d_p_y,
-                                              in_data['internal'].zones_ids,
-                                              in_data['internal'].d,
+                                              in_data.slice('internal').zones_ids,
+                                              in_data.slice('internal').d,
                                               d_uy_y,
                                               *y_diff)
 

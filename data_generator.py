@@ -161,6 +161,15 @@ def set_decompose_par(case_path: str, n_proc: int):
     set_run_n_proc(f'{case_path}/Run', n_proc)
 
 
+def write_coefs(fv_options_path: str, coefs: list, coef: str):
+    with open(fv_options_path) as f:
+        lines = f.read()
+    lines = re.sub(f'{coef}\s+(.+);', f'{coef} ({coefs[0]} {coefs[1]} {coefs[2]});', lines)
+
+    with open(fv_options_path, 'w') as f:
+        f.write(lines)
+
+
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
@@ -170,13 +179,17 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{darcy[0]}-{darcy[1]}_in{inlet_ux}"
+                d = coeffs['d']
+                f = coeffs['f']
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 
                 write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
                 FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [inlet_ux, 0, 0]
-                fv_options = FoamFile(f'{case_path}/simpleFoam/system/fvOptions')
-                fv_options['porousFilter']['explicitPorositySourceCoeffs']['d'] = darcy
+                fv_options = f'{case_path}/simpleFoam/system/fvOptions'
+
+                write_coefs(fv_options, d, 'd')
+                write_coefs(fv_options, f, 'f')
 
                 set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
                 set_decompose_par(f'{case_path}/simpleFoam', n_proc)

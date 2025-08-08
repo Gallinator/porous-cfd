@@ -1,4 +1,5 @@
 import torch
+from sympy.physics.units import momentum
 from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
@@ -187,12 +188,12 @@ class PiGanoPP(L.LightningModule):
                              grad_outputs=torch.ones_like(outputs),
                              retain_graph=True, create_graph=True)[0]
 
-    def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+    def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple:
         d_ui = self.calculate_gradients(ui, points)
         d_ui_i, d_ui_j = d_ui[..., i:i + 1], d_ui[..., j:j + 1]
         dd_ui_i = self.calculate_gradients(d_ui_i, points)[..., i:i + 1]
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[..., j:j + 1]
-        return d_ui_i, d_ui_j, dd_ui_i, dd_ui_j
+        return d_ui_i, (d_ui_j, dd_ui_i, dd_ui_j)
 
     def training_step(self, in_data: FoamData, batch_idx: int):
         in_data.domain_dict = self.domain_dict
@@ -216,9 +217,9 @@ class PiGanoPP(L.LightningModule):
 
         pred_data = PdeData(pred, in_data.batch, self.domain_dict)
         # i=0 is x, j=1 is y
-        d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_pos, pred_data.slice('internal').ux, 0, 1)
+        d_ux_x, x_diff = self.differentiate_field(internal_pos, pred_data.slice('internal').ux, 0, 1)
         # i=1 is y, j=0 is x
-        d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_pos, pred_data.slice('internal').uy, 1, 0)
+        d_uy_y, y_diff = self.differentiate_field(internal_pos, pred_data.slice('internal').uy, 1, 0)
 
         d_p = self.calculate_gradients(pred_data.slice('internal').p, internal_pos)
         d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
@@ -233,24 +234,20 @@ class PiGanoPP(L.LightningModule):
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
         mom_loss_x = self.momentum_x_loss(pred_data.slice('internal').ux,
-                                          d_ux_x,
-                                          d_ux_y,
                                           pred_data.slice('internal').uy,
-                                          dd_ux_x,
-                                          dd_ux_y,
                                           d_p_x,
                                           in_data.slice('internal').zones_ids,
-                                          in_data.slice('internal').d)
+                                          in_data.slice('internal').d,
+                                          d_ux_x,
+                                          *x_diff)
 
         mom_loss_y = self.momentum_y_loss(pred_data.slice('internal').uy,
-                                          d_uy_y,
-                                          d_uy_x,
                                           pred_data.slice('internal').ux,
-                                          dd_uy_y,
-                                          dd_uy_x,
                                           d_p_y,
-                                          in_data.slice('internal').zones_ids,
-                                          in_data.slice('internal').d)
+                                          in_data['internal'].zones_ids,
+                                          in_data['internal'].d,
+                                          d_uy_y,
+                                          *y_diff)
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -328,34 +325,29 @@ class PiGanoPP(L.LightningModule):
             pred_data = PdeData(pred, in_data.batch, self.domain_dict)
 
             # i=0 is x, j=1 is y
-            d_ux_x, d_ux_y, dd_ux_x, dd_ux_y = self.differentiate_field(internal_pos,
-                                                                        pred_data.slice('internal').ux, 0, 1)
+            d_ux_x, x_diff = self.differentiate_field(internal_pos, pred_data.slice('internal').ux, 0, 1)
             # i=1 is y, j=0 is x
-            d_uy_y, d_uy_x, dd_uy_y, dd_uy_x = self.differentiate_field(internal_pos,
-                                                                        pred_data.slice('internal').uy, 1, 0)
+            d_uy_y, y_diff = self.differentiate_field(internal_pos, pred_data.slice('internal').uy, 1, 0)
+
             d_p = self.calculate_gradients(pred_data.slice('internal').p, internal_pos)
             d_p_x, d_p_y = d_p[..., 0:1], d_p[..., 1:2]
 
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
-            momentum_x = self.momentum_x_loss.func(pred_data.slice('internal').ux,
-                                                   d_ux_x,
-                                                   d_ux_y,
-                                                   pred_data.slice('internal').uy,
-                                                   dd_ux_x,
-                                                   dd_ux_y,
-                                                   d_p_x,
-                                                   in_data.slice('internal').zones_ids,
-                                                   in_data.slice('internal').d)
+            momentum_x = self.momentum_x_loss(pred_data.slice('internal').ux,
+                                              pred_data.slice('internal').uy,
+                                              d_p_x,
+                                              in_data.slice('internal').zones_ids,
+                                              in_data.slice('internal').d,
+                                              d_ux_x,
+                                              *x_diff)
 
-            momentum_y = self.momentum_y_loss.func(pred_data.slice('internal').uy,
-                                                   d_uy_y,
-                                                   d_uy_x,
-                                                   pred_data.slice('internal').ux,
-                                                   dd_uy_y,
-                                                   dd_uy_x,
-                                                   d_p_y,
-                                                   in_data.slice('internal').zones_ids,
-                                                   in_data.slice('internal').d)
+            momentum_y = self.momentum_y_loss(pred_data.slice('internal').uy,
+                                              pred_data.slice('internal').ux,
+                                              d_p_y,
+                                              in_data['internal'].zones_ids,
+                                              in_data['internal'].d,
+                                              d_uy_y,
+                                              *y_diff)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:

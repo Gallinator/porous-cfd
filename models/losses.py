@@ -31,7 +31,7 @@ class MomentumLoss(nn.Module):
         self.i = i
         self.j = j
 
-    def func(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids, d):
+    def func(self, ui, uj, d_p_i, zones_ids, d, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
         i, j = self.i, self.j
         norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])

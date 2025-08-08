@@ -32,19 +32,23 @@ class MomentumLoss(nn.Module):
         self.i = i
         self.j = j
 
-    def func(self, ui, uj, d_p_i, zones_ids, d, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
+    def func(self, ui, uj, d_p_i, zones_ids, d, f, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
         i, j = self.i, self.j
         norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
         norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
         norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
-        d_i = self.d_scaler[i].inverse_transform(d[..., i:i + 1])
+        ui_raw = ui * self.u_scaler.std[i] + self.u_scaler.mean[i]
+        uj_raw = uj * self.u_scaler.std[j] + self.u_scaler.mean[j]
 
-        return (norm_d_ui_i * d_ui_i * (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) +
-                norm_d_ui_j * d_ui_j * (uj * self.u_scaler.std[j] + self.u_scaler.mean[j]) -
+        d_i = self.d_scaler[i].inverse_transform(d[..., i:i + 1])
+        f_i = self.f_scaler[i].inverse_transform(f[..., i:i + 1])
+
+        source = ui_raw * (d_i * self.mu * zones_ids + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * f_i)
+
+        return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
-                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i +
-                (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * d_i * self.mu * zones_ids)
+                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source)
 
     def forward(self, *args):
         res = self.func(*args)

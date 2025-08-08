@@ -186,6 +186,7 @@ class PiGano(L.LightningModule):
                                           d_p_x,
                                           in_data['internal'].zones_ids,
                                           in_data['internal'].d,
+                                          in_data['internal'].f,
                                           d_ux_x,
                                           *x_diff)
 
@@ -194,6 +195,7 @@ class PiGano(L.LightningModule):
                                           d_p_y,
                                           in_data['internal'].zones_ids,
                                           in_data['internal'].d,
+                                          in_data['internal'].f,
                                           d_uy_y,
                                           *y_diff)
 
@@ -273,6 +275,7 @@ class PiGano(L.LightningModule):
                                                    d_p_x,
                                                    in_data['internal'].zones_ids,
                                                    in_data['internal'].d,
+                                                   in_data['internal'].f,
                                                    d_ux_x,
                                                    *x_diff)
             momentum_y = self.momentum_y_loss.func(pred_data['internal'].uy,
@@ -280,6 +283,7 @@ class PiGano(L.LightningModule):
                                                    d_p_y,
                                                    in_data['internal'].zones_ids,
                                                    in_data['internal'].d,
+                                                   in_data['internal'].f,
                                                    d_uy_y,
                                                    *y_diff)
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)

@@ -31,7 +31,7 @@ class MomentumLoss(nn.Module):
         self.i = i
         self.j = j
 
-    def f(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids, d):
+    def func(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, zones_ids, d):
         i, j = self.i, self.j
         norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
         norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
@@ -46,7 +46,7 @@ class MomentumLoss(nn.Module):
                 (ui * self.u_scaler.std[i] + self.u_scaler.mean[i]) * d_i * self.mu * zones_ids)
 
     def forward(self, *args):
-        res = self.f(*args)
+        res = self.func(*args)
         return mse_loss(res, torch.zeros_like(res))
 
 

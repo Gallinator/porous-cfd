@@ -38,8 +38,8 @@ if __name__ == '__main__':
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
     scalers = {'U': train_data.standard_scaler[2:4],
-           'p': train_data.standard_scaler[4],
-           'Points': train_data.standard_scaler[0:2]}
+               'p': train_data.standard_scaler[4],
+               'Points': train_data.standard_scaler[0:2]}
     model = PipnPP(n_internal, n_boundary, scalers)
 
     trainer = L.Trainer(max_epochs=epochs,

@@ -49,7 +49,7 @@ class MomentumLoss(nn.Module):
                 (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source)
 
     def forward(self, *args):
-        res = self.f(*args)
+        res = self.func(*args)
         res = res[..., :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 

@@ -16,6 +16,7 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of internal points to sample', default=168)
     arg_parser.add_argument('--batch-size', type=int, default=13)
     arg_parser.add_argument('--precision', type=str, default='32-true')
+    arg_parser.add_argument('--epochs', type=int, default=3000)
     return arg_parser
 
 
@@ -25,6 +26,8 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     n_internal = args.n_internal
     n_boundary = args.n_boundary
+    n_obs = args.n_observations
+    epochs = args.epochs
 
     train_data = FoamDataset('data/train', n_internal, n_boundary)
     train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
@@ -33,7 +36,7 @@ if __name__ == '__main__':
 
     model = Pipn(n_internal, n_boundary)
 
-    trainer = L.Trainer(max_epochs=-1,
+    trainer = L.Trainer(max_epochs=epochs,
                         callbacks=[RichProgressBar()],
                         log_every_n_steps=2,
                         precision=args.precision,

@@ -1,4 +1,5 @@
 import argparse
+import os
 from argparse import ArgumentParser
 
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor
@@ -20,6 +21,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--batch-size', type=int, default=13)
     arg_parser.add_argument('--precision', type=str, default='32-true')
     arg_parser.add_argument('--epochs', type=int, default=3000)
+    arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd())
     return arg_parser
 
 
@@ -45,6 +47,7 @@ if __name__ == '__main__':
     trainer = L.Trainer(max_epochs=epochs,
                         callbacks=[RichProgressBar(), LearningRateMonitor()],
                         log_every_n_steps=int(batch_size / len(train_data)),
-                        precision=args.precision)
+                        precision=args.precision,
+                        default_root_dir=args.logs_dir)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

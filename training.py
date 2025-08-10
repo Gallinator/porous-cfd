@@ -1,7 +1,7 @@
 import argparse
 from argparse import ArgumentParser
 
-from lightning.pytorch.callbacks import RichProgressBar
+from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor
 from torch_geometric.data import DataLoader
 from foam_dataset import FoamDataset
 from foam_dataset import FoamData
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     model = PiGanoPP(train_data.domain_dict, scalers)
 
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar()],
+                        callbacks=[RichProgressBar(), LearningRateMonitor()],
                         log_every_n_steps=int(batch_size / len(train_data)),
                         precision=args.precision)
 

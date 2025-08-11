@@ -51,7 +51,7 @@ def parse_scale(scale_dict: dict) -> list:
     return list(itertools.product(scales_x, scales_y))
 
 
-def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str, drop_p=0.5):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{meshes_dir}/transforms.json', 'r') as f:
@@ -62,7 +62,10 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
             import_mesh(f'{meshes_dir}/{mesh}')
             rotations = parse_rotations(transforms['rotation'])
             scales = parse_scale(transforms['scale'])
-            for r, s in itertools.product(rotations, scales):
+            params = list(itertools.product(rotations, scales))
+            for r, s in params:
+                if len(params) > 1 and random.random() > drop_p:
+                    continue
                 ops.object.select_all(action='SELECT')
                 ops.object.duplicate(linked=False)
                 obj = bpy.context.selected_objects[0]
@@ -170,14 +173,17 @@ def write_coefs(fv_options_path: str, coefs: list, coef: str):
         f.write(lines)
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc):
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, drop_p=0.5):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
         config = json.load(config)['cfd params']
-        for inlet_ux, coeffs in itertools.product(config['inlet'], config['coeffs']):
+        params = list(itertools.product(config['inlet'], config['coeffs']))
+        for inlet_ux, coeffs in params:
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
+                if len(params) > 1 and random.random() > drop_p:
+                    continue
                 d = coeffs['d']
                 f = coeffs['f']
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}-{f[0]}_in{inlet_ux}"

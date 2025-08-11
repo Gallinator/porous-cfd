@@ -3,13 +3,13 @@ from lightning import Trainer
 from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 
-from foam_dataset import FoamDataset, PdeData
-from models.pipn import Pipn, FoamData
+from foam_dataset import FoamDataset, PdeData, FoamData
+from models.pi_gano import PiGano
 from visualization import plot_fields
 
 CHECKPOINT_PATH = 'lightning_logs/version_63/checkpoints/epoch=1458-step=2918.ckpt'
 
-model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
+model = PiGano.load_from_checkpoint(CHECKPOINT_PATH)
 
 val_data = FoamDataset('data/val_unseen', 1000, 200, 500, 'data/train')
 val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)

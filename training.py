@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from lightning.pytorch.callbacks import RichProgressBar
 from torch.utils.data import DataLoader
 from foam_dataset import FoamDataset
-from models.pipn import Pipn
+from models.pi_gano import PiGano
 import lightning as L
 
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                'd': train_data.d_normalizer,
                'f': train_data.f_normalizer}
 
-    model = Pipn(train_data.domain_dict, scalers)
+    model = PiGano(train_data.domain_dict, scalers)
 
     trainer = L.Trainer(max_epochs=epochs,
                         callbacks=[RichProgressBar()],

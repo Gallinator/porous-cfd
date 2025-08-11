@@ -6,8 +6,8 @@ from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from data_parser import parse_meta
-from foam_dataset import FoamDataset, PdeData
-from models.pipn import Pipn, FoamData
+from foam_dataset import FoamDataset, PdeData, FoamData
+from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
@@ -15,7 +15,7 @@ N_INTERNAL = 1000
 N_BOUNDARY = 200
 N_OBS = 500
 
-model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
+model = PiGano.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True
 
 val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY, N_OBS, 'data/train')

@@ -1,6 +1,8 @@
 import argparse
 import os
 from argparse import ArgumentParser
+
+import torch
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
@@ -26,6 +28,8 @@ def build_arg_parser() -> ArgumentParser:
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
+
+    torch.set_float32_matmul_precision('high')
 
     batch_size = args.batch_size
     n_internal = args.n_internal

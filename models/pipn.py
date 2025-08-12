@@ -2,6 +2,7 @@ import torch
 from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
+from torch.optim.lr_scheduler import ExponentialLR
 from foam_dataset import PdeData, FoamData, StandardScaler, Normalizer
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 
@@ -97,7 +98,9 @@ class Pipn(L.LightningModule):
         return self.decoder.forward(local_features, exp_global)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        scheduler = ExponentialLR(optimizer, 0.999)
+        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
         return autograd.grad(outputs, inputs,

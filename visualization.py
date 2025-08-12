@@ -90,6 +90,7 @@ def plot_dataset_dist(path: str):
     for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
                       description="Reading data"):
         b_data = data_parser.parse_boundary(case, ['U'], ['p'])
+        b_data = np.vstack(list(b_data.values()))
         i_data = parse_internal_mesh(case, "U", "p")
         data.extend(b_data)
         data.extend(i_data)

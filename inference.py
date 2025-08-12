@@ -25,7 +25,7 @@ u_scaler = val_data.standard_scaler[2:4]
 p_scaler = val_data.standard_scaler[4]
 
 raw_points = points_scaler.inverse_transform(tgt.pos.numpy(force=True))
-ids = tgt.zones_ids.numpy(force=True)[:,1:2]
+ids = tgt.zones_ids.numpy(force=True)
 
 plt.interactive(True)
 plot_fields('Predicted', raw_points, u_scaler.inverse_transform(pred.u),

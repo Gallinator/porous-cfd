@@ -54,6 +54,7 @@ if __name__ == '__main__':
                         callbacks=[RichProgressBar(), LearningRateMonitor()],
                         log_every_n_steps=int(batch_size / len(train_data)),
                         precision=args.precision,
-                        default_root_dir=args.logs_dir)
+                        default_root_dir=args.logs_dir,
+                        enable_checkpointing=False)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

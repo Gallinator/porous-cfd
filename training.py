@@ -1,7 +1,7 @@
 import argparse
 import os
 from argparse import ArgumentParser
-
+from pathlib import Path
 import torch
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor
 from torch_geometric.data import DataLoader
@@ -58,3 +58,5 @@ if __name__ == '__main__':
                         enable_checkpointing=False)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+
+    trainer.save_checkpoint(Path(trainer.log_dir) / 'last.ckpt')

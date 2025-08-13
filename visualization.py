@@ -2,6 +2,7 @@ import glob
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.linalg import norm
 from rich.progress import track
 from scipy.interpolate import griddata
@@ -19,6 +20,12 @@ def plot_or_save(fig, save_path):
         plt.close(fig)
     else:
         plt.show()
+
+
+def add_colorbar(fig, ax, plot):
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.05)
+    fig.colorbar(plot, cax=cax)
 
 
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
@@ -48,7 +55,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     g_s = griddata(points, field_s, (xi, yi), method='nearest')
 
     plot = ax.streamplot(xx, yy, g_x, g_y, color=g_s, density=2, cmap='turbo')
-    fig.colorbar(plot.lines, ax=ax)
+    add_colorbar(fig, ax, plot.lines)
     ax.set_aspect('equal')
 
 

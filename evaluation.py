@@ -15,10 +15,6 @@ from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
-N_INTERNAL = 1000
-N_BOUNDARY = 200
-N_OBS = 500
-
 
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
@@ -30,6 +26,12 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
     arg_parser.add_argument('--data-dir', type=str, default='data/val')
     arg_parser.add_argument('--meta-dir', type=str, default='data/train')
+    arg_parser.add_argument('--n-internal', type=int,
+                            help='number of internal points to sample', default=1000)
+    arg_parser.add_argument('--n-boundary', type=int,
+                            help='number of internal points to sample', default=200)
+    arg_parser.add_argument('--n-observations', type=int,
+                            help='number of observation points to sample', default=500)
     return arg_parser
 
 
@@ -44,7 +46,7 @@ if __name__ == '__main__':
     model = PiGano.load_from_checkpoint(args.checkpoint)
     model.verbose_predict = True
 
-    val_data = FoamDataset(args.data_dir, 1000, 200, 500, args.meta_dir)
+    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
     trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
@@ -67,9 +69,9 @@ if __name__ == '__main__':
                         pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
         errors.extend(error.numpy(force=True))
 
-        pred_residuals.extend(phys_data[..., :val_data.n_internal, :].numpy(force=True))
-        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=2)
-        cfd_residuals.extend(cfd_res[..., :val_data.n_internal, :].numpy(force=True))
+        pred_residuals.extend(phys_data.numpy(force=True))
+        cfd_res = torch.cat([t.mom_x, t.mom_y, t.div], dim=-1)
+        cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     errors = np.concatenate(errors)
     error_data = PdeData(errors)

@@ -62,7 +62,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
 
 def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, plot_streams=True,
                 save_path=None):
-    fig = plt.figure(figsize=(12, 10), layout='constrained')
+    fig = plt.figure(figsize=(16, 9), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure

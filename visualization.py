@@ -35,6 +35,8 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
                label='Porous', edgecolors='black')
     plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=15, cmap='turbo')
 
+    ax.set_ymargin(0.025)
+    ax.set_xmargin(0.02)
     add_colorbar(fig, ax, plot)
     ax.legend(loc='upper right')
     ax.set_aspect('equal')
@@ -57,6 +59,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
 
     plot = ax.streamplot(xx, yy, g_x, g_y, color=g_s, density=2, cmap='turbo')
     add_colorbar(fig, ax, plot.lines)
+    ax.set_ymargin(0)
     ax.set_aspect('equal')
 
 

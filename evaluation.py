@@ -1,4 +1,9 @@
+import argparse
+import os
 import time
+from argparse import ArgumentParser
+from pathlib import Path
+
 import numpy as np
 import torch
 from lightning import Trainer
@@ -12,6 +17,19 @@ from visualization import plot_data_dist, plot_timing, plot_errors, plot_residua
 
 CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
 N_INTERNAL = 1000
+
+
+def build_arg_parser() -> ArgumentParser:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--save-plots', action="store_true",
+                            help='save all the inference plots', default=False)
+    last_model = sorted(os.listdir('lightning_logs'))[-1]
+    default_model_path = Path('lightning_logs') / last_model / 'last.ckpt'
+    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
+    arg_parser.add_argument('--data-dir', type=str, default='data/val')
+    arg_parser.add_argument('--meta-dir', type=str, default='data/train/raw')
+    return arg_parser
+
 
 model = PipnPP.load_from_checkpoint(CHECKPOINT_PATH)
 model.verbose_predict = True

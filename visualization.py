@@ -15,6 +15,14 @@ M_S = '$\left[ \\frac{m}{s} \\right]$'
 M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
 
 
+def plot_or_save(fig, save_path):
+    if save_path is not None:
+        plt.savefig(f'{save_path}/{fig._suptitle.get_text()}.png')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
     porous_zone = np.nonzero(porous > 0)[0]

@@ -33,7 +33,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     porous_zone = np.nonzero(porous > 0)[0]
     ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=50, zorder=-1, c='#ffffffff',
                label='Porous', edgecolors='black')
-    plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
+    plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=15, cmap='')
 
     add_colorbar(fig, ax, plot)
     ax.legend(loc='upper right')

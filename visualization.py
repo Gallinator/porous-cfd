@@ -15,8 +15,13 @@ M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
 
 
 def plot_or_save(fig, save_path):
+    if fig._suptitle is not None:
+        file_name = fig._suptitle.get_text()
+    else:
+        file_name = fig.axes[0].get_title()
+
     if save_path is not None:
-        plt.savefig(f'{save_path}/{fig._suptitle.get_text()}.png', transparent=True)
+        plt.savefig(f'{save_path}/{file_name}.png', transparent=True)
         plt.close(fig)
     else:
         plt.show()

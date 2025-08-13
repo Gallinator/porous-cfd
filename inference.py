@@ -55,7 +55,7 @@ if __name__ == '__main__':
         if plots_path is not None:
             case_plot_path = plots_path / Path(args.data_dir).name / str(i)
 
-        tgt = FoamData(val_data[0]).numpy()
+        tgt = FoamData(tgt).numpy()
 
         points_scaler = val_data.standard_scaler[0:2]
         u_scaler = val_data.standard_scaler[2:4]

@@ -26,11 +26,11 @@ def plot_or_save(fig, save_path):
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
     porous_zone = np.nonzero(porous > 0)[0]
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=100, zorder=-1, c='silver',
-               label='Porous')
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='$\circ$', s=50, zorder=-1, c='black')
+    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=50, zorder=-1, c=[0,0,0,0],
+               label='Porous',edgecolors='black')
     plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=5, cmap='turbo')
-    fig.colorbar(plot, ax=ax)
+
+    add_colorbar(fig, ax, plot)
     ax.legend(loc='upper right')
     ax.set_aspect('equal')
 

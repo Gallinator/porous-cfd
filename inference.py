@@ -6,19 +6,19 @@ from pathlib import Path
 import numpy as np
 from lightning import Trainer
 from matplotlib import pyplot as plt
+from rich.progress import track
 from torch.utils.data import DataLoader
 
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
 from visualization import plot_fields
 
-CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt'
-
 
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--save-plots', action="store_true",
                             help='save all the inference plots', default=False)
+    last_model = sorted(os.listdir('lightning_logs'))[-1]
     default_model_path = Path('lightning_logs') / last_model / 'last.ckpt'
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
     arg_parser.add_argument('--data-dir', type=str, default='data/val')
@@ -26,31 +26,46 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
-model = Pipn.load_from_checkpoint(CHECKPOINT_PATH)
+if __name__ == '__main__':
+    args = build_arg_parser().parse_args()
 
-val_data = FoamDataset('data/val', 1000, 200, 500, 'data/train')
-val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
+    plots_path = None
+    if args.save_plots:
+        plots_path = Path('plots')
+        plots_path.mkdir(exist_ok=True)
 
-trainer = Trainer(logger=False, enable_checkpointing=False)
-pred = trainer.predict(model, dataloaders=val_loader)[0]
-pred = PdeData(pred).numpy()
+    model = Pipn.load_from_checkpoint(args.checkpoint)
 
-tgt = FoamData(val_data[0]).numpy()
+    val_data = FoamDataset(args.data_dir, 1000, 200, 500, args.meta_dir)
+    val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
-points_scaler = val_data.standard_scaler[0:2]
-u_scaler = val_data.standard_scaler[2:4]
-p_scaler = val_data.standard_scaler[4]
+    trainer = Trainer(logger=False, enable_checkpointing=False)
+    predictions = trainer.predict(model, dataloaders=val_loader)
+    for i, (tgt, pred) in enumerate(track(list(zip(val_data, predictions)), description='Saving plots...')):
+        pred = PdeData(pred).numpy()
 
-raw_points = points_scaler.inverse_transform(tgt.points)
+        case_plot_path = None
+        if plots_path is not None:
+            case_plot_path = plots_path / Path(args.data_dir).name / str(i)
 
-plt.interactive(True)
-plot_fields('Predicted', raw_points, u_scaler.inverse_transform(pred.u[0]),
-            p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids)
-plot_fields('Ground truth', raw_points, u_scaler.inverse_transform(tgt.pde.u),
-            p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids)
+        tgt = FoamData(val_data[0]).numpy()
 
-plt.interactive(False)
+        points_scaler = val_data.standard_scaler[0:2]
+        u_scaler = val_data.standard_scaler[2:4]
+        p_scaler = val_data.standard_scaler[4]
 
-u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
-p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
-plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, plot_streams=False)
+        raw_points = points_scaler.inverse_transform(tgt.points)
+
+        plt.interactive(case_plot_path is None)
+
+        plot_fields('Predicted', raw_points, u_scaler.inverse_transform(pred.u[0]),
+                    p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids, save_path=case_plot_path)
+        plot_fields('Ground truth', raw_points, u_scaler.inverse_transform(tgt.pde.u),
+                    p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids, save_path=case_plot_path)
+
+        plt.interactive(False)
+
+        u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
+        p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
+        plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
+                    save_path=case_plot_path)

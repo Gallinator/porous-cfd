@@ -70,7 +70,7 @@ if __name__ == '__main__':
         errors.extend(error.numpy(force=True))
 
         pred_residuals.extend(phys_data.numpy(force=True))
-        cfd_res = torch.cat([t.mom_x, t.mom_y, t.div], dim=-1)
+        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     errors = np.concatenate(errors)

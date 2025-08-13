@@ -9,8 +9,6 @@ from scipy.interpolate import griddata
 import data_parser
 from data_parser import parse_internal_mesh
 
-plt.style.use('dark_background')
-
 M_S = '$\left[ \\frac{m}{s} \\right]$'
 M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
 

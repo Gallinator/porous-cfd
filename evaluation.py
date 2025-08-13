@@ -15,7 +15,6 @@ from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
-CHECKPOINT_PATH = 'lightning_logs/version_41_no_tnet_tanh/checkpoints/epoch=1122-step=2246.ckpt'
 N_INTERNAL = 1000
 N_BOUNDARY = 200
 N_OBS = 500
@@ -33,46 +32,56 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
-model = PiGano.load_from_checkpoint(CHECKPOINT_PATH)
-model.verbose_predict = True
+if __name__ == '__main__':
+    args = build_arg_parser().parse_args()
 
-val_data = FoamDataset('data/val', N_INTERNAL, N_BOUNDARY, N_OBS, 'data/train')
-val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
+    plots_path = None
+    if args.save_plots:
+        plots_path = Path('plots/stats')
+        plots_path.mkdir(exist_ok=True, parents=True)
 
-trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
+    model = PiGano.load_from_checkpoint(args.checkpoint)
+    model.verbose_predict = True
 
-start_time = time.perf_counter()
-pred = trainer.predict(model, dataloaders=val_loader)
-inference_time = time.perf_counter() - start_time
-avg_inference_time = inference_time / len(val_data)
-val_timing = parse_meta('data/val_unseen')['Timing']
-plot_timing([inference_time, val_timing['Total'] / 1e3],
-            [avg_inference_time, val_timing['Average'] / 1e3])
+    val_data = FoamDataset(args.data_dir, 1000, 200, 500, args.meta_dir)
+    val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
-errors, pred_residuals, cfd_residuals = [], [], []
-pde_scaler = val_data.standard_scaler[2:5].to_torch()
-for p, t in zip(pred, val_loader):
-    pred_data, phys_data = p
-    tgt_data = FoamData(t)
-    error = l1_loss(pde_scaler.inverse_transform(pred_data),
-                    pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
-    errors.extend(error.numpy(force=True))
+    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
 
-    pred_residuals.extend(phys_data[:, :N_INTERNAL, :].numpy(force=True))
-    cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=2)
-    cfd_residuals.extend(cfd_res[:N_INTERNAL, :].numpy(force=True))
+    start_time = time.perf_counter()
+    pred = trainer.predict(model, dataloaders=val_loader)
+    inference_time = time.perf_counter() - start_time
+    avg_inference_time = inference_time / len(val_data)
+    val_timing = parse_meta(args.meta_dir)['Timing']
+    plot_timing([inference_time, val_timing['Total'] / 1e3],
+                [avg_inference_time, val_timing['Average'] / 1e3],
+                plots_path)
 
-errors = np.concatenate(errors)
-error_data = PdeData(errors)
-plot_data_dist('Absolute error distribution', error_data.u, error_data.p, None)
+    errors, pred_residuals, cfd_residuals = [], [], []
+    pde_scaler = val_data.standard_scaler[2:5].to_torch()
+    for p, t in zip(pred, val_loader):
+        pred_data, phys_data = p
+        tgt_data = FoamData(t)
+        error = l1_loss(pde_scaler.inverse_transform(pred_data),
+                        pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
+        errors.extend(error.numpy(force=True))
 
-mae = np.average(errors, axis=0)
-plot_errors(mae.tolist())
+        pred_residuals.extend(phys_data[..., :val_data.n_internal, :].numpy(force=True))
+        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=2)
+        cfd_residuals.extend(cfd_res[..., :val_data.n_internal, :].numpy(force=True))
 
-pred_residuals = np.concatenate(pred_residuals)
-cfd_residuals = np.concatenate(cfd_residuals)
-plot_data_dist('Absolute residuals', np.abs(pred_residuals[:, 0:2]), np.abs(pred_residuals[:, 2:3]), None)
+    errors = np.concatenate(errors)
+    error_data = PdeData(errors)
+    plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)
 
-pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
-cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
-plot_residuals(pred_res_avg, cfd_res_avg)
+    mae = np.average(errors, axis=0)
+    plot_errors(mae.tolist(), save_path=plots_path)
+
+    pred_residuals = np.concatenate(pred_residuals)
+    cfd_residuals = np.concatenate(cfd_residuals)
+    plot_data_dist('Absolute residuals', np.abs(pred_residuals[..., 0:2]), np.abs(pred_residuals[..., 2:3]),
+                   save_path=plots_path)
+
+    pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
+    cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
+    plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)

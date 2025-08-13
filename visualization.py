@@ -114,7 +114,7 @@ def plot_dataset_dist(path: str, save_path=None):
     plot_data_dist(f'{path} distribution', data[..., 2:4], data[..., 4:5], data[..., -1:], save_path)
 
 
-def plot_data_dist(title, u, p, zones_ids, save_path=None):
+def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
     ux, uy = u[..., 0], u[..., 1]
     fig = plt.figure(layout='constrained')
     fig.suptitle(title, fontsize=20)

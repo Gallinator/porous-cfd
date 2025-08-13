@@ -1,3 +1,8 @@
+import argparse
+import os
+from argparse import ArgumentParser
+from pathlib import Path
+
 import numpy as np
 from lightning import Trainer
 from matplotlib import pyplot as plt
@@ -8,6 +13,18 @@ from models.pi_gano_pp import PiGanoPP
 from visualization import plot_fields
 
 CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt'
+
+def build_arg_parser() -> ArgumentParser:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--save-plots', action="store_true",
+                            help='save all the inference plots', default=False)
+    default_model_path = Path('lightning_logs') / last_model / 'last.ckpt'
+    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
+    arg_parser.add_argument('--data-dir', type=str, default='data/val')
+    arg_parser.add_argument('--meta-dir', type=str, default='data/train/raw')
+    return arg_parser
+
+
 
 model = PiGanoPP.load_from_checkpoint(CHECKPOINT_PATH)
 

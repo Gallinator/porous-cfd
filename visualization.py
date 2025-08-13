@@ -77,7 +77,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, p
     g_y = griddata(points, field_y, (xi, yi), method='nearest')
 
     ax.streamplot(xx, yy, g_x, g_y, color='black', density=2, zorder=1)
-
+    ax.set_ymargin(0)
     add_colorbar(fig, ax, plot)
     ax.set_aspect('equal')
 

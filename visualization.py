@@ -57,7 +57,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
     fig = plt.figure(figsize=(12, 10), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_u_z, ax_p = (fig.add_subplot(2, 2, 1, projection='3d'),
@@ -74,7 +74,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
     plot_scalar_field(f'$u_z$ {M_S}', points, u[:, 2], porous, fig, ax_u_z)
 
-    plt.show()
+    plot_or_save(fig, save_path)
 
 
 def plot_case(path: str):
@@ -94,7 +94,7 @@ def plot_histogram(ax, data, color: str, title: str, bins=100):
     ax.hist(data, bins=bins, color=color, edgecolor='black')
 
 
-def plot_dataset_dist(path: str):
+def plot_dataset_dist(path: str, save_path=None):
     data = []
     for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
                       description="Reading data"):
@@ -104,10 +104,10 @@ def plot_dataset_dist(path: str):
         data.extend(i_data)
 
     data = np.array(data)
-    plot_data_dist(f'{path} distribution', data[..., 2:4], data[..., 4:5], data[..., -1:])
+    plot_data_dist(f'{path} distribution', data[..., 2:4], data[..., 4:5], data[..., -1:], save_path)
 
 
-def plot_data_dist(title, u, p, zones_ids):
+def plot_data_dist(title, u, p, zones_ids, save_path=None):
     ux, uy = u[..., 0], u[..., 1]
     fig = plt.figure(layout='constrained')
     fig.suptitle(title, fontsize=20)
@@ -120,7 +120,7 @@ def plot_data_dist(title, u, p, zones_ids):
         plot_histogram(ax_zones, zones_ids, 'palegreen', 'Material zones', 2)
     else:
         plot_histogram(ax_zones, norm(u, axis=1), 'palegreen', '$U$')
-    plt.show()
+    plot_or_save(fig, save_path)
 
 
 def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
@@ -134,7 +134,7 @@ def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
     ax.legend(ncols=2)
 
 
-def plot_timing(total: list, average: list):
+def plot_timing(total: list, average: list, save_path=None):
     fig = plt.figure()
     ax_total, ax_avg = fig.subplots(2)
     colors = ['salmon', 'lightblue']
@@ -144,10 +144,10 @@ def plot_timing(total: list, average: list):
     plot_barh(ax_avg, 'Average simulation time [s/case]', average, labels, colors)
 
     fig.tight_layout()
-    plt.show()
+    plot_or_save(fig, save_path)
 
 
-def plot_errors(*args):
+def plot_errors(*args, save_path=None):
     fig, ax = plt.subplots()
     colors = ['salmon', 'lightblue', 'palegreen']
     labels = [f'$U_x$ {M_S}', f'$U_y$ {M_S}', f'$p$ {M2_S2}']
@@ -155,10 +155,10 @@ def plot_errors(*args):
     plot_barh(ax, 'Average relative error', *args, labels, colors)
 
     fig.tight_layout()
-    plt.show()
+    plot_or_save(fig, save_path)
 
 
-def plot_residuals(*args):
+def plot_residuals(*args, save_path=None):
     fig, ax = plt.subplots()
     colors = ['salmon', 'lightblue']
     labels = ['PINN', 'OpenFoam']
@@ -174,4 +174,4 @@ def plot_residuals(*args):
     ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
     ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Continuity'])
     fig.tight_layout()
-    plt.show()
+    plot_or_save(fig, save_path)

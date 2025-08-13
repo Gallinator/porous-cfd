@@ -23,6 +23,12 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
     arg_parser.add_argument('--data-dir', type=str, default='data/val')
     arg_parser.add_argument('--meta-dir', type=str, default='data/train/raw')
+    arg_parser.add_argument('--n-internal', type=int,
+                            help='number of internal points to sample', default=1000)
+    arg_parser.add_argument('--n-boundary', type=int,
+                            help='number of internal points to sample', default=200)
+    arg_parser.add_argument('--n-observations', type=int,
+                            help='number of observation points to sample', default=500)
     return arg_parser
 
 
@@ -36,7 +42,7 @@ if __name__ == '__main__':
 
     model = PiGanoPP.load_from_checkpoint(args.checkpoint)
 
-    val_data = FoamDataset(args.data_dir, 1000, 200, 500, args.meta_dir)
+    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir)
     val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
     trainer = Trainer(logger=False, enable_checkpointing=False)

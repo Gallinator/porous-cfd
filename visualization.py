@@ -60,7 +60,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
 
 
 def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
-    fig = plt.figure(figsize=(12, 10), layout='constrained')
+    fig = plt.figure(figsize=(16, 9), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_u_z, ax_p = (fig.add_subplot(2, 2, 1, projection='3d'),
                                     fig.add_subplot(2, 2, 2, projection='3d'),

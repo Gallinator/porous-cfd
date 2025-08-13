@@ -165,11 +165,11 @@ def plot_errors(*args, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_residuals(*args, save_path=None):
+def plot_residuals(*args, trim, save_path=None):
     fig, ax = plt.subplots()
     colors = ['salmon', 'lightblue']
     labels = ['PINN', 'OpenFoam']
-    ax.set_title('Absolute average residuals (trimmed)', pad=10)
+    ax.set_title(f'Absolute average residuals (trimmed {trim})', pad=10)
     w = 0.01
     x = np.array([x * 0.03 for x in range(len(args[0]))])
 

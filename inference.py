@@ -54,6 +54,7 @@ if __name__ == '__main__':
         case_plot_path = None
         if plots_path is not None:
             case_plot_path = plots_path / Path(args.data_dir).name / str(i)
+            case_plot_path.mkdir(exist_ok=True, parents=True)
 
         tgt = FoamData(tgt).numpy()
 

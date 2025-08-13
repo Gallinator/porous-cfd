@@ -250,6 +250,9 @@ class PipnPP(L.LightningModule):
                                                    self.add_batch_dim(dd_uy_x),
                                                    self.add_batch_dim(d_p_y),
                                                    self.add_batch_dim(in_data.zones_ids))
+            momentum_x = torch.vstack([*momentum_x])
+            momentum_y = torch.vstack([*momentum_y])
+            cont = torch.vstack([*cont])
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:

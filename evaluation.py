@@ -15,8 +15,6 @@ from foam_dataset import FoamDataset, PdeData
 from models.pipn_pp import PipnPP, FoamData
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
-N_INTERNAL = 1000
-
 
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
@@ -27,6 +25,12 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
     arg_parser.add_argument('--data-dir', type=str, default='data/val')
     arg_parser.add_argument('--meta-dir', type=str, default='data/train/raw')
+    arg_parser.add_argument('--n-internal', type=int,
+                            help='number of internal points to sample', default=1000)
+    arg_parser.add_argument('--n-boundary', type=int,
+                            help='number of internal points to sample', default=200)
+    arg_parser.add_argument('--n-observations', type=int,
+                            help='number of observation points to sample', default=500)
     return arg_parser
 
 
@@ -41,7 +45,7 @@ if __name__ == '__main__':
     model = PipnPP.load_from_checkpoint(args.checkpoint)
     model.verbose_predict = True
 
-    val_data = FoamDataset(args.data_dir, 1000, 200, 500, args.meta_dir)
+    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
     trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
@@ -65,7 +69,7 @@ if __name__ == '__main__':
 
         pred_residuals.extend(phys_data.numpy(force=True))
         cfd_res = torch.cat([t.mom_x, t.mom_y, t.div], dim=-1)
-        cfd_residuals.extend(cfd_res[..., :val_data.n_internal, :].numpy(force=True))
+        cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     error_data = PdeData(np.array(errors))
     plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)

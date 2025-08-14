@@ -50,7 +50,7 @@ class MomentumLoss(nn.Module):
 
         return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw + norm_d_ui_k * d_ui_k * uk_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j + norm_dd_ui_k * dd_ui_k) +
-                (self.p_stats.std / 1) * d_p_i + source)
+                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source)
 
     def forward(self, *args):
         res = self.func(*args)

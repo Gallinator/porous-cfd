@@ -74,5 +74,5 @@ if __name__ == '__main__':
 
         u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
         p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
-        plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
-                    case_plot_path)
+        plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids,
+                    save_path=case_plot_path)

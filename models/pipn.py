@@ -101,10 +101,11 @@ class Pipn(L.LightningModule):
         self.verbose_predict = False
 
     def to(self, *args, **kwargs):
-        super().to(*args, *kwargs)
-        self.u_scaler.to(*args, *kwargs)
-        self.p_scaler.to(*args, *kwargs)
-        self.points_scaler.to(*args, *kwargs)
+        ret = super().to(*args, *kwargs)
+        self.u_scaler = self.u_scaler.to(*args, *kwargs)
+        self.p_scaler = self.p_scaler.to(*args, *kwargs)
+        self.points_scaler = self.points_scaler.to(*args, *kwargs)
+        return ret
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> Tensor:
         local_features, global_feature = self.encoder.forward(x, zones_ids)
@@ -113,8 +114,7 @@ class Pipn(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
-        scheduler = ExponentialLR(optimizer, 0.999)
-        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
+        return optimizer
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
         return autograd.grad(outputs, inputs,

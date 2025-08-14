@@ -61,16 +61,16 @@ if __name__ == '__main__':
                 plots_path)
 
     errors, pred_residuals, cfd_residuals = [], [], []
-    pde_scaler = val_data.standard_scaler[2:5].to_torch()
+    pde_scaler = val_data.standard_scaler[3:7].to(model.device)
     for p, t in zip(pred, val_loader):
         pred_data, phys_data = p
         tgt_data = FoamData(t)
-        error = l1_loss(pde_scaler.inverse_transform(pred_data),
+        error = l1_loss(pde_scaler.inverse_transform(pred_data[..., 3:7]),
                         pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
         errors.extend(error.numpy(force=True))
 
         pred_residuals.extend(phys_data.numpy(force=True))
-        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=-1)
+        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.mom_z, tgt_data.div], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     errors = np.concatenate(errors)

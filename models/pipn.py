@@ -222,19 +222,27 @@ class Pipn(L.LightningModule):
             pred = self.forward(in_data.points, in_data.zones_ids)
             pred_data = PdeData(pred)
 
-            # i=0 is x, j=1 is y
-            d_ux_x, diff_x = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
-            # i=1 is y, j=0 is x
-            d_uy_y, diff_y = self.differentiate_field(in_data.points, pred_data.uy, 1, 0)
+            # i=0 is x, j=1 is y, k=2 is z
+            d_ux_x, ux_diffs = self.differentiate_field(in_data.points, pred_data.ux, 0, 1, 2)
+            # i=1 is y, j=0 is x, k=2 is z
+            d_uy_y, uy_diffs = self.differentiate_field(in_data.points, pred_data.uy, 1, 0, 2)
+            # i=2 is z, j=0 is x,, k=1 is y
+            d_uz_z, uz_diffs = self.differentiate_field(in_data.points, pred_data.uz, 2, 0, 1)
+
             d_p = self.calculate_gradients(pred_data.p, in_data.points)
-            d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+            d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
 
-            momentum_x = self.momentum_x_loss.func(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, d_ux_x,
-                                                   *diff_x)
-            momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, d_uy_y,
-                                                   *diff_y)
-            cont = self.continuity_loss.f(d_ux_x, d_uy_y)
+            cont = self.continuity_loss.func(d_ux_x, d_uy_y, d_uz_z)
+            momentum_x = self.momentum_x_loss.func(pred_data.ux, pred_data.uy, pred_data.uz, d_p_x, in_data.zones_ids,
+                                                   d_ux_x,
+                                                   *ux_diffs)
+            momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, pred_data.uz, d_p_y, in_data.zones_ids,
+                                                   d_uy_y,
+                                                   *uy_diffs)
+            mom_loss_z = self.momentum_z_loss.func(pred_data.uz, pred_data.ux, pred_data.uy, d_p_z, in_data.zones_ids,
+                                                   d_uz_z,
+                                                   *uz_diffs)
 
-            return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
+            return pred_data.data, torch.cat([momentum_x, momentum_y, mom_loss_z, cont], dim=2)
         else:
             return self.forward(in_data.points, in_data.zones_ids)

@@ -187,6 +187,6 @@ def plot_residuals(*args, trim, save_path=None):
 
     ax.legend()
     ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
-    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Continuity'])
+    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y','Momentum z', 'Continuity'])
     fig.tight_layout()
     plot_or_save(fig, save_path)

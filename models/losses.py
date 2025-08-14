@@ -65,11 +65,11 @@ class ContinuityLoss(nn.Module):
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
 
-    def f(self, d_ux_x, d_uy_y, d_uz_z):
+    def func(self, d_ux_x, d_uy_y, d_uz_z):
         return ((self.u_scaler[0].std / self.points_scaler[0].std) * d_ux_x +
                 (self.u_scaler[1].std / self.points_scaler[1].std) * d_uy_y +
                 (self.u_scaler[2].std / self.points_scaler[2].std) * d_uz_z)
 
     def forward(self, *args):
-        res = self.f(*args)
+        res = self.func(*args)
         return mse_loss(res, torch.zeros_like(res))

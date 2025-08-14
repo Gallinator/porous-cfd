@@ -93,7 +93,7 @@ class Pipn(L.LightningModule):
                                             self.u_scaler, self.points_scaler, self.p_scaler)
         self.momentum_y_loss = MomentumLoss(1, 0, 2, self.mu, self.d, 5, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
-        self.momentum_z_loss = MomentumLoss(2, 0, 1, self.mu, self.d, n_internal,
+        self.momentum_z_loss = MomentumLoss(2, 0, 1, self.mu, self.d, 5, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)

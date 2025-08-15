@@ -134,6 +134,7 @@ class PiGanoPP(L.LightningModule):
         self.branch = Branch()
         self.neural_op1 = NeuralOperator(256, 256)
         self.neural_op2 = NeuralOperator(256, 256)
+        self.neural_op3 = NeuralOperator(256, 256)
 
         self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
         self.training_loss_togger = LossLogger(self, 'Train loss',
@@ -182,7 +183,8 @@ class PiGanoPP(L.LightningModule):
         out_x, out_pos, out_batch = out
 
         out = self.neural_op1(out_x, par_embedding)
-        out = self.neural_op1(out, par_embedding)
+        out = self.neural_op2(out, par_embedding)
+        out = self.neural_op3(out, par_embedding)
 
         return self.decoder(out, out_pos, out_batch, skip)
 
@@ -347,22 +349,22 @@ class PiGanoPP(L.LightningModule):
 
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
             momentum_x = self.momentum_x_loss.func(pred_data.slice('internal').ux,
-                                              pred_data.slice('internal').uy,
-                                              d_p_x,
-                                              in_data.slice('internal').zones_ids,
-                                              in_data.slice('internal').d,
-                                              in_data.slice('internal').f,
-                                              d_ux_x,
-                                              *x_diff)
+                                                   pred_data.slice('internal').uy,
+                                                   d_p_x,
+                                                   in_data.slice('internal').zones_ids,
+                                                   in_data.slice('internal').d,
+                                                   in_data.slice('internal').f,
+                                                   d_ux_x,
+                                                   *x_diff)
 
             momentum_y = self.momentum_y_loss.func(pred_data.slice('internal').uy,
-                                              pred_data.slice('internal').ux,
-                                              d_p_y,
-                                              in_data.slice('internal').zones_ids,
-                                              in_data.slice('internal').d,
-                                              in_data.slice('internal').f,
-                                              d_uy_y,
-                                              *y_diff)
+                                                   pred_data.slice('internal').ux,
+                                                   d_p_y,
+                                                   in_data.slice('internal').zones_ids,
+                                                   in_data.slice('internal').d,
+                                                   in_data.slice('internal').f,
+                                                   d_uy_y,
+                                                   *y_diff)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=-1)
         else:

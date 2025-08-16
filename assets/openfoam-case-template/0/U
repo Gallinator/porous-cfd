@@ -35,7 +35,8 @@ boundaryField
 
     walls
     {
-        type            slip;
+        type            fixedValue;
+        value           $internalField;
     }
 
     front
@@ -44,7 +45,8 @@ boundaryField
     }
     back
     {
-        type            slip;
+        type            fixedValue;
+        value           $internalField;
     }
 }
 

@@ -1,8 +1,6 @@
 import argparse
 import glob
-import itertools
 import json
-import math
 import os
 import pathlib
 from random import Random
@@ -11,7 +9,6 @@ import shutil
 import subprocess
 import sys
 from argparse import ArgumentParser
-import mathutils
 import bpy
 import numpy as np
 from foamlib import FoamFile
@@ -78,29 +75,42 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
             import_mesh(f'{meshes_dir}/{mesh}')
-            rotations = parse_rotations(transforms['rotation'])
-            scales = parse_scale(transforms['scale'])
-            params = list(itertools.product(rotations, scales))
-            for r, s in params:
-                if len(params) > 1 and rng.random() > drop_p:
-                    continue
-                ops.object.select_all(action='SELECT')
-                ops.object.duplicate(linked=False)
-                obj = bpy.context.selected_objects[0]
-                obj.scale = mathutils.Vector((s[0], s[1], 1.0))
+            n_trees = transforms['n_trees']
+            scales = transforms['scale']
+            src_obj = bpy.context.selected_objects[0]
+            ops.object.select_all(action='DESELECT')
 
-                obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
+            for i in range(transforms['n_windbreaks']):
 
-                ops.wm.obj_export(filepath=f'{dest_dir}/s{s[0]}-{s[1]}_r{r}_{mesh}',
+                trees = create_windbreak(src_obj, n_trees, scales)
+
+                windbreak = merge_trees(trees)
+
+                bpy.ops.object.select_all(action='DESELECT')
+                windbreak.select_set(True)
+
+                modifier = windbreak.modifiers.new(name="Remesh", type='REMESH')
+                modifier.voxel_size = 0.2
+                bpy.context.view_layer.objects.active = windbreak
+                bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+                bpy.context.view_layer.objects.active = windbreak
+                bpy.ops.object.transform_apply()
+                bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME')
+                windbreak.location = [0, 0, windbreak.location[2]]
+
+                ops.wm.obj_export(filepath=f'{dest_dir}/{i}_{mesh}',
                                   forward_axis='Y',
                                   up_axis='Z',
                                   export_materials=False,
                                   export_selected_objects=True)
-                # Delete copy
+                for t in trees:
+                    t.select_set(True)
+                # Delete copies
                 ops.object.delete()
-            # Delete original
-            ops.object.select_all(action='SELECT')
-            ops.object.delete()
+        # Delete original
+        ops.object.select_all(action='SELECT')
+        ops.object.delete()
 
 
 def create_case_template_dirs():

@@ -27,27 +27,8 @@ def import_obj(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
-def parse_rotations(rotations_dict: dict):
-    if not rotations_dict:
-        return [0]
-    start, stop, n = rotations_dict[0], rotations_dict[1], rotations_dict[2]
-    return np.linspace(start, stop, n)
-
-
-def parse_scale(scale_dict: dict) -> list:
-    if [] in scale_dict.values():
-        return [(1, 1)]
-
-    def parse_values(data: list):
-        return np.linspace(data[0], data[1], data[2])
-
-    if 'xy' in scale_dict:
-        scales = parse_values(scale_dict['xy'])
-        return list(zip(scales, scales))
-
-    scales_x = parse_values(scale_dict['x'])
-    scales_y = parse_values(scale_dict['y'])
-    return list(itertools.product(scales_x, scales_y))
+def get_random_in_range(l, h):
+    return l + random.random() * (h - l)
 
 
 def generate_transformed_meshes(meshes_dir: str, dest_dir: str):

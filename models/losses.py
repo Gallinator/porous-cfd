@@ -44,11 +44,11 @@ class MomentumLoss(nn.Module):
         d_i = self.d_scaler[i].inverse_transform(d[..., i:i + 1])
         f_i = self.f_scaler[i].inverse_transform(f[..., i:i + 1])
 
-        source = ui_raw * (d_i * self.mu * zones_ids + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * f_i)
+        source = ui_raw * (d_i * self.mu + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * f_i)
 
         return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
-                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source)
+                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source * zones_ids)
 
     def forward(self, *args):
         res = self.func(*args)

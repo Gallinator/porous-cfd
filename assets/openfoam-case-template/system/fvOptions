@@ -22,8 +22,8 @@ porousFilter{
         cellZone mesh;
         type DarcyForchheimer;
 
-        d   (14000 14000 14000);
-        f   (0 0 0);
+        d   (500 500 500);
+        f   (3.6 3.6 3.6);
 
         coordinateSystem{
             origin (0 0 0);

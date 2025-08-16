@@ -42,11 +42,11 @@ class MomentumLoss(nn.Module):
         ui_raw = ui * self.u_scaler.std[i] + self.u_scaler.mean[i]
         uj_raw = uj * self.u_scaler.std[j] + self.u_scaler.mean[j]
 
-        source = ui_raw * (self.d * self.mu * zones_ids + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * self.f)
+        source = ui_raw * (self.d * self.mu + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * self.f)
 
         return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
-                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source)
+                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source * zones_ids)
 
     def forward(self, *args):
         res = self.func(*args)

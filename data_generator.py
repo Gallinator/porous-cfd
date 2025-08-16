@@ -31,6 +31,43 @@ def get_random_in_range(l, h):
     return l + random.random() * (h - l)
 
 
+def merge_trees(trees):
+    ops.object.select_all(action='DESELECT')
+    windbreak = trees[0]
+    windbreak.select_set(True)
+    for i, t in enumerate(trees[:-1]):
+        modifier = windbreak.modifiers.new(name="Boolean", type='BOOLEAN')
+        modifier.operation = 'UNION'
+        modifier.object = trees[i + 1]
+        bpy.context.view_layer.objects.active = windbreak
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+    return windbreak
+
+
+def create_windbreak(src_tree, n_trees, scales):
+    trees = []
+    prev_obj = src_tree
+    for n in range(n_trees):
+        ops.object.select_all(action='DESELECT')
+        src_tree.select_set(True)
+        ops.object.duplicate(linked=False)
+        obj = bpy.context.selected_objects[0]
+
+        scale_xy = get_random_in_range(*scales['xy'])
+        scale_z = get_random_in_range(*scales['z'])
+        obj.scale = (scale_xy, scale_xy, scale_z)
+        rot_z = get_random_in_range(0, 360)
+        obj.rotation_euler = (*obj.rotation_euler[0:2], rot_z)
+        bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
+        y_size = obj.dimensions[1]
+        prev_y_size = prev_obj.dimensions[1]
+        if n > 0:
+            obj.location[1] = prev_obj.location[1] + prev_y_size / 2 + y_size / 2 * 0.8
+        trees.append(obj)
+        prev_obj = obj
+    return trees
+
+
 def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 

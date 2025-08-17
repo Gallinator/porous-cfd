@@ -2,6 +2,7 @@ import torch
 from torch import nn, autograd, Tensor
 import lightning as L
 from torch.nn.functional import l1_loss, mse_loss
+from torch.optim.lr_scheduler import ExponentialLR
 from torchvision.ops import MLP
 
 from foam_dataset import StandardScaler, FoamData, PdeData, Normalizer
@@ -133,7 +134,9 @@ class PiGano(L.LightningModule):
         return self.reduction.forward(y)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-4)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        scheduler = ExponentialLR(optimizer, 0.999)
+        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
     def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple:
         d_ui = self.calculate_gradients(ui, points)

@@ -1,0 +1,22 @@
+{
+  "pine.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
+    "n_trees": 4
+  },
+  "oak.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1], "z": [0.75, 1]},
+    "n_trees": 2
+  },
+  "willow.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
+    "n_trees": 3
+  },
+  "cypress.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
+    "n_trees": 10
+  }
+}

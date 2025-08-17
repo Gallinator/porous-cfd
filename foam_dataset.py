@@ -37,7 +37,11 @@ class DomainData:
 
     @property
     def mom_y(self):
-        return self.data[..., 12:13]
+        return self.data[..., 16:17]
+
+    @property
+    def mom_z(self):
+        return self.data[..., 17:18]
 
     @property
     def div(self):

@@ -119,6 +119,13 @@ class PiGano(L.LightningModule):
                                           'Val error uz')
         self.save_hyperparameters()
 
+    def to(self, *args, **kwargs):
+        res = super().to(*args, *kwargs)
+        self.u_scaler = self.u_scaler.to(*args, *kwargs)
+        self.p_scaler = self.p_scaler.to(*args, *kwargs)
+        self.points_scaler = self.points_scaler.to(*args, *kwargs)
+        return res
+
     def forward(self,
                 pred_points: Tensor,
                 zones_ids: Tensor,

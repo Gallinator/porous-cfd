@@ -70,7 +70,7 @@ class PiGano(L.LightningModule):
 
         self.branch = Branch()
         self.geometry_encoder = GeometryEncoder()
-        self.points_encoder = MLP(2, [128, 128, 128], activation_layer=nn.Tanh)
+        self.points_encoder = MLP(3, [128, 128, 128], activation_layer=nn.Tanh)
         self.neural_op1 = NeuralOperator(256, 256)
         self.neural_op2 = NeuralOperator(256, 256, True)
         self.neural_op3 = NeuralOperator(256, 256, True)
@@ -122,7 +122,7 @@ class PiGano(L.LightningModule):
                 par_inlet_ux: Tensor) -> Tensor:
         geom_embedding = self.geometry_encoder.forward(pred_points.detach(), zones_ids)
         par_embedding = self.branch.forward(par_points, par_d, par_f, par_inlet_points, par_inlet_ux)
-        local_embedding = self.points_encoder.forward(pred_points)
+        local_embedding = self.points_encoder.forward(torch.cat([pred_points, zones_ids], dim=-1))
 
         geom_embedding = geom_embedding.repeat((1, local_embedding.shape[-2], 1))
         local_embedding = torch.cat([local_embedding, geom_embedding], dim=-1)

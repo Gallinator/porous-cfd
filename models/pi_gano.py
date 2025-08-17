@@ -205,6 +205,7 @@ class PiGano(L.LightningModule):
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y, d_uz_z)
         mom_loss_x = self.momentum_x_loss(pred_data['internal'].ux,
                                           pred_data['internal'].uy,
+                                          pred_data['internal'].uz,
                                           d_p_x,
                                           in_data['internal'].zones_ids,
                                           in_data['internal'].d,
@@ -214,6 +215,7 @@ class PiGano(L.LightningModule):
 
         mom_loss_y = self.momentum_y_loss(pred_data['internal'].uy,
                                           pred_data['internal'].ux,
+                                          pred_data['internal'].uz,
                                           d_p_y,
                                           in_data['internal'].zones_ids,
                                           in_data['internal'].d,

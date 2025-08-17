@@ -3,7 +3,7 @@ import glob
 import json
 import os
 import pathlib
-import random
+from random import Random
 import re
 import shutil
 import subprocess
@@ -24,8 +24,8 @@ def import_obj(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
-def get_random_in_range(l, h):
-    return l + random.random() * (h - l)
+def get_random_in_range(l, h, rng):
+    return l + rng.random() * (h - l)
 
 
 def merge_trees(trees):
@@ -41,7 +41,7 @@ def merge_trees(trees):
     return windbreak
 
 
-def create_windbreak(src_tree, n_trees, scales):
+def create_windbreak(src_tree, n_trees, scales, rng):
     trees = []
     prev_obj = src_tree
     for n in range(n_trees):
@@ -50,10 +50,10 @@ def create_windbreak(src_tree, n_trees, scales):
         ops.object.duplicate(linked=False)
         obj = bpy.context.selected_objects[0]
 
-        scale_xy = get_random_in_range(*scales['xy'])
-        scale_z = get_random_in_range(*scales['z'])
+        scale_xy = get_random_in_range(*scales['xy'], rng=rng)
+        scale_z = get_random_in_range(*scales['z'], rng=rng)
         obj.scale = (scale_xy, scale_xy, scale_z)
-        rot_z = get_random_in_range(0, 360)
+        rot_z = get_random_in_range(0, 360, rng)
         obj.rotation_euler = (*obj.rotation_euler[0:2], rot_z)
         bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
         y_size = obj.dimensions[1]
@@ -65,7 +65,7 @@ def create_windbreak(src_tree, n_trees, scales):
     return trees
 
 
-def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{meshes_dir}/transforms.json', 'r') as f:
@@ -81,7 +81,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
 
             for i in range(transforms['n_windbreaks']):
 
-                trees = create_windbreak(src_obj, n_trees, scales)
+                trees = create_windbreak(src_obj, n_trees, scales, rng)
 
                 windbreak = merge_trees(trees)
 
@@ -250,13 +250,13 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-def generate_split(data_path: str, config_path: str):
+def generate_split(data_path: str, config_path: str, rng=Random()):
     if not os.path.exists(config_path):
         return
     with open(config_path) as f:
         splits = json.load(f)['splits']
     cases = list(os.listdir(f"{data_path}"))
-    random.shuffle(cases)
+    rng.shuffle(cases)
     n = len(cases)
     start = 0
     for s in splits:
@@ -286,12 +286,14 @@ if __name__ == '__main__':
     clean_dir('data')
     clean_dir('assets/generated-meshes')
 
+    rng = Random(8421)
+
     for d in os.listdir('assets/meshes'):
-        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}', rng)
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}',
                                 args.openfoam_procs)
-        generate_split(f'data/{d}', f'assets/meshes/{d}/config.json')
+        generate_split(f'data/{d}', f'assets/meshes/{d}/config.json', rng)
 
     for d in os.listdir('data'):
         generate_data(f'data/{d}')

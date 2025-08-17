@@ -187,7 +187,7 @@ class PiGano(L.LightningModule):
         # i=1 is y, j=0 is x
         d_uy_y, y_diff = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0, 2)
         # i=1 is y, j=0 is x
-        d_uy_z, z_diff = self.differentiate_field(internal_points, pred_data['internal'].uz, 1, 0, 2)
+        d_uz_z, z_diff = self.differentiate_field(internal_points, pred_data['internal'].uz, 2, 0, 1)
 
         d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
         d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
@@ -221,9 +221,20 @@ class PiGano(L.LightningModule):
                                           d_uy_y,
                                           *y_diff)
 
+        mom_loss_z = self.momentum_y_loss(pred_data['internal'].uz,
+                                          pred_data['internal'].ux,
+                                          pred_data['internal'].uy,
+                                          d_p_z,
+                                          in_data['internal'].zones_ids,
+                                          in_data['internal'].d,
+                                          in_data['internal'].f,
+                                          d_uz_z,
+                                          *z_diff)
+
         loss = (cont_loss +
                 mom_loss_x +
                 mom_loss_y +
+                mom_loss_z +
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
@@ -237,6 +248,7 @@ class PiGano(L.LightningModule):
                                       cont_loss,
                                       mom_loss_x,
                                       mom_loss_y,
+                                      mom_loss_z,
                                       boundary_p_loss,
                                       boundary_ux_loss,
                                       boundary_uy_loss,

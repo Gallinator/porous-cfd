@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)
-    plot_data_dist('Absolute residuals', np.abs(pred_residuals[..., 0:2]), np.abs(pred_residuals[..., 2:3]),
+    plot_data_dist('Absolute residuals', np.abs(pred_residuals[..., 0:3]), np.abs(pred_residuals[..., 3:4]),
                    save_path=plots_path)
 
     pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)

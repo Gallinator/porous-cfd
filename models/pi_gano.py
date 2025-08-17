@@ -254,6 +254,7 @@ class PiGano(L.LightningModule):
                                       boundary_p_loss,
                                       boundary_ux_loss,
                                       boundary_uy_loss,
+                                      boundary_uz_loss,
                                       obs_p_loss,
                                       obs_ux_loss,
                                       obs_uy_loss,

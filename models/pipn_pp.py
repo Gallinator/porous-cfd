@@ -62,7 +62,8 @@ class PointNetPP(nn.Module):
 
         self.propagate3 = FeaturePropagation(4, MLP([1024 + 256, 256], act=nn.Tanh(), norm=None))
         self.propagate2 = FeaturePropagation(8, MLP([256 + 128, 128], act=nn.Tanh(), norm=None))
-        self.propagate1 = FeaturePropagation(16, MLP([128 + 3, 128, 128, 3], act=nn.Tanh(), norm=None))
+        self.propagate1 = FeaturePropagation(16, MLP([128 + 3, 128, 128, 3], act=nn.Tanh(), norm=None,
+                                                     dropout=[0.05, 0.05, 0]))
 
     def forward(self, x: Tensor, pos: Tensor, batch: Tensor) -> Tensor:
         x = torch.cat([x, pos], dim=1)

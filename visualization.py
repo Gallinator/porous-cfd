@@ -119,17 +119,18 @@ def plot_dataset_dist(path: str, save_path=None):
         data.extend(i_data)
 
     data = np.array(data)
-    plot_data_dist(f'{path} distribution', data[..., 2:4], data[..., 4:5], data[..., -1:], save_path)
+    plot_data_dist(f'{path} distribution', data[..., 3:6], data[..., 6:7], data[..., -1:], save_path)
 
 
 def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
-    ux, uy = u[..., 0], u[..., 1]
+    ux, uy, uz = u[..., 0], u[..., 1], u[..., 2]
     fig = plt.figure(layout='constrained')
     fig.suptitle(title, fontsize=20)
-    ax_ux, ax_uy, ax_p, ax_zones = fig.subplots(ncols=2, nrows=2).flatten()
+    ax_ux, ax_uy, ax_uz, ax_p, ax_zones, _ = fig.subplots(ncols=3, nrows=2).flatten()
 
     plot_histogram(ax_ux, ux, 'lightsteelblue', '$U_x$')
     plot_histogram(ax_uy, uy, 'lemonchiffon', '$U_y$')
+    plot_histogram(ax_uz, uz, 'thistle', '$U_z$')
     plot_histogram(ax_p, p, 'lightsalmon', '$p$')
     if zones_ids is not None:
         plot_histogram(ax_zones, zones_ids, 'palegreen', 'Material zones', 2)
@@ -187,6 +188,6 @@ def plot_residuals(*args, trim, save_path=None):
 
     ax.legend()
     ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
-    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y','Momentum z', 'Continuity'])
+    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Momentum z', 'Continuity'])
     fig.tight_layout()
     plot_or_save(fig, save_path)

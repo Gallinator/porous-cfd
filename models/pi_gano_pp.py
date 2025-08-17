@@ -267,9 +267,9 @@ class PiGanoPP(L.LightningModule):
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
-                obs_p_loss * 1000 +
-                obs_ux_loss * 1000 +
-                obs_uy_loss * 1000)
+                obs_p_loss * 100 +
+                obs_ux_loss * 100 +
+                obs_uy_loss * 100)
 
         self.training_loss_togger.log(len(in_data.batch), loss,
                                       cont_loss,

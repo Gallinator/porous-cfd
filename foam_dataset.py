@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from rich.progress import track
+from numpy.random import default_rng
 from torch import tensor, Tensor
 from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
@@ -132,10 +133,12 @@ class Normalizer:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
+        self.rng = rng
+
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
         self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
         self.standard_scaler = StandardScaler(
@@ -203,7 +206,7 @@ class FoamDataset(Dataset):
 
         for k, b in boundary_dict.items():
             n = self.n_boundary * self.min_points[k] / tot
-            index = np.random.choice(len(b), replace=False, size=int(n)) + cur_start
+            index = self.rng.choice(len(b), replace=False, size=int(n)) + cur_start
             samples.extend(index.tolist())
             cur_start += len(b)
         return samples
@@ -219,14 +222,14 @@ class FoamDataset(Dataset):
         b_data = b_data[b_samples]
 
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
-        i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
+        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
         i_data = np.concatenate([i_data, np.zeros((len(i_data), 1))], axis=-1)
 
         data = np.concatenate((i_data, b_data))
         data = self.reorder_data(data)
 
-        obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
+        obs_samples = self.rng.choice(len(i_data), replace=False, size=self.n_obs)
         obs_samples = self.extend_gather_indices(obs_samples, data.shape[-1])
 
         # Do not standardize zones indices

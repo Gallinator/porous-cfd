@@ -1,8 +1,8 @@
 import argparse
 from argparse import ArgumentParser
-
 from lightning.pytorch.callbacks import RichProgressBar
 from torch.utils.data import DataLoader
+from numpy.random import default_rng
 from foam_dataset import FoamDataset
 from models.pi_gano import PiGano
 import lightning as L
@@ -31,9 +31,10 @@ if __name__ == '__main__':
     n_obs = args.n_observations
     epochs = args.epochs
 
-    train_data = FoamDataset('data/train', n_internal, n_boundary, n_obs)
+    rng = default_rng(8421)
+    train_data = FoamDataset('data/train', n_internal, n_boundary, n_obs, rng=rng)
     train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
-    val_data = FoamDataset('data/val', n_internal, n_boundary, n_obs, 'data/train')
+    val_data = FoamDataset('data/val', n_internal, n_boundary, n_obs, 'data/train', rng=rng)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
     scalers = {'U': train_data.standard_scaler[2:4],

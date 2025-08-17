@@ -76,7 +76,8 @@ class DecoderPp(nn.Module):
         super().__init__()
         self.propagate3 = FeaturePropagation(4, MLP([128 + 256, 128, 128], act=nn.Tanh(), norm=None))
         self.propagate2 = FeaturePropagation(8, MLP([64 + 128, 64, 64], act=nn.Tanh(), norm=None))
-        self.propagate1 = FeaturePropagation(16, MLP([64 + 3, 64, 64, 3], act=nn.Tanh(), norm=None))
+        self.propagate1 = FeaturePropagation(16, MLP([64 + 3, 64, 64, 3], act=nn.Tanh(), norm=None,
+                                                     dropout=[0.05, 0.05, 0]))
 
     def forward(self, x: Tensor, pos: Tensor, batch: Tensor, skip) -> Tensor:
         prop3 = self.propagate3(x, pos, batch, *skip[2])

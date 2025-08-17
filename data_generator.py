@@ -25,8 +25,8 @@ def import_mesh(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
-def get_random_in_range(l, h):
-    return l + random.random() * (h - l)
+def get_random_in_range(l, h, rng):
+    return l + rng.random() * (h - l)
 
 
 def merge_trees(trees):
@@ -51,10 +51,10 @@ def create_windbreak(src_tree, n_trees, scales):
         ops.object.duplicate(linked=False)
         obj = bpy.context.selected_objects[0]
 
-        scale_xy = get_random_in_range(*scales['xy'])
-        scale_z = get_random_in_range(*scales['z'])
+        scale_xy = get_random_in_range(*scales['xy'], rng=rng)
+        scale_z = get_random_in_range(*scales['z'], rng=rng)
         obj.scale = (scale_xy, scale_xy, scale_z)
-        rot_z = get_random_in_range(0, 360)
+        rot_z = get_random_in_range(0, 360, rng=rng)
         obj.rotation_euler = (*obj.rotation_euler[0:2], rot_z)
         bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
         y_size = obj.dimensions[1]

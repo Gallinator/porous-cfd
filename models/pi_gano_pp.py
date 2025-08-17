@@ -134,7 +134,6 @@ class PiGanoPP(L.LightningModule):
         self.branch = Branch()
         self.neural_op1 = NeuralOperator(256, 256)
         self.neural_op2 = NeuralOperator(256, 256)
-        self.neural_op3 = NeuralOperator(256, 256)
 
         self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
         self.training_loss_togger = LossLogger(self, 'Train loss',
@@ -184,7 +183,6 @@ class PiGanoPP(L.LightningModule):
 
         out = self.neural_op1(out_x, par_embedding)
         out = self.neural_op2(out, par_embedding)
-        out = self.neural_op3(out, par_embedding)
 
         return self.decoder(out, out_pos, out_batch, skip)
 

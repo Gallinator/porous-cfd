@@ -5,7 +5,7 @@ import json
 import math
 import os
 import pathlib
-import random
+from random import Random
 import re
 import shutil
 import subprocess
@@ -237,13 +237,13 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-def generate_split(data_path: str, config_path: str):
+def generate_split(data_path: str, config_path: str, rng=Random()):
     if not os.path.exists(config_path):
         return
     with open(config_path) as f:
         splits = json.load(f)['splits']
     cases = list(os.listdir(f"{data_path}"))
-    random.shuffle(cases)
+    rng.shuffle(cases)
     n = len(cases)
     start = 0
     for s in splits:
@@ -273,12 +273,14 @@ if __name__ == '__main__':
     clean_dir('data')
     clean_dir('assets/generated-meshes')
 
+    rng = Random(8421)
+
     for d in os.listdir('assets/meshes'):
         generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}/raw',
                                 args.openfoam_procs)
-        generate_split(f'data/{d}/raw', f'assets/meshes/{d}/config.json')
+        generate_split(f'data/{d}/raw', f'assets/meshes/{d}/config.json', rng=rng)
 
     for d in os.listdir('data'):
         generate_data(f'data/{d}/raw')

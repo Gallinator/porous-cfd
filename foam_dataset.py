@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import torch
+from numpy.random import default_rng
 import torch_geometric
 from torch import tensor, Tensor
 from torch_geometric.data import InMemoryDataset
@@ -91,10 +92,11 @@ class FoamData(torch_geometric.data.Data):
 
 
 class FoamDataset(InMemoryDataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
+        self.rng = rng
 
         self.meta = parse_meta(f'{data_dir}/raw' if meta_dir is None else meta_dir)
         self.check_sample_size()
@@ -125,16 +127,16 @@ class FoamDataset(InMemoryDataset):
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
-        b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_samples = self.rng.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 
         i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))
-        i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
+        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
 
         data = np.concatenate((i_data, b_data))
 
-        obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
+        obs_samples = self.rng.choice(len(i_data), replace=False, size=self.n_obs)
 
         data = self.reorder_data(data)
 

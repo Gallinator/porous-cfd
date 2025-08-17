@@ -12,23 +12,23 @@ from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 class Branch(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP(7, [256, 256, 256], activation_layer=nn.Tanh)
+        self.linear = MLP(10, [256, 256, 256], activation_layer=nn.Tanh)
 
     def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
         """
-        :param ceof_points: Coordinates of darcy boundary points(B, M, 2)
-        :param d: Darcy coefficients (B, M, 2)
-        :param f: Forchheimer coefficients (B, M, 2)
-        :param inlet_points: Coordinates of inlet boundary points(B, N, 2)
+        :param ceof_points: Coordinates of darcy boundary points(B, M, 3)
+        :param d: Darcy coefficients (B, M, 3)
+        :param f: Forchheimer coefficients (B, M, 3)
+        :param inlet_points: Coordinates of inlet boundary points(B, N, 3)
         :param inlet_ux: inlet velocity along x (B, N, 1)
-        :return: Parameter embedding (B, 1, 64)
+        :return: Parameter embedding (B, 1, 256)
         """
         points = torch.cat([ceof_points, inlet_points], dim=-2)
         par_dim = d.shape[-1] + f.shape[-1] + inlet_ux.shape[-1]
         x = torch.zeros((points.shape[0], points.shape[1], par_dim), device=points.device)
-        x[..., 0:ceof_points.shape[-2], 0:2] = d
-        x[..., 0:ceof_points.shape[-2], 2:4] = f
-        x[..., ceof_points.shape[-2]:, 4:5] = inlet_ux
+        x[..., 0:ceof_points.shape[-2], 0:3] = d
+        x[..., 0:ceof_points.shape[-2], 3:6] = f
+        x[..., ceof_points.shape[-2]:, 6:7] = inlet_ux
         x = torch.cat([points, x], dim=-1)
         y = self.linear(x)
         return torch.max(y, dim=1, keepdim=True)[0]
@@ -37,7 +37,7 @@ class Branch(nn.Module):
 class GeometryEncoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP(3, [128, 128, 128], activation_layer=nn.Tanh)
+        self.linear = MLP(4, [128, 128, 128], activation_layer=nn.Tanh)
 
     def forward(self, points: Tensor, zones_ids: Tensor) -> Tensor:
         """
@@ -70,12 +70,12 @@ class PiGano(L.LightningModule):
 
         self.branch = Branch()
         self.geometry_encoder = GeometryEncoder()
-        self.points_encoder = MLP(3, [128, 128, 128], activation_layer=nn.Tanh)
+        self.points_encoder = MLP(4, [128, 128, 128], activation_layer=nn.Tanh)
         self.neural_op1 = NeuralOperator(256, 256)
         self.neural_op2 = NeuralOperator(256, 256, True)
         self.neural_op3 = NeuralOperator(256, 256, True)
         self.neural_op4 = NeuralOperator(256, 256)
-        self.reduction = nn.Linear(256, 3)
+        self.reduction = nn.Linear(256, 4)
 
         self.domain_dict = domain_dict
         self.mu = 1489.4e-6

@@ -86,9 +86,11 @@ class PiGano(L.LightningModule):
         self.d_scaler = scalers['d']
         self.f_scaler = scalers['f']
 
-        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
+        self.momentum_x_loss = MomentumLoss(0, 1, 2, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
                                             self.d_scaler, self.f_scaler)
-        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
+        self.momentum_y_loss = MomentumLoss(1, 0, 2, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
+                                            self.d_scaler, self.f_scaler)
+        self.momentum_z_loss = MomentumLoss(2, 0, 1, self.mu, self.u_scaler, self.points_scaler, self.p_scaler,
                                             self.d_scaler, self.f_scaler)
         self.continuity_loss = ContinuityLoss(self.u_scaler, self.points_scaler)
 
@@ -174,9 +176,11 @@ class PiGano(L.LightningModule):
         pred_data = PdeData(pred, self.domain_dict)
 
         # i=0 is x, j=1 is y
-        d_ux_x, x_diff = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1)
+        d_ux_x, x_diff = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1, 2)
         # i=1 is y, j=0 is x
-        d_uy_y, y_diff = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0)
+        d_uy_y, y_diff = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0, 2)
+        # i=1 is y, j=0 is x
+        d_uy_z, z_diff = self.differentiate_field(internal_points, pred_data['internal'].uz, 1, 0, 2)
 
         d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
         d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]

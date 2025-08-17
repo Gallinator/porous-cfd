@@ -243,7 +243,7 @@ def generate_data(cases_dir: str):
 
 def generate_meta(data_dir: str):
     internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 4
-    d_max, f_max = np.ones(2) * sys.float_info.min, np.ones(2) * sys.float_info.min
+    d_max, f_max = np.ones(3) * sys.float_info.min, np.ones(3) * sys.float_info.min
     running_stats = Welford()
     elapse_times = []
 
@@ -276,8 +276,8 @@ def generate_meta(data_dir: str):
     std_meta = {'Points': features_std[0:3], 'U': features_std[3:6], 'p': features_std[6]}
     mean_meta = {'Points': features_mean[0:3], 'U': features_mean[3:6], 'p': features_mean[6]}
     timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
-    coefs_meta = {"d": {'Min': [0, 0], 'Max': d_max.tolist()},
-                  "f": {'Min': [0, 0], 'Max': f_max.tolist()}}
+    coefs_meta = {"d": {'Min': [0, 0, 0], 'Max': d_max.tolist()},
+                  "f": {'Min': [0, 0, 0], 'Max': f_max.tolist()}}
 
     meta_dict = {"Min points": min_points_meta,
                  'Mean': mean_meta,

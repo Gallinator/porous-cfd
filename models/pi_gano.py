@@ -98,18 +98,23 @@ class PiGano(L.LightningModule):
                                                'Train loss continuity',
                                                'Train loss momentum x',
                                                'Train loss momentum y',
+                                               'Train loss momentum z',
                                                'Train loss p',
                                                'Train loss ux',
                                                'Train loss uy',
+                                               'Train loss uz',
                                                'Obs loss p',
                                                'Obs loss ux',
                                                'Obs loss uy',
+                                               'Obs loss uz',
                                                'Train p error',
                                                'Train ux error',
-                                               'Train uy error')
+                                               'Train uy error',
+                                               'Train uz error')
         self.val_loss_logger = LossLogger(self, 'Val error p',
                                           'Val error ux',
-                                          'Val error uy')
+                                          'Val error uy',
+                                          'Val error uz')
         self.save_hyperparameters()
 
     def forward(self,

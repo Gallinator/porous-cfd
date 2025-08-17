@@ -232,7 +232,9 @@ class PiGano(L.LightningModule):
                                       l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
                                               self.u_scaler[0].inverse_transform(in_data.pde.ux)),
                                       l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
-                                              self.u_scaler[1].inverse_transform(in_data.pde.uy)))
+                                              self.u_scaler[1].inverse_transform(in_data.pde.uy)),
+                                      l1_loss(self.u_scaler[2].inverse_transform(pred_data.uz),
+                                              self.u_scaler[2].inverse_transform(in_data.pde.uz)))
 
         return loss
 
@@ -252,7 +254,9 @@ class PiGano(L.LightningModule):
                            self.u_scaler[0].inverse_transform(batch_data.pde.ux))
         uy_error = l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
                            self.u_scaler[1].inverse_transform(batch_data.pde.uy))
-        self.val_loss_logger.log(p_error, ux_error, uy_error)
+        uz_error = l1_loss(self.u_scaler[2].inverse_transform(pred_data.uy),
+                           self.u_scaler[2].inverse_transform(batch_data.pde.uy))
+        self.val_loss_logger.log(p_error, ux_error, uy_error, uz_error)
 
     def predict_step(self, batch: Tensor) -> tuple[Tensor, Tensor] | Tensor:
         in_data = FoamData(batch, self.domain_dict)

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import numpy as np
 import torch
+from numpy.random import default_rng
 from torch_geometric.utils import unbatch
 from torch import tensor, Tensor
 from torch_geometric.data import InMemoryDataset, Data
@@ -159,10 +160,11 @@ class FoamData(DomainData):
 
 
 class FoamDataset(InMemoryDataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
+        self.rng = rng
 
         self.meta = parse_meta(f'{data_dir}/raw' if meta_dir is None else meta_dir)
         self.standard_scaler = StandardScaler(
@@ -224,7 +226,7 @@ class FoamDataset(InMemoryDataset):
 
         for k, b in boundary_dict.items():
             n = self.n_boundary * self.min_points[k] / tot
-            index = np.random.choice(len(b), replace=False, size=int(n)) + cur_start
+            index = self.rng.choice(len(b), replace=False, size=int(n)) + cur_start
             samples.extend(index.tolist())
             cur_start += len(b)
         return samples
@@ -246,13 +248,13 @@ class FoamDataset(InMemoryDataset):
         b_data = b_data[b_samples]
 
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
-        i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
+        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
         i_data = np.concatenate([i_data, np.zeros((len(i_data), 1))], axis=-1)
 
         data = np.concatenate((i_data, b_data))
 
-        obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
+        obs_samples = self.rng.choice(len(i_data), replace=False, size=self.n_obs)
 
         data = self.reorder_data(data)
 

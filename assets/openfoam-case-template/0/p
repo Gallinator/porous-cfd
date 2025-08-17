@@ -31,16 +31,7 @@ boundaryField
         value           $internalField;
     }
 
-    walls
-    {
-        type            zeroGradient;
-    }
-
     front
-    {
-        type            zeroGradient;
-    }
-    back
     {
         type            zeroGradient;
     }

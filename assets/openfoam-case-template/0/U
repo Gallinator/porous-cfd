@@ -33,20 +33,9 @@ boundaryField
         outlet          $internalField;
     }
 
-    walls
-    {
-        type            fixedValue;
-        value           $internalField;
-    }
-
     front
     {
         type            slip;
-    }
-    back
-    {
-        type            fixedValue;
-        value           $internalField;
     }
 }
 

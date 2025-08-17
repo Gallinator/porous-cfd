@@ -81,23 +81,6 @@ functions
         executeControl  writeTime;
         writeControl    writeTime;
     }
-    walls
-    {
-        // Mandatory entries (unmodifiable)
-        type            surfaceFieldValue;
-        libs            (fieldFunctionObjects);
-        surfaceFormat   foam;
-
-        // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError vorticity vorticityMag);
-        operation       none;
-        regionType      patch;
-        name            walls;
-
-        // Optional (inherited) entries
-        writeFields     true;
-        writeControl    writeTime;
-    }
     inlet
     {
         // Mandatory entries (unmodifiable)
@@ -143,6 +126,24 @@ functions
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeToFile     true;
+        writeControl    writeTime;
+        surfaceFormat   foam;
+    }
+    front
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory entries (runtime modifiable)
+        fields          (U p div(phi) momentError vorticity vorticityMag);
+        operation       none;
+        regionType      patch;
+        name            front;
 
         // Optional (inherited) entries
         writeFields     true;

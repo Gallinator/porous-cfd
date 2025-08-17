@@ -50,6 +50,9 @@ boundary
         faces
         (
             (0 4 7 3)
+            (2 3 6 7) //Left wall
+            (0 1 5 4) //Right wall
+            (4 5 6 7) //Upper wall
         );
     }
     outlet
@@ -60,29 +63,12 @@ boundary
             (1 2 6 5)
         );
     }
-    walls
-    {
-        type wall;
-        faces
-        (
-            (2 3 6 7) //Left wall
-            (0 1 5 4) //Right wall
-        );
-    }
     front
     {
         type wall;
         faces
         (
             (3 2 1 0) //Lower wall
-        );
-    }
-    back
-    {
-        type wall;
-        faces
-        (
-            (4 5 6 7) //Upper wall
         );
     }
 );

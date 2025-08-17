@@ -200,7 +200,7 @@ class FoamDataset(Dataset):
         inlet_data = []
         for key in boundary_data.keys():
             if key == 'inlet':
-                inlet_ux = boundary_data[key][..., 5:6]
+                inlet_ux = boundary_data[key][..., 6:7]
                 inlet_ux = self.standard_scaler[3:4].transform(inlet_ux)
                 inlet_data.append(inlet_ux)
             else:
@@ -244,10 +244,9 @@ class FoamDataset(Dataset):
         obs_samples = self.extend_gather_indices(obs_samples, data.shape[-1])
 
         # Do not standardize zones indices
-        data[:, 0:9] = self.standard_scaler.transform(data[:, 0:9])
-        data[:, 9:12] = self.d_normalizer.transform(data[:, 9:12])
-        data[:, 12:15] = self.f_normalizer.transform(data[:, 12:15])
-
+        data[:, 0:7] = self.standard_scaler.transform(data[:, 0:7])
+        data[:, 8:11] = self.d_normalizer.transform(data[:, 8:11])
+        data[:, 11:14] = self.f_normalizer.transform(data[:, 11:14])
         return tensor(data, dtype=torch.float), obs_samples
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor]:

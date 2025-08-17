@@ -58,9 +58,9 @@ if __name__ == '__main__':
             case_plot_path = plots_path / Path(args.data_dir).name / str(i)
             case_plot_path.mkdir(exist_ok=True, parents=True)
 
-        points_scaler = val_data.standard_scaler[0:2]
-        u_scaler = val_data.standard_scaler[2:4]
-        p_scaler = val_data.standard_scaler[4]
+        points_scaler = val_data.standard_scaler[0:3]
+        u_scaler = val_data.standard_scaler[3:6]
+        p_scaler = val_data.standard_scaler[6]
 
         raw_points = points_scaler.inverse_transform(tgt.points)
 

@@ -269,7 +269,7 @@ def generate_split(data_path: str, config_path: str, rng=Random()):
     for case in os.listdir(f'{data_path}'):
         first_split = list(splits.keys())[0]
         shutil.move(f'{data_path}/{case}', f'{pathlib.Path(data_path).parent}/{first_split}/{case}')
-    shutil.rmtree(pathlib.Path(data_path).parent)
+    shutil.rmtree(pathlib.Path(data_path))
 
 
 def build_arg_parser() -> ArgumentParser:

@@ -256,8 +256,8 @@ def generate_meta(data_dir: str):
 
         internal_min = min(internal_min, len(i_data))
 
-        d = np.max(i_data[:, -4:-2], axis=0)
-        f = np.max(i_data[:, -2:], axis=0)
+        d = np.max(i_data[:, -6:-3], axis=0)
+        f = np.max(i_data[:, -3:], axis=0)
         d_max = np.maximum(d, d_max)
         f_max = np.maximum(f, f_max)
 

@@ -12,28 +12,28 @@ from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 class DomainData:
     def __init__(self, data: Tensor):
         self.data = data
-        self.points = self.data[..., 0:2]
-        self.pde = PdeData(self.data[..., 2:5])
+        self.points = self.data[..., 0:3]
+        self.pde = PdeData(self.data[..., 3:7])
 
     @property
     def zones_ids(self) -> Tensor | np.ndarray:
-        return self.data[..., 5:6]
+        return self.data[..., 7:8]
 
     @property
     def d(self) -> Tensor | np.ndarray:
-        return self.data[..., 6:8]
+        return self.data[..., 8:11]
 
     @property
     def f(self) -> Tensor | np.ndarray:
-        return self.data[..., 8:10]
+        return self.data[..., 11:14]
 
     @property
     def inlet_ux(self):
-        return self.data[..., 10:11]
+        return self.data[..., 14:15]
 
     @property
     def mom_x(self):
-        return self.data[..., 11:12]
+        return self.data[..., 15:16]
 
     @property
     def mom_y(self):
@@ -45,7 +45,7 @@ class DomainData:
 
     @property
     def div(self):
-        return self.data[..., 13:14]
+        return self.data[..., 18:19]
 
 
 class PdeData:
@@ -71,7 +71,7 @@ class PdeData:
 
     @property
     def p(self) -> Tensor | np.ndarray:
-        return self.data[..., 2:3]
+        return self.data[..., 3:4]
 
     def __getitem__(self, item):
         if self.domain_dict is None:

@@ -5,7 +5,7 @@ import itertools
 import math
 import os
 import pathlib
-import random
+from random import Random
 import re
 import shutil
 import subprocess
@@ -51,7 +51,7 @@ def parse_scale(scale_dict: dict) -> list:
     return list(itertools.product(scales_x, scales_y))
 
 
-def generate_transformed_meshes(meshes_dir: str, dest_dir: str, drop_p=0.5):
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str, drop_p=0.5, rng=Random()):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{meshes_dir}/transforms.json', 'r') as f:
@@ -64,7 +64,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, drop_p=0.5):
             scales = parse_scale(transforms['scale'])
             params = list(itertools.product(rotations, scales))
             for r, s in params:
-                if len(params) > 1 and random.random() > drop_p:
+                if len(params) > 1 and rng.random() > drop_p:
                     continue
                 ops.object.select_all(action='SELECT')
                 ops.object.duplicate(linked=False)
@@ -173,7 +173,7 @@ def write_coefs(fv_options_path: str, coefs: list, coef: str):
         f.write(lines)
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, drop_p=0.5):
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, drop_p=0.5, rng=Random()):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
@@ -182,7 +182,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
         for inlet_ux, coeffs in params:
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
-                if len(params) > 1 and random.random() > drop_p:
+                if len(params) > 1 and rng.random() > drop_p:
                     continue
                 d = coeffs['d']
                 f = coeffs['f']
@@ -278,7 +278,7 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-def generate_split(data_path: str, config_path: str):
+def generate_split(data_path: str, config_path: str, rng=Random()):
     if not os.path.exists(config_path):
         return
     with open(config_path) as f:
@@ -287,7 +287,7 @@ def generate_split(data_path: str, config_path: str):
             return
         splits = config['splits']
     cases = list(os.listdir(f"{data_path}"))
-    random.shuffle(cases)
+    rng.shuffle(cases)
     n = len(cases)
     start = 0
     for s in splits:
@@ -331,13 +331,16 @@ if __name__ == '__main__':
     clean_dir('data')
     clean_dir('assets/generated-meshes')
 
+    rng = Random(8421)
+
     for d in os.listdir('assets/meshes'):
-        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}', rng=rng)
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}/raw',
                                 f'assets/meshes/{d}',
-                                args.openfoam_procs)
-        generate_split(f'data/{d}/raw', f'assets/meshes/{d}/config.json')
+                                args.openfoam_procs,
+                                rng=rng)
+        generate_split(f'data/{d}/raw', f'assets/meshes/{d}/config.json', rng=rng)
 
     for d in os.listdir('data'):
         generate_data(f'data/{d}/raw')

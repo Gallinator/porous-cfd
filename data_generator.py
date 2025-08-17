@@ -214,12 +214,12 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                 f = coeffs['f']
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
-                shutil.copyfile(m, f"{case_path}/triSurface/mesh.obj")
+                shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
                 write_locations_in_mesh(f'{case_path}', get_location_inside(m))
 
-                FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [inlet_ux, 0, 0]
+                FoamFile(f'{case_path}/0/U')['internalField'] = [inlet_ux, 0, 0]
 
-                fv_options = f'{case_path}/simpleFoam/system/fvOptions'
+                fv_options = f'{case_path}/system/fvOptions'
                 write_coefs(fv_options, d, 'd')
                 write_coefs(fv_options, f, 'f')
 
@@ -312,7 +312,7 @@ def generate_split(data_path: str, config_path: str, rng=Random()):
         first_split = list(splits.keys())[0]
         shutil.move(f'{data_path}/{case}', f'{pathlib.Path(data_path).parent}/{first_split}/{case}')
 
-    shutil.rmtree(pathlib.Path(data_path).parent)
+    shutil.rmtree(pathlib.Path(data_path))
 
 
 def generate_min_points(data_parent: str):

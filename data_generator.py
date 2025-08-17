@@ -268,10 +268,10 @@ def generate_meta(data_dir: str):
         elapse_times.append(parse_elapsed_time(case) / 1e6)
 
     min_points_meta = {"internal": internal_min,
-                       "inlet": boundary_min[0],
-                       "interface": boundary_min[1],
-                       "outlet": boundary_min[2],
-                       "walls": boundary_min[3]}
+                       "front": boundary_min[0],
+                       "inlet": boundary_min[1],
+                       "interface": boundary_min[2],
+                       "outlet": boundary_min[3]}
     features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
     std_meta = {'Points': features_std[0:3], 'U': features_std[3:6], 'p': features_std[6]}
     mean_meta = {'Points': features_mean[0:3], 'U': features_mean[3:6], 'p': features_mean[6]}

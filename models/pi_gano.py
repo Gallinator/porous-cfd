@@ -179,7 +179,7 @@ class PiGano(L.LightningModule):
         d_uy_y, y_diff = self.differentiate_field(internal_points, pred_data['internal'].uy, 1, 0)
 
         d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
-        d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
+        d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
 
         obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.ux)
         obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uy)

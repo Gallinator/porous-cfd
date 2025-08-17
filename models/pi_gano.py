@@ -183,6 +183,7 @@ class PiGano(L.LightningModule):
 
         obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.ux)
         obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uy)
+        obs_uz_loss = mse_loss(pred_data.uz.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uz)
         obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.p)
 
         boundary_p_loss = mse_loss(pred_data['boundary'].p, in_data['boundary'].pde.p)
@@ -216,7 +217,8 @@ class PiGano(L.LightningModule):
                 boundary_uy_loss +
                 obs_p_loss * 100 +
                 obs_ux_loss * 100 +
-                obs_uy_loss * 100)
+                obs_uy_loss * 100 +
+                obs_uz_loss * 100)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,
@@ -228,6 +230,7 @@ class PiGano(L.LightningModule):
                                       obs_p_loss,
                                       obs_ux_loss,
                                       obs_uy_loss,
+                                      obs_uz_loss,
                                       l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                                               self.p_scaler.inverse_transform(in_data.pde.p)),
                                       l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),

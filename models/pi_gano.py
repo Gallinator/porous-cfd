@@ -143,12 +143,13 @@ class PiGano(L.LightningModule):
         scheduler = ExponentialLR(optimizer, 0.999)
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
-    def differentiate_field(self, points, ui: Tensor, i: int, j: int) -> tuple:
+    def differentiate_field(self, points, ui: Tensor, i: int, j: int, k: int) -> tuple:
         d_ui = self.calculate_gradients(ui, points)
-        d_ui_i, d_ui_j = d_ui[:, :, i:i + 1], d_ui[:, :, j:j + 1]
+        d_ui_i, d_ui_j, d_ui_k = d_ui[:, :, i:i + 1], d_ui[:, :, j:j + 1], d_ui[:, :, k:k + 1]
         dd_ui_i = self.calculate_gradients(d_ui_i, points)[:, :, i:i + 1]
         dd_ui_j = self.calculate_gradients(d_ui_j, points)[:, :, j:j + 1]
-        return d_ui_i, (d_ui_j, dd_ui_i, dd_ui_j)
+        dd_ui_k = self.calculate_gradients(d_ui_j, points)[:, :, k:k + 1]
+        return d_ui_i, (d_ui_j, d_ui_k, dd_ui_i, dd_ui_j, dd_ui_k)
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
         return autograd.grad(outputs, inputs,

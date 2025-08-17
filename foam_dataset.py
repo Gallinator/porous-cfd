@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from rich.progress import track
 from torch import tensor, Tensor
+from numpy.random import default_rng
 from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
@@ -102,10 +103,12 @@ class StandardScaler:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
+        self.rng = rng
+
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
         self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
         self.check_sample_size()
@@ -132,17 +135,17 @@ class FoamDataset(Dataset):
 
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
-        b_samples = np.random.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_samples = self.rng.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 
         i_data = (parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)'))
-        i_samples = np.random.choice(len(i_data), replace=False, size=self.n_internal)
+        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
 
         data = np.concatenate((i_data, b_data))
         data = self.reorder_data(data)
 
-        obs_samples = np.random.choice(len(i_data), replace=False, size=self.n_obs)
+        obs_samples = self.rng.choice(len(i_data), replace=False, size=self.n_obs)
 
         # Do not standardize zones indices
         data[:, 0:-5] = self.standard_scaler.transform(data[:, 0:-5])

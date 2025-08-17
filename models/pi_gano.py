@@ -202,7 +202,7 @@ class PiGano(L.LightningModule):
         boundary_uy_loss = mse_loss(pred_data['boundary'].uy, in_data['boundary'].pde.uy)
         boundary_uz_loss = mse_loss(pred_data['boundary'].uz, in_data['boundary'].pde.uz)
 
-        cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
+        cont_loss = self.continuity_loss(d_ux_x, d_uy_y, d_uz_z)
         mom_loss_x = self.momentum_x_loss(pred_data['internal'].ux,
                                           pred_data['internal'].uy,
                                           d_p_x,

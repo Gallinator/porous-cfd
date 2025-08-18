@@ -18,5 +18,15 @@
     "n_windbreaks": 1,
     "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
     "n_trees": 10
+  },
+  "acacia.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
+    "n_trees": 2
+  },
+  "eucalyptus.obj": {
+    "n_windbreaks": 1,
+    "scale": {"xy": [0.75, 1.25], "z": [0.75, 1.25]},
+    "n_trees": 7
   }
 }

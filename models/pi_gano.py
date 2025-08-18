@@ -78,7 +78,7 @@ class PiGano(L.LightningModule):
         self.reduction = nn.Linear(256, 4)
 
         self.domain_dict = domain_dict
-        self.mu = 1489.4e-6
+        self.mu = 14.61e-6
 
         self.u_scaler = scalers['U']
         self.p_scaler = scalers['p']

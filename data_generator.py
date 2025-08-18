@@ -204,26 +204,24 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
         config = json.load(config)['cfd params']
-        params = list(itertools.product(config['inlet'], config['coeffs']))
-        for inlet_ux, coeffs in params:
-            meshes = glob.glob(f"{meshes_dir}/*.obj")
-            for m in meshes:
-                if len(params) > 1 and rng.random() > drop_p:
-                    continue
-                d = coeffs['d']
-                f = coeffs['f']
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
-                shutil.copytree('assets/openfoam-case-template', case_path)
-                shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
-                write_locations_in_mesh(f'{case_path}', get_location_inside(m))
+        meshes = glob.glob(f"{meshes_dir}/*.obj")
+        params = list(itertools.product(meshes, config['inlet']))
+        for m, inlet_ux in params:
+            mesh_name = re.match('.+_(.+obj)', m)[1]
+            d = config['trees'][mesh_name]['d']
+            f = config['trees'][mesh_name]['f']
+            case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
+            shutil.copytree('assets/openfoam-case-template', case_path)
+            shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+            write_locations_in_mesh(f'{case_path}', get_location_inside(m))
 
-                FoamFile(f'{case_path}/0/U')['internalField'] = [inlet_ux, 0, 0]
+            FoamFile(f'{case_path}/0/U')['internalField'] = [inlet_ux, 0, 0]
 
-                fv_options = f'{case_path}/system/fvOptions'
-                write_coefs(fv_options, d, 'd')
-                write_coefs(fv_options, f, 'f')
+            fv_options = f'{case_path}/system/fvOptions'
+            write_coefs(fv_options, d, 'd')
+            write_coefs(fv_options, f, 'f')
 
-                set_decompose_par(f'{case_path}', n_proc)
+            set_decompose_par(f'{case_path}', n_proc)
 
 
 def raise_with_log_text(case_path, text):

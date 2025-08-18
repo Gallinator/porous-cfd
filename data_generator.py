@@ -301,7 +301,7 @@ def generate_split(data_path: str, config_path: str, rng=Random()):
         first_split = list(splits.keys())[0]
         shutil.move(f'{data_path}/{case}', f'{pathlib.Path(data_path).parent}/{first_split}/{case}')
 
-    shutil.rmtree(pathlib.Path(data_path).parent)
+    shutil.rmtree(pathlib.Path(data_path))
 
 
 def generate_min_points(data_parent: str):

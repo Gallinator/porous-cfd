@@ -199,7 +199,7 @@ def write_coefs(fv_options_path: str, coefs: list, coef: str):
         f.write(lines)
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, drop_p=0.5, rng=Random()):
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
@@ -352,8 +352,7 @@ if __name__ == '__main__':
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}',
                                 f'assets/meshes/{d}',
-                                args.openfoam_procs,
-                                rng=rng)
+                                args.openfoam_procs)
         generate_split(f'data/{d}', f'assets/meshes/{d}/config.json')
 
     for d in os.listdir('data'):

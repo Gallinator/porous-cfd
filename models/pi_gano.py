@@ -12,7 +12,7 @@ from models.losses import MomentumLoss, ContinuityLoss, LossLogger
 class Branch(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP(10, [256, 256, 256], activation_layer=nn.Tanh)
+        self.linear = MLP(10, [256, 256, 512], activation_layer=nn.Tanh)
 
     def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_ux: Tensor):
         """
@@ -37,7 +37,7 @@ class Branch(nn.Module):
 class GeometryEncoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self.linear = MLP(4, [128, 128, 128], activation_layer=nn.Tanh)
+        self.linear = MLP(4, [256, 256, 256], activation_layer=nn.Tanh)
 
     def forward(self, points: Tensor, zones_ids: Tensor) -> Tensor:
         """
@@ -70,12 +70,12 @@ class PiGano(L.LightningModule):
 
         self.branch = Branch()
         self.geometry_encoder = GeometryEncoder()
-        self.points_encoder = MLP(4, [128, 128, 128], activation_layer=nn.Tanh)
-        self.neural_op1 = NeuralOperator(256, 256)
-        self.neural_op2 = NeuralOperator(256, 256, True)
-        self.neural_op3 = NeuralOperator(256, 256, True)
-        self.neural_op4 = NeuralOperator(256, 256)
-        self.reduction = nn.Linear(256, 4)
+        self.points_encoder = MLP(4, [256, 256, 256], activation_layer=nn.Tanh)
+        self.neural_op1 = NeuralOperator(512, 512)
+        self.neural_op2 = NeuralOperator(512, 512, True)
+        self.neural_op3 = NeuralOperator(512, 512, True)
+        self.neural_op4 = NeuralOperator(512, 512)
+        self.reduction = nn.Linear(512, 4)
 
         self.domain_dict = domain_dict
         self.mu = 14.61e-6

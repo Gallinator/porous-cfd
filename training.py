@@ -18,7 +18,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-boundary', type=int,
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-observations', type=int,
-                            help='number of observation points to sample', default=1500)
+                            help='number of observation points to sample', default=2000)
     arg_parser.add_argument('--batch-size', type=int, default=13)
     arg_parser.add_argument('--precision', type=str, default='32-true')
     arg_parser.add_argument('--epochs', type=int, default=3000)

@@ -28,11 +28,11 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--data-dir', type=str, default='data/val')
     arg_parser.add_argument('--meta-dir', type=str, default='data/train')
     arg_parser.add_argument('--n-internal', type=int,
-                            help='number of internal points to sample', default=1000)
+                            help='number of internal points to sample', default=5000)
     arg_parser.add_argument('--n-boundary', type=int,
-                            help='number of internal points to sample', default=200)
+                            help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-observations', type=int,
-                            help='number of observation points to sample', default=500)
+                            help='number of observation points to sample', default=2000)
     return arg_parser
 
 

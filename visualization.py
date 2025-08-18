@@ -43,7 +43,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
 
     ax.set_ymargin(0.025)
     ax.set_xmargin(0.02)
-    add_colorbar(fig, ax, plot)
+    fig.colorbar(plot, ax=ax)
     ax.legend(loc='upper right')
     ax.set_aspect('equal')
 

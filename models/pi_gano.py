@@ -58,7 +58,7 @@ class NeuralOperator(nn.Module):
             nn.Tanh()
         )
         if dropout:
-            self.linear.append(nn.Dropout(0.05))
+            self.linear.append(nn.Dropout(0.15))
 
     def forward(self, x: Tensor, par_embedding: Tensor):
         return self.linear(x) * par_embedding

@@ -1,30 +1,59 @@
 import json
 import os
+import re
 from pathlib import Path
 
 import numpy as np
 from foamlib import FoamCase, FoamFile
 
 
-def parse_boundary(case_path: str):
+def parse_post_process_fields(path: str):
+    """This is a temporary workaround as foamlib cannot read post processed fields"""
+
+    def parse_content(content: str):
+        if content[0] == '(':
+            return [float(v) for v in content[content.find('(') + 1:content.rfind(')')].split()]
+        else:
+            return float(content)
+
+    with open(path, 'r') as f:
+        lines = f.readlines()
+        if (m := re.match('(\d+){(.+)}', lines[0])) is not None:
+            n = m.groups()[0]
+            v = parse_content(m.groups()[1])
+            return [v] * int(n)
+
+        data = []
+        for l in lines[3:-1]:
+            data.append(parse_content(l))
+    return data
+
+
+def parse_boundary(case_path: str, vectors: list[str], scalars: list[str]) -> np.ndarray:
     last_step = int(FoamCase(case_path)[-1].time)
     boundaries_path = f"{case_path}/postProcessing"
     faces = []
-    u = []
-    p = []
-
-    for s in os.listdir(boundaries_path):
-        coords = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/faceCentres")[None]
+    scalar_values, vector_values = {s: [] for s in scalars}, {v: [] for v in vectors}
+    for b in os.listdir(boundaries_path):
+        intermediate_dir = list(os.listdir(f"{boundaries_path}/{b}/surface/{last_step}"))[0]
+        coords = FoamFile(f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/faceCentres")[None]
         coords = make_at_most_2d(coords)
-        u_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/vectorField/U")[None]
-        u_values = make_at_most_2d(u_values)
-        p_values = FoamFile(f"{boundaries_path}/{s}/surface/{last_step}/patch_{s}/scalarField/p")[None]
-        p_values = make_column(p_values)
         faces.extend(coords)
-        u.extend(u_values)
-        p.extend(p_values)
 
-    return np.array(faces), np.array(u), np.array(p), np.zeros_like(p)
+        for s in scalars:
+            values = parse_post_process_fields(
+                f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/scalarField/{s}")
+            values = make_column(values)
+            scalar_values[s].extend(values)
+
+        for v in vectors:
+            values = parse_post_process_fields(
+                f"{boundaries_path}/{b}/surface/{last_step}/{intermediate_dir}/vectorField/{v}")
+            values = make_at_most_2d(values)
+            vector_values[v].extend(values)
+    vector_values = [np.array(vector_values[v]) for v in vectors]
+    scalar_values = [np.array(scalar_values[s]) for s in scalars]
+    return np.concatenate([np.array(faces)] + vector_values + scalar_values + [np.zeros_like(scalar_values[0])], axis=1)
 
 
 def make_at_most_2d(field) -> np.array:
@@ -41,7 +70,7 @@ def make_column(field) -> np.array:
     return f
 
 
-def parse_internal_mesh(case_path: str, *fields):
+def parse_internal_mesh(case_path: str, *fields) -> np.ndarray:
     case = FoamCase(case_path)
     last_step = case[-1]
     domain_points = last_step.cell_centers().internal_field
@@ -55,9 +84,14 @@ def parse_internal_mesh(case_path: str, *fields):
 
     porous_points = case[0]['cellToRegion'].internal_field.reshape((-1, 1))
 
-    return [domain_points] + fields_values + [porous_points]
+    return np.concatenate([domain_points] + fields_values + [porous_points], axis=1)
 
 
 def parse_meta(data_dir: str) -> dict:
     with open(Path(data_dir, 'meta.json'), 'r') as f:
         return json.load(f)
+
+
+def parse_elapsed_time(case_dir: str) -> int:
+    with open(Path(case_dir, 'timing.txt'), 'r') as f:
+        return int(f.readline())

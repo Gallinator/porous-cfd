@@ -1,7 +1,9 @@
 import argparse
+import os
 from argparse import ArgumentParser
-
-from lightning.pytorch.callbacks import RichProgressBar
+import torch
+from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor
+from numpy.random import default_rng
 from torch.utils.data import DataLoader
 from foam_dataset import FoamDataset
 from models.pipn import Pipn
@@ -17,29 +19,32 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--batch-size', type=int, default=13)
     arg_parser.add_argument('--precision', type=str, default='32-true')
     arg_parser.add_argument('--epochs', type=int, default=3000)
+    arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd())
     return arg_parser
 
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
 
+    torch.set_float32_matmul_precision('high')
+
     batch_size = args.batch_size
     n_internal = args.n_internal
     n_boundary = args.n_boundary
-    n_obs = args.n_observations
     epochs = args.epochs
 
-    train_data = FoamDataset('data/train', n_internal, n_boundary)
+    rng = default_rng(8421)
+    train_data = FoamDataset('data/train', n_internal, n_boundary, rng=rng)
     train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
-    val_data = FoamDataset('data/val', n_internal, n_boundary)
+    val_data = FoamDataset('data/val', n_internal, n_boundary, 'data/train', rng=rng)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
     model = Pipn(n_internal, n_boundary)
 
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar()],
-                        log_every_n_steps=2,
+                        callbacks=[RichProgressBar(), LearningRateMonitor()],
+                        log_every_n_steps=int(batch_size / len(train_data)),
                         precision=args.precision,
-                        val_check_interval=2)
+                        default_root_dir=args.logs_dir)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

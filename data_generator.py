@@ -1,18 +1,28 @@
+import argparse
 import glob
 import json
 import math
 import os
 import pathlib
+import re
 import shutil
 import subprocess
+from argparse import ArgumentParser
+from random import Random
+
 import mathutils
 import bpy
 import numpy as np
+from foamlib import FoamFile
 from rich.progress import track
 from bpy import ops
 from data_parser import parse_boundary, parse_internal_mesh
 
-OPENFOAM_COMMAND = "/usr/lib/openfoam/openfoam2412/etc/openfoam"
+OPENFOAM_COMMAND = ""
+
+
+def import_mesh(mesh: str):
+    ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 
 
 def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
@@ -23,9 +33,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh, transforms in json.load(f).items():
-            ops.wm.obj_import(filepath=f'{meshes_dir}/{mesh}',
-                              forward_axis='Y',
-                              up_axis='Z')
+            import_mesh(f'{meshes_dir}/{mesh}')
             for t in transforms:
                 for r in t["rotation"]:
                     ops.object.select_all(action='SELECT')
@@ -65,62 +73,155 @@ def clean_dir(directory: str):
             shutil.rmtree(os.path.join(root, d))
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str):
+def get_location_inside(mesh: str):
+    ops.object.select_all(action='SELECT')
+    ops.object.delete()
+    import_mesh(mesh)
+    ops.object.select_all(action='SELECT')
+    obj = bpy.context.object
+    verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+    verts = np.array(verts)
+    center = np.sum(verts, axis=0) / len(verts)
+    ops.object.delete()
+    return center[0:2]
+
+
+def get_location_outside():
+    return -0.3 + 1e-6, -0.3 + 1e-6
+
+
+def write_locations_in_mesh(case_path: str, loc_in_mesh):
+    snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
+    locations_in_mesh = snappy_dict['castellatedMeshControls']['locationInMesh']
+    locations_in_mesh[0:2] = loc_in_mesh
+    snappy_dict['castellatedMeshControls']['locationInMesh'] = locations_in_mesh
+    snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = locations_in_mesh
+
+
+def set_par_dict_coeffs(dict_path: str, n_proc: int):
+    i, prev = 1, n_proc
+    while True:
+        proc_x = 2 ** i
+        proc_y = n_proc / proc_x
+        if proc_y % 2 != 0 or proc_y <= proc_x:
+            proc_y = int(proc_y)
+            break
+        i += 1
+    proc_x = max(proc_x, proc_y)
+    proc_y = min(proc_x, proc_y)
+
+    with open(dict_path) as f:
+        lines = f.read()
+        lines = re.sub('numberOfSubdomains\s+\d+;', f'numberOfSubdomains {n_proc};', lines)
+        lines = re.sub('n\s+\(.+\)', f'n ({proc_x} {proc_y} 1);', lines)
+
+    with open(dict_path, 'w') as f:
+        f.write(lines)
+
+
+def set_run_n_proc(run_path: str, n_proc: int):
+    with open(run_path, 'r') as f:
+        data = f.read()
+        data = re.sub('\$n_proc', str(n_proc), data, re.MULTILINE)
+    with open(run_path, 'w') as f:
+        f.write(data)
+
+
+def set_decompose_par(case_path: str, n_proc: int):
+    if n_proc % 2 != 0:
+        raise ValueError('n_proc must be an even number!')
+    dict_path = f'{case_path}/system/decomposeParDict'
+    set_par_dict_coeffs(dict_path, n_proc)
+    set_par_dict_coeffs(dict_path, n_proc)
+    set_run_n_proc(f'{case_path}/Run', n_proc)
+
+
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     meshes = glob.glob(f"{meshes_dir}/*.obj")
     for m in meshes:
         case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
         shutil.copytree('assets/openfoam-case-template', case_path)
-        shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+        shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
+
+        set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
+        set_decompose_par(f'{case_path}/simpleFoam', n_proc)
+
+
+def raise_with_log_text(case_path, text):
+    with open(f'{case_path}/log.txt') as log:
+        raise RuntimeError(f'{text} {case_path}\n\n {log.read()}')
 
 
 def generate_data(cases_dir: str):
+    for case in track(glob.glob(f"{cases_dir}/*"), description="Generating geometries"):
+        process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                   stdout=subprocess.DEVNULL, text=True)
+        process.communicate(f"{case}/snappyHexMesh/Run")
+        process.wait()
+        if process.returncode != 0:
+            raise_with_log_text(f'{case}/snappyHexMesh', 'Failed to generate mesh for case ')
+
     for case in track(glob.glob(f"{cases_dir}/*"), description="Running cases"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
-        process.communicate(f"{case}/Run")
+        process.communicate(f"{case}/simpleFoam/Run")
         process.wait()
         if process.returncode != 0:
-            raise RuntimeError(f'Failed to run {case}')
+            raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
+
+        clean_dir(f"{case}/snappyHexMesh")
+        os.rmdir(f"{case}/snappyHexMesh")
+        shutil.move(f"{case}/simpleFoam", 'tmp')
+        os.rmdir(f'{case}')
+        shutil.move("tmp", f'{case}')
 
 
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points, porous_num_points = [], [], []
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_points, b_u, b_p, b_porous_idx = parse_boundary(case)
-        i_points, i_porous_idx = parse_internal_mesh(case)
-        n_porous = np.count_nonzero(b_porous_idx > 0) + np.count_nonzero(i_porous_idx > 0)
+        b_data = parse_boundary(case, [], [])
+        i_data = parse_internal_mesh(case, )
+        n_porous = np.count_nonzero(b_data[..., -1] > 0) + np.count_nonzero(i_data[..., -1] > 0)
 
-        boundary_num_points.append(len(b_points))
-        internal_num_points.append(len(i_points))
+        boundary_num_points.append(len(b_data))
+        internal_num_points.append(len(i_data))
         porous_num_points.append(n_porous)
 
     min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
                        "Internal": int(np.min(internal_num_points)),
                        'Porous': int(np.min(porous_num_points))}
-
     meta_dict = {"Min points": min_points_meta}
-
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-create_case_template_dirs()
-clean_dir('data')
-clean_dir('assets/generated-meshes')
+def build_arg_parser() -> ArgumentParser:
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--openfoam-dir', type=str,
+                            help='OpenFOAM installation directory')
+    arg_parser.add_argument('--openfoam-procs', type=int,
+                            help='the number of processors to use for OpenFoam simulations',
+                            default=2)
+    return arg_parser
 
-generate_transformed_meshes('assets/meshes/train', 'assets/generated-meshes/train')
-generate_openfoam_cases('assets/generated-meshes/train', 'data/train')
-generate_data('data/train')
-generate_meta('data/train')
 
-generate_transformed_meshes('assets/meshes/test', 'assets/generated-meshes/test')
-generate_openfoam_cases('assets/generated-meshes/test', 'data/test')
-generate_data('data/test')
-generate_meta('data/test')
+if __name__ == '__main__':
+    args = build_arg_parser().parse_args()
+    OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
 
-generate_transformed_meshes('assets/meshes/val', 'assets/generated-meshes/val')
-generate_openfoam_cases('assets/generated-meshes/val', 'data/val')
-generate_data('data/val')
-generate_meta('data/val')
+    create_case_template_dirs()
+    clean_dir('data')
+    clean_dir('assets/generated-meshes')
+
+    rng = Random(8421)
+
+    for d in os.listdir('assets/meshes'):
+        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+        generate_openfoam_cases(f'assets/generated-meshes/{d}',
+                                f'data/{d}',
+                                args.openfoam_procs)
+        generate_data(f'data/{d}')
+        generate_meta(f'data/{d}')

@@ -1,10 +1,10 @@
 from pathlib import Path
 import numpy as np
 import torch
+from numpy.random import default_rng
 from rich.progress import track
 from torch import tensor, Tensor
 from torch.utils.data import Dataset
-
 from data_parser import parse_meta, parse_boundary, parse_internal_mesh
 
 
@@ -51,15 +51,16 @@ class FoamData:
         return self.data[..., 6:7]
 
     def numpy(self):
-        return FoamData(self.data.numpy(force=True))
+        return FoamData([self.data.numpy(force=True)])
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir: str, n_internal: int, n_boundary: int):
+    def __init__(self, data_dir: str, n_internal: int, n_boundary: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
+        self.rng = rng
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
-        self.meta = parse_meta(data_dir)
+        self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
         self.check_sample_size()
 
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
@@ -95,21 +96,26 @@ class FoamDataset(Dataset):
 
         return u, p, f
 
+    def reorder_data(self, data: np.ndarray) -> np.ndarray:
+        return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
+
     def load_case(self, case_dir):
-        b_points, _, _, b_zones_ids = parse_boundary(case_dir)
-        b_samples = np.random.choice(len(b_points), replace=False, size=self.n_boundary)
-        b_points, b_zones_ids = b_points[b_samples], b_zones_ids[b_samples]
+        b_data = parse_boundary(case_dir, [], [])
+        b_samples = self.rng.choice(len(b_data), replace=False, size=self.n_boundary)
+        b_data = b_data[b_samples]
 
-        i_points, i_zones_ids = parse_internal_mesh(case_dir)
-        i_samples = np.random.choice(len(i_points), replace=False, size=self.n_internal)
-        i_points, i_zones_ids = i_points[i_samples], i_zones_ids[i_samples]
+        i_data = (parse_internal_mesh(case_dir, ))
+        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
+        i_data = i_data[i_samples]
 
-        points = np.concatenate((i_points, b_points))
-        zones_ids = np.concatenate((i_zones_ids, b_zones_ids))
+        data = np.concatenate((i_data, b_data))
+        data = self.reorder_data(data)
+
+        points = data[:, 0:2]
+        zones_ids = data[..., 7:8]
 
         u, p, f = self.create_manufactured_solutions(points, zones_ids)
-
-        data = np.concatenate([points, u, p, f, zones_ids], axis=1)
+        data = np.concatenate([points, u, p, f, zones_ids], axis=-1)
 
         return tensor(data, dtype=torch.float)
 

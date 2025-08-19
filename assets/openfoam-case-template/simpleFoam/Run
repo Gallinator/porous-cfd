@@ -20,16 +20,5 @@ log_output $? "$out"
 out=$(splitMeshRegions -cellZones -overwrite -detectOnly 2>&1 >/dev/null)
 log_output $? "$out"
 
-start=$(date +%s%N)
-
-out=$(decomposePar 2>&1 >/dev/null)
+out=$(postProcess 2>&1 >/dev/null)
 log_output $? "$out"
-
-out=$(mpirun -np $n_proc $(getApplication) -parallel 2>&1 >/dev/null)
-log_output $? "$out"
-
-out=$(reconstructPar 2>&1 >/dev/null)
-log_output $? "$out"
-
-end=$(date +%s%N)
-echo "$(($end-$start))" > ./timing.txt

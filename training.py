@@ -34,9 +34,9 @@ if __name__ == '__main__':
     epochs = args.epochs
 
     rng = default_rng(8421)
-    train_data = FoamDataset('data/train', n_internal, n_boundary, rng=rng)
+    train_data = FoamDataset('data/standard', n_internal, n_boundary, rng=rng)
     train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
-    val_data = FoamDataset('data/val', n_internal, n_boundary, 'data/train', rng=rng)
+    val_data = FoamDataset('data/unseen', n_internal, n_boundary, 'data/standard', rng=rng)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
     model = Pipn(n_internal, n_boundary)

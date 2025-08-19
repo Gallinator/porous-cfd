@@ -174,11 +174,6 @@ class Pipn(L.LightningModule):
             d_p = self.calculate_gradients(pred_data.p, in_data.points)
             d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
-            momentum_x = self.momentum_x_loss.func(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, d_ux_x,
-                                                   *diff_x)
-            momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, d_uy_y,
-                                                   *diff_y)
-            cont = self.continuity_loss.f(d_ux_x, d_uy_y)
             cont = self.continuity_loss(d_ux_x, d_uy_y)
             momentum_x = self.momentum_x_loss(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, in_data.fx, d_ux_x,
                                               *diff_x)

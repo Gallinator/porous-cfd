@@ -164,7 +164,7 @@ def generate_data(cases_dir: str):
         if process.returncode != 0:
             raise_with_log_text(f'{case}/snappyHexMesh', 'Failed to generate mesh for case ')
 
-    for case in track(glob.glob(f"{cases_dir}/*"), description="Running cases"):
+    for case in track(glob.glob(f"{cases_dir}/*"), description="Extruding mesh"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                    stdout=subprocess.DEVNULL, text=True)
         process.communicate(f"{case}/simpleFoam/Run")

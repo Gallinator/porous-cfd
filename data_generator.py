@@ -98,44 +98,6 @@ def write_locations_in_mesh(case_path: str, loc_in_mesh):
     snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = locations_in_mesh
 
 
-def set_par_dict_coeffs(dict_path: str, n_proc: int):
-    i, prev = 1, n_proc
-    while True:
-        proc_x = 2 ** i
-        proc_y = n_proc / proc_x
-        if proc_y % 2 != 0 or proc_y <= proc_x:
-            proc_y = int(proc_y)
-            break
-        i += 1
-    proc_x = max(proc_x, proc_y)
-    proc_y = min(proc_x, proc_y)
-
-    with open(dict_path) as f:
-        lines = f.read()
-        lines = re.sub('numberOfSubdomains\s+\d+;', f'numberOfSubdomains {n_proc};', lines)
-        lines = re.sub('n\s+\(.+\)', f'n ({proc_x} {proc_y} 1);', lines)
-
-    with open(dict_path, 'w') as f:
-        f.write(lines)
-
-
-def set_run_n_proc(run_path: str, n_proc: int):
-    with open(run_path, 'r') as f:
-        data = f.read()
-        data = re.sub('\$n_proc', str(n_proc), data, re.MULTILINE)
-    with open(run_path, 'w') as f:
-        f.write(data)
-
-
-def set_decompose_par(case_path: str, n_proc: int):
-    if n_proc % 2 != 0:
-        raise ValueError('n_proc must be an even number!')
-    dict_path = f'{case_path}/system/decomposeParDict'
-    set_par_dict_coeffs(dict_path, n_proc)
-    set_par_dict_coeffs(dict_path, n_proc)
-    set_run_n_proc(f'{case_path}/Run', n_proc)
-
-
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
@@ -145,9 +107,6 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
         shutil.copytree('assets/openfoam-case-template', case_path)
         shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
         write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
-
-        set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
-        set_decompose_par(f'{case_path}/simpleFoam', n_proc)
 
 
 def raise_with_log_text(case_path, text):

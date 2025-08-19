@@ -46,20 +46,11 @@ runTimeModifiable true;
 
 functions
 {
-    momErr
+    writeCellData
     {
-        type            momentumError;
+        type            writeCellCentres;
         libs            (fieldFunctionObjects);
-        executeControl  writeTime;
-        writeControl    writeTime;
-    }
 
-    contErr
-    {
-        type            div;
-        libs            (fieldFunctionObjects);
-        field           phi;
-        executeControl  writeTime;
         writeControl    writeTime;
     }
     walls
@@ -70,7 +61,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (C);
         operation       none;
         regionType      patch;
         name            walls;
@@ -87,7 +78,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (C);
         operation       none;
         regionType      patch;
         name            inlet;
@@ -100,11 +91,11 @@ functions
     {
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
-        libs            (fieldFunctionObjects);
+        libs            (C);
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (C);
         operation       none;
         regionType      patch;
         name            outlet;
@@ -120,7 +111,7 @@ functions
         libs            (fieldFunctionObjects);
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (C);
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;
@@ -130,13 +121,6 @@ functions
         writeToFile     true;
         writeControl    writeTime;
         surfaceFormat   foam;
-    }
-    writeCellData
-    {
-        type            writeCellCentres;
-        libs            (fieldFunctionObjects);
-
-        writeControl    writeTime;
     }
 }
 

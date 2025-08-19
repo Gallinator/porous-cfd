@@ -96,9 +96,6 @@ class FoamDataset(Dataset):
 
         return u, p, f
 
-    def reorder_data(self, data: np.ndarray) -> np.ndarray:
-        return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
-
     def load_case(self, case_dir):
         b_data = parse_boundary(case_dir, [], [])
         b_samples = self.rng.choice(len(b_data), replace=False, size=self.n_boundary)
@@ -109,7 +106,6 @@ class FoamDataset(Dataset):
         i_data = i_data[i_samples]
 
         data = np.concatenate((i_data, b_data))
-        data = self.reorder_data(data)
 
         points = data[:, 0:2]
         zones_ids = data[..., 7:8]

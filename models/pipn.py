@@ -125,8 +125,10 @@ class Pipn(L.LightningModule):
         boundary_uy_loss = self.boundary_loss(pred_data.uy, in_data.pde.uy)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y)
-        mom_loss_x = self.momentum_x_loss(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, d_ux_x, *diff_x)
-        mom_loss_y = self.momentum_y_loss(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, d_uy_y, *diff_y)
+        mom_loss_x = self.momentum_x_loss(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, in_data.fx, d_ux_x,
+                                          *diff_x)
+        mom_loss_y = self.momentum_y_loss(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, in_data.fy, d_uy_y,
+                                          *diff_y)
 
         loss = (cont_loss +
                 mom_loss_x +
@@ -177,6 +179,11 @@ class Pipn(L.LightningModule):
             momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, d_uy_y,
                                                    *diff_y)
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
+            cont = self.continuity_loss(d_ux_x, d_uy_y)
+            momentum_x = self.momentum_x_loss(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, in_data.fx, d_ux_x,
+                                              *diff_x)
+            momentum_y = self.momentum_y_loss(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, in_data.fy, d_uy_y,
+                                              *diff_y)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:

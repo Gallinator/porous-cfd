@@ -108,7 +108,7 @@ class FoamDataset(Dataset):
         data = np.concatenate((i_data, b_data))
 
         points = data[:, 0:2]
-        zones_ids = data[..., 7:8]
+        zones_ids = data[..., 2:3]
 
         u, p, f = self.create_manufactured_solutions(points, zones_ids)
         data = np.concatenate([points, u, p, f, zones_ids], axis=-1)

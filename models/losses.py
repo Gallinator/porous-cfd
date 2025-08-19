@@ -25,7 +25,7 @@ class MomentumLoss(nn.Module):
         self.f = f
         self.n_internal = n_internal
 
-    def forward(self, ui, d_ui_i, d_ui_j, uj, dd_ui_i, dd_ui_j, d_p_i, fi, zones_ids):
+    def forward(self, ui, uj, d_p_i, zones_ids, fi, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
         source = ui * (self.d * self.mu + 1 / 2 * torch.sqrt(ui ** 2 + uj ** 2) * self.f)
         res = d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i + source * zones_ids - fi
         res = res[:, :self.n_internal, :]

@@ -63,12 +63,12 @@ if __name__ == '__main__':
 
         plt.interactive(case_plot_path is None)
 
-        plot_fields('Predicted', pred.points, pred.u[0], pred.p[0], tgt.zones_ids, save_path=case_plot_path)
-        plot_fields('Ground truth', pred.points, tgt.pde.u, tgt.pde.p, tgt.zones_ids, save_path=case_plot_path)
+        plot_fields('Predicted', tgt.points, pred.u[0], pred.p[0], tgt.zones_ids, save_path=case_plot_path)
+        plot_fields('Ground truth', tgt.points, tgt.pde.u, tgt.pde.p, tgt.zones_ids, save_path=case_plot_path)
 
         plt.interactive(False)
 
         u_error = pred.u[0] - tgt.pde.u
         p_error = pred.p[0] - tgt.pde.p
-        plot_fields('Absolute error', pred.points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
+        plot_fields('Absolute error', tgt.points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
                     save_path=case_plot_path)

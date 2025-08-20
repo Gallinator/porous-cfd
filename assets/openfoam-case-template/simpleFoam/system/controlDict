@@ -104,24 +104,6 @@ functions
         writeFields     true;
         writeControl    writeTime;
     }
-    interface
-    {
-        // Mandatory entries (unmodifiable)
-        type            surfaceFieldValue;
-        libs            (fieldFunctionObjects);
-
-        // Mandatory entries (runtime modifiable)
-        fields          (C);
-        operation       none;
-        regionType      faceZone;
-        name            meshmesh_slaveCutFaceZone;
-
-        // Optional (inherited) entries
-        writeFields     true;
-        writeToFile     true;
-        writeControl    writeTime;
-        surfaceFormat   foam;
-    }
 }
 
 

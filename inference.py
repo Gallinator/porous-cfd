@@ -25,8 +25,8 @@ def build_arg_parser() -> ArgumentParser:
     default_model_path = Path('lightning_logs') / last_model / 'checkpoints'
     default_model_path /= os.listdir(default_model_path)[0]
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
-    arg_parser.add_argument('--data-dir', type=str, default='data/val')
-    arg_parser.add_argument('--meta-dir', type=str, default='data/train')
+    arg_parser.add_argument('--data-dir', type=str, default='data/standard')
+    arg_parser.add_argument('--meta-dir', type=str, default='data/standard')
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-boundary', type=int,

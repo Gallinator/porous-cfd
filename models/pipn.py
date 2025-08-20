@@ -10,7 +10,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self.local_feature = nn.Sequential(
-            nn.Linear(3, 64),
+            nn.Linear(2, 64),
             nn.Tanh(),
             nn.Linear(64, 64),
             nn.Tanh()
@@ -25,7 +25,6 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        x = torch.cat([x, zones_ids], dim=2)
         local_features = self.local_feature(x)
         local_features = torch.concatenate([local_features, zones_ids], dim=2)
         global_feature = self.global_feature(local_features)

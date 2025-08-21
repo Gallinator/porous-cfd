@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from lightning import Trainer
+from lightning.pytorch.callbacks import RichProgressBar
 from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir, rng=rng)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
-    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
+    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False, callbacks=[RichProgressBar()])
 
     start_time = time.perf_counter()
     pred = trainer.predict(model, dataloaders=val_loader)

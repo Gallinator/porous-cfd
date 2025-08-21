@@ -40,8 +40,11 @@ class ContinuityLoss(nn.Module):
         super().__init__()
         self.n_internal = n_internal
 
-    def forward(self, d_ux_x, d_uy_y):
-        res = d_ux_x + d_uy_y
+    def func(self, d_ux_x, d_uy_y):
+        return d_ux_x + d_uy_y
+
+    def forward(self, *args):
+        res = self.func(*args)
         res = res[:, :self.n_internal, :]
         return mse_loss(res, torch.zeros_like(res))
 

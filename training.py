@@ -1,6 +1,6 @@
 import argparse
 from argparse import ArgumentParser
-from lightning.pytorch.callbacks import RichProgressBar
+from lightning.pytorch.callbacks import RichProgressBar, ModelCheckpoint
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
 from foam_dataset import FoamDataset
@@ -45,9 +45,13 @@ if __name__ == '__main__':
 
     model = PiGano(train_data.domain_dict, scalers)
 
+    checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
+
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar()],
+                        callbacks=[RichProgressBar(), checkpoint_callback],
                         log_every_n_steps=int(len(train_data) / batch_size),
                         precision=args.precision)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+
+    trainer.save_checkpoint(f'{trainer.log_dir}/model.ckpt')

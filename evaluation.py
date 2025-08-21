@@ -31,8 +31,6 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-boundary', type=int,
                             help='number of internal points to sample', default=200)
-    arg_parser.add_argument('--n-observations', type=int,
-                            help='number of observation points to sample', default=500)
     return arg_parser
 
 
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     model.verbose_predict = True
 
     rng = default_rng(8421)
-    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir, rng=rng)
+    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.meta_dir, rng=rng)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
     trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)

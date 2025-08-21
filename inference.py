@@ -12,7 +12,7 @@ from rich.progress import track
 
 from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
-from visualization import plot_fields
+from visualization import plot_fields, M_S
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -65,15 +65,23 @@ if __name__ == '__main__':
 
         raw_points = points_scaler.inverse_transform(tgt.points)
 
+        d = np.max(val_data.d_normalizer.inverse_transform(tgt.d))
+        f = np.max(val_data.f_normalizer.inverse_transform(tgt.d))
+        inlet_ux = np.max(u_scaler[0].inverse_transform(tgt.inlet_ux))
+
         plt.interactive(case_plot_path is None)
-        plot_fields('Predicted', raw_points, u_scaler.inverse_transform(pred.u[0]),
+        plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points,
+                    u_scaler.inverse_transform(pred.u[0]),
                     p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids, save_path=case_plot_path)
-        plot_fields('Ground truth', raw_points, u_scaler.inverse_transform(tgt.pde.u),
+        plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points,
+                    u_scaler.inverse_transform(tgt.pde.u),
                     p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids, save_path=case_plot_path)
 
         plt.interactive(False)
 
         u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
         p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
-        plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
+        plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points, np.abs(u_error),
+                    np.abs(p_error),
+                    tgt.zones_ids, False,
                     case_plot_path)

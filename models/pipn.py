@@ -38,10 +38,8 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(1089, 512),
             nn.Tanh(),
-            nn.Dropout(0.05),
             nn.Linear(512, 256),
             nn.Tanh(),
-            nn.Dropout(0.05),
             nn.Linear(256, 128),
             nn.Tanh(),
             nn.Linear(128, n_pde)

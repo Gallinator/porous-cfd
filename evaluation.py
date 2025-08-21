@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     plots_path = None
     if args.save_plots:
-        plots_path = Path('plots/stats')
+        plots_path = Path(args.checkpoint).parent / 'plots/stats'
         plots_path.mkdir(exist_ok=True, parents=True)
 
     model = PiGano.load_from_checkpoint(args.checkpoint)

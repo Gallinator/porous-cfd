@@ -55,16 +55,14 @@ if __name__ == '__main__':
     pred = trainer.predict(model, dataloaders=val_loader)
 
     errors, pred_residuals, cfd_residuals = [], [], []
-    pde_scaler = val_data.standard_scaler[2:5].to_torch()
     for p, t in zip(pred, val_loader):
         pred_data, phys_data = p
         tgt_data = FoamData(t)
-        error = l1_loss(pde_scaler.inverse_transform(pred_data),
-                        pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
+        error = l1_loss(pred_data, tgt_data.pde.data, reduction='none')
         errors.extend(error.numpy(force=True))
 
         pred_residuals.extend(phys_data.numpy(force=True))
-        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.div], dim=-1)
+        cfd_res = torch.cat([tgt_data.fx, tgt_data.fy, torch.zeros_like(tgt_data.fx)], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     errors = np.concatenate(errors)

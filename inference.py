@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from lightning import Trainer
+from lightning.pytorch.callbacks import RichProgressBar
 from matplotlib import pyplot as plt
 from rich.progress import track
 from torch.utils.data import DataLoader
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir)
     val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
 
-    trainer = Trainer(logger=False, enable_checkpointing=False)
+    trainer = Trainer(logger=False, enable_checkpointing=False, callbacks=[RichProgressBar()])
     predictions = trainer.predict(model, dataloaders=val_loader)
     for i, (tgt, pred) in enumerate(track(list(zip(val_data, predictions)), description='Saving plots...')):
         pred = PdeData(pred).numpy()

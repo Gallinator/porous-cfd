@@ -40,8 +40,8 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     fluid_zone = np.nonzero(porous == 0)[0]
     ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=25, zorder=1, c='#00000000',
                label='Porous', edgecolors='black')
-    ax.scatter(points[fluid_zone, 0], points[fluid_zone, 1], s=5, zorder=1, c='black',
-               label='Porous')
+    ax.scatter(points[..., 0], points[..., 1], s=5, zorder=1, c='black',
+               label='Collocation')
 
     triangulation = tri.Triangulation(points[..., 0], points[..., 1])
     refiner = tri.UniformTriRefiner(triangulation)

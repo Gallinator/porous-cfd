@@ -28,11 +28,9 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--data-dir', type=str, default='data/standard')
     arg_parser.add_argument('--meta-dir', type=str, default='data/standard')
     arg_parser.add_argument('--n-internal', type=int,
-                            help='number of internal points to sample', default=1000)
+                            help='number of internal points to sample', default=667)
     arg_parser.add_argument('--n-boundary', type=int,
-                            help='number of internal points to sample', default=200)
-    arg_parser.add_argument('--n-observations', type=int,
-                            help='number of observation points to sample', default=500)
+                            help='number of internal points to sample', default=168)
     return arg_parser
 
 

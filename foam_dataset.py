@@ -90,8 +90,8 @@ class FoamDataset(Dataset):
         f_y = -2 * 0.01 * np.sin(points_x) * np.cos(points_y)
 
         u_mag = np.sqrt(u_x ** 2 + u_y ** 2)
-        f_x += (0.01 * 100 + 1 * u_mag) * u_x * porous
-        f_y += (0.01 * 100 + 1 * u_mag) * u_y * porous
+        f_x += (0.01 * 50 + 1 / 2 * 1 * u_mag) * u_x * porous
+        f_y += (0.01 * 50 + 1 / 2 * 1 * u_mag) * u_y * porous
 
         f = np.concatenate([f_x, f_y], axis=1)
 

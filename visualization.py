@@ -2,6 +2,7 @@ import glob
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import tri
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.linalg import norm
 from rich.progress import track
@@ -36,9 +37,17 @@ def add_colorbar(fig, ax, plot):
 def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
     ax.set_title(title, pad=20)
     porous_zone = np.nonzero(porous > 0)[0]
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=50, zorder=-1, c='#ffffffff',
+    fluid_zone = np.nonzero(porous == 0)[0]
+    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=25, zorder=1, c='#00000000',
                label='Porous', edgecolors='black')
-    plot = ax.scatter(points[:, 0], points[:, 1], c=value, s=15, cmap='turbo')
+    ax.scatter(points[fluid_zone, 0], points[fluid_zone, 1], s=5, zorder=1, c='black',
+               label='Porous')
+
+    triangulation = tri.Triangulation(points[..., 0], points[..., 1])
+    refiner = tri.UniformTriRefiner(triangulation)
+    tri_points, tri_field = refiner.refine_field(value.flatten(), subdiv=3)
+
+    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='turbo')
 
     ax.set_ymargin(0.025)
     ax.set_xmargin(0.02)
@@ -47,8 +56,13 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     ax.set_aspect('equal')
 
 
-def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
+def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, plot_streamlines=True):
     ax.set_title(title, pad=20)
+
+    triangulation = tri.Triangulation(points[..., 0], points[..., 1])
+    refiner = tri.UniformTriRefiner(triangulation)
+    tri_points, tri_field = refiner.refine_field(np.linalg.norm(field, axis=1).flatten())
+    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='turbo')
     x = points[:, 0].flatten()
     y = points[:, 1].flatten()
     xx = np.linspace(x.min(), x.max(), 50)
@@ -57,14 +71,13 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     xi, yi = np.meshgrid(xx, yy)
     field_x = field[:, 0].flatten()
     field_y = field[:, 1].flatten()
-    field_s = norm(field, axis=1).flatten()
+
     g_x = griddata(points, field_x, (xi, yi), method='nearest')
     g_y = griddata(points, field_y, (xi, yi), method='nearest')
-    g_s = griddata(points, field_s, (xi, yi), method='nearest')
 
-    plot = ax.streamplot(xx, yy, g_x, g_y, color=g_s, density=2, cmap='turbo')
-    add_colorbar(fig, ax, plot.lines)
-    ax.set_ymargin(0)
+    ax.streamplot(xx, yy, g_x, g_y, color='black', density=2, zorder=1)
+
+    add_colorbar(fig, ax, plot)
     ax.set_aspect('equal')
 
 
@@ -80,11 +93,10 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
     plot_scalar_field(f'$u_x$ {M_S}', points, u[:, 0], porous, fig, ax_u_x)
 
     plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y)
-
     if plot_streams:
         plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
     else:
-        plot_scalar_field(f'$U$ {M_S}', points, norm(u, axis=1), porous, fig, ax_u)
+        plot_scalar_field(f'$u_y$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
 
     plot_or_save(fig, save_path)
 

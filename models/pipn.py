@@ -27,8 +27,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        local_features = torch.concatenate([local_features, zones_ids], dim=2)
-        global_feature = self.global_feature(local_features)
+        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
@@ -37,7 +36,7 @@ class Decoder(nn.Module):
     def __init__(self, n_pde: int):
         super().__init__()
         self.decoder = nn.Sequential(
-            nn.Linear(1089, 512),
+            nn.Linear(1088, 512),
             nn.Tanh(),
             nn.Dropout(0.05),
             nn.Linear(512, 256),

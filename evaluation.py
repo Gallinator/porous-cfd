@@ -7,14 +7,14 @@ from pathlib import Path
 import numpy as np
 import torch
 from lightning import Trainer
+from lightning.pytorch.callbacks import RichProgressBar
 from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
-from data_parser import parse_meta
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
-from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
+from visualization import plot_data_dist, plot_errors, plot_residuals
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.meta_dir, rng=rng)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
-    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False)
+    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False, callbacks=[RichProgressBar()])
 
     start_time = time.perf_counter()
     pred = trainer.predict(model, dataloaders=val_loader)

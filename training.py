@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     trainer = L.Trainer(max_epochs=epochs,
                         callbacks=[RichProgressBar()],
-                        log_every_n_steps=int(batch_size / len(train_data)),
+                        log_every_n_steps=int(len(train_data) / batch_size),
                         precision=args.precision)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

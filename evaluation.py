@@ -53,12 +53,6 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
     pred = trainer.predict(model, dataloaders=val_loader)
-    inference_time = time.perf_counter() - start_time
-    avg_inference_time = inference_time / len(val_data)
-    val_timing = parse_meta(args.meta_dir)['Timing']
-    plot_timing([inference_time, val_timing['Total'] / 1e3],
-                [avg_inference_time, val_timing['Average'] / 1e3],
-                plots_path)
 
     errors, pred_residuals, cfd_residuals = [], [], []
     pde_scaler = val_data.standard_scaler[2:5].to_torch()

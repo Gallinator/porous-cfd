@@ -42,8 +42,7 @@ if __name__ == '__main__':
     model = Pipn(n_internal, n_boundary)
 
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar(), LearningRateMonitor()],
-                        log_every_n_steps=int(batch_size / len(train_data)),
+                        log_every_n_steps=int(len(train_data) / batch_size),
                         precision=args.precision,
                         default_root_dir=args.logs_dir)
 

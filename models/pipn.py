@@ -19,7 +19,7 @@ class SetAbstraction(torch.nn.Module):
 
     def forward(self, x, pos, batch):
         idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=128)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=1024)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
@@ -48,8 +48,8 @@ class Encoder(nn.Module):
             nn.Linear(64, 64),
             nn.Tanh()
         )
-        self.conv1 = SetAbstraction(0.5, 0.6, MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
-        self.conv2 = SetAbstraction(0.25, 1.2, MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
+        self.conv1 = SetAbstraction(0.5, 0.4, MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
+        self.conv2 = SetAbstraction(0.25, 1.5, MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
         self.conv3 = GlobalSetAbstraction(MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:

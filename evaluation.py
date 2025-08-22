@@ -62,7 +62,8 @@ if __name__ == '__main__':
         errors.extend(error.numpy(force=True))
 
         pred_residuals.extend(phys_data.numpy(force=True))
-        cfd_res = torch.cat([tgt_data.fx, tgt_data.fy, torch.zeros_like(tgt_data.fx)], dim=-1)
+        res_tgt = torch.zeros_like(tgt_data.fx)
+        cfd_res = torch.cat([res_tgt, res_tgt, res_tgt], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
     errors = np.concatenate(errors)

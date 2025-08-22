@@ -60,8 +60,7 @@ class Encoder(nn.Module):
         out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*x]), batch)
         out = self.conv2(*out)
         y, _, batch = self.conv3(*out)
-        y = torch.stack(unbatch(y, batch))
-        global_feature = torch.max(y, dim=1, keepdim=True)[0]
+        global_feature = torch.stack(unbatch(y, batch))
         return local_features, global_feature
 
 

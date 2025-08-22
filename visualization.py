@@ -155,7 +155,7 @@ def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
     w = 0.01
     x = np.arange(0, spacing * len(values), step=w)
     rects = ax.barh(x + offset, values, w, color=colors, label=labels)
-    ax.bar_label(rects, fmt='%.3f', padding=10)
+    ax.bar_label(rects, fmt='%.2e', padding=10)
     ax.set_yticks([])
     ax.legend(ncols=2)
 
@@ -193,7 +193,7 @@ def plot_residuals(*args, trim, save_path=None):
 
     for i, d in enumerate(args):
         rects = ax.bar(x + i * w, d, w, color=colors[i], label=labels[i])
-        ax.bar_label(rects, fmt='%.3f', padding=10)
+        ax.bar_label(rects, fmt='%.2e', padding=10)
 
     ax.legend()
     ax.set_ylim(0, max([max(d) for d in args]) * 1.1)

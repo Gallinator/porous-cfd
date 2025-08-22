@@ -2,8 +2,41 @@ import torch
 from torch import nn, Tensor, autograd
 from torch.nn.functional import mse_loss, l1_loss
 import lightning as L
+from torch_cluster import fps, radius
+from torch_geometric.nn import MLP, global_max_pool, PointNetConv
+from torch_geometric.utils import unbatch
+
 from foam_dataset import PdeData, FoamData
 from models.losses import MomentumLoss, ContinuityLoss, LossLogger, BoundaryLoss
+
+
+class SetAbstraction(torch.nn.Module):
+    def __init__(self, ratio: float, r: float, mlp):
+        super().__init__()
+        self.ratio = ratio
+        self.r = r
+        self.conv = PointNetConv(mlp)
+
+    def forward(self, x, pos, batch):
+        idx = fps(pos, batch, ratio=self.ratio)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx])
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        return x, pos, batch
+
+
+class GlobalSetAbstraction(torch.nn.Module):
+    def __init__(self, mlp):
+        super().__init__()
+        self.nn = mlp
+
+    def forward(self, x, pos, batch):
+        x = self.nn(torch.cat([x, pos], dim=1))
+        x = global_max_pool(x, batch)
+        pos = pos.new_zeros((x.size(0), 2))
+        batch = torch.arange(x.size(0), device=batch.device)
+        return x, pos, batch
 
 
 class Encoder(nn.Module):
@@ -15,19 +48,20 @@ class Encoder(nn.Module):
             nn.Linear(64, 64),
             nn.Tanh()
         )
-        self.global_feature = nn.Sequential(
-            nn.Linear(65, 64),
-            nn.Tanh(),
-            nn.Linear(64, 128),
-            nn.Tanh(),
-            nn.Linear(128, 1024),
-            nn.Tanh()
-        )
+        self.conv1 = SetAbstraction(0.5, 1, MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
+        self.conv2 = SetAbstraction(0.25, 0.4, MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
+        self.conv3 = GlobalSetAbstraction(MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
-        global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
+        global_in = torch.concatenate([local_features, zones_ids], dim=2)
+        batch = torch.concatenate([torch.tensor([i] * x.shape[-2]) for i in range(len(x))]).to(device=x.device,
+                                                                                               dtype=torch.int64)
+        out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*x]), batch)
+        out = self.conv2(*out)
+        y, _, batch = self.conv3(*out)
+        y = torch.stack(unbatch(y, batch))
+        global_feature = torch.max(y, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
 

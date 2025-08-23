@@ -103,10 +103,18 @@ class FoamDataset(Dataset):
         b_data = b_data[b_samples]
 
         i_data = (parse_internal_mesh(case_dir, ))
-        i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
-        i_data = i_data[i_samples]
+        i_zones_ids = i_data[..., 2:3].flatten()
+        p_data = i_data[(i_zones_ids > 0), :]
+        i_data = i_data[(i_zones_ids < 1), :]
+        i_avg, p_avg = self.meta['Mean points']['Internal'], self.meta['Mean points']['Porous']
+        n_i = int(i_avg / (i_avg + p_avg) * self.n_internal)
 
-        data = np.concatenate((i_data, b_data))
+        i_samples = self.rng.choice(len(i_data), replace=False, size=n_i)
+        i_data = i_data[i_samples]
+        p_samples = self.rng.choice(len(p_data), replace=False, size=self.n_internal - n_i)
+        p_data = p_data[p_samples]
+
+        data = np.concatenate((i_data, p_data, b_data))
 
         points = data[:, 0:2]
         zones_ids = data[..., 2:3]

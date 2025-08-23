@@ -152,7 +152,11 @@ def generate_meta(data_dir: str):
     min_points_meta = {"Boundary": int(np.min(boundary_num_points)),
                        "Internal": int(np.min(internal_num_points)),
                        'Porous': int(np.min(porous_num_points))}
-    meta_dict = {"Min points": min_points_meta}
+    avg_points = {"Boundary": np.mean(boundary_num_points),
+                  "Internal": np.mean(internal_num_points),
+                  'Porous': np.mean(porous_num_points)}
+    meta_dict = {"Min points": min_points_meta,
+                 "Mean points": avg_points}
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
 

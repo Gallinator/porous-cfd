@@ -131,6 +131,23 @@ functions
         writeControl    writeTime;
         surfaceFormat   foam;
     }
+       solid
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+        surfaceFormat   foam;
+
+        // Mandatory entries (runtime modifiable)
+        fields          (U p div(phi) momentError);
+        operation       none;
+        regionType      patch;
+        name            solid;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
     writeCellData
     {
         type            writeCellCentres;

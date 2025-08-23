@@ -20,11 +20,15 @@ addLayers       false;
 
 geometry
 {
-
     mesh.obj
     {
         type triSurfaceMesh;
         name mesh;
+    }
+    solid.obj
+    {
+        type triSurfaceMesh;
+        name solid;
     }
 }
 
@@ -46,19 +50,29 @@ castellatedMeshControls
             file "mesh.eMesh";
             level 2;
         }
+        {
+            file "solid.eMesh";
+            level 2;
+        }
     );
 
     refinementSurfaces
     {
         mesh
         {
-            insidePoint (0 0 0);
+            insidePoint (0.0 0.0 0.0001);
             level (0 2);
             patchInfo { type patch; }
             faceZone mesh;
             faceType baffle;
             cellZone mesh;
             cellZoneInside insidePoint;
+            addBufferLayers false;
+        }
+        solid
+        {
+            level (0 2);
+            patchInfo { type patch; }
             addBufferLayers false;
         }
     }
@@ -72,9 +86,13 @@ castellatedMeshControls
             mode distance;
             levels ((0.03 1));
         }
+        solid
+        {
+            mode distance;
+            levels ((0.1 1));
+        }
     }
-
-    locationInMesh (0.0001 0.0001 0.0001);
+    locationInMesh (3.1 3.1 0.0001);
 
     allowFreeStandingZoneFaces false;
 }

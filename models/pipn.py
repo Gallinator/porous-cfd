@@ -16,7 +16,7 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
         self.global_feature = nn.Sequential(
-            nn.Linear(65, 64),
+            nn.Linear(64, 64),
             nn.Tanh(),
             nn.Linear(64, 128),
             nn.Tanh(),
@@ -26,7 +26,8 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
+        porous_zone = local_features[zones_ids.repeat(1, 1, 64) > 0].reshape((len(x), -1, 64))
+        global_feature = self.global_feature(porous_zone)
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
@@ -169,10 +170,12 @@ class Pipn(L.LightningModule):
             d_p_x, d_p_y = d_p[:, :, 0:1], d_p[:, :, 1:2]
 
             cont = self.continuity_loss.func(d_ux_x, d_uy_y)
-            momentum_x = self.momentum_x_loss.func(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, in_data.fx, d_ux_x,
-                                              *diff_x)
-            momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, in_data.fy, d_uy_y,
-                                              *diff_y)
+            momentum_x = self.momentum_x_loss.func(pred_data.ux, pred_data.uy, d_p_x, in_data.zones_ids, in_data.fx,
+                                                   d_ux_x,
+                                                   *diff_x)
+            momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, in_data.fy,
+                                                   d_uy_y,
+                                                   *diff_y)
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:

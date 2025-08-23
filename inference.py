@@ -14,8 +14,6 @@ from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
 from visualization import plot_fields
 
-CHECKPOINT_PATH = 'lightning_logs/version_22/checkpoints/epoch=402-step=806.ckpt'
-
 
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()

@@ -62,6 +62,7 @@ class Pipn(L.LightningModule):
         self.decoder = Decoder(3)
         self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
         self.d = 14000
+        self.f = 17.11
         self.training_loss_togger = LossLogger(self, 'Train loss',
                                                'Train loss continuity',
                                                'Train loss momentum x',
@@ -83,9 +84,9 @@ class Pipn(L.LightningModule):
         self.p_scaler = scalers['p']
         self.points_scaler = scalers['Points']
 
-        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.d, 5, n_internal,
+        self.momentum_x_loss = MomentumLoss(0, 1, self.mu, self.d, self.f, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
-        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.d, 5, n_internal,
+        self.momentum_y_loss = MomentumLoss(1, 0, self.mu, self.d, self.f, n_internal,
                                             self.u_scaler, self.points_scaler, self.p_scaler)
         self.continuity_loss = ContinuityLoss(n_internal, self.u_scaler, self.points_scaler)
         self.boundary_loss = BoundaryLoss(n_internal)

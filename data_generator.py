@@ -115,7 +115,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
                 bpy.ops.object.editmode_toggle()
                 bpy.ops.mesh.select_all(action='SELECT')
 
-                offset = get_radom_offset(center, obj)
+                offset = get_radom_offset(center, obj, rng)
 
                 bpy.ops.transform.translate(value=(offset[0], offset[1], 0),
                                             orient_type='GLOBAL')

@@ -50,14 +50,33 @@ def parse_scale(scale_dict: dict) -> list:
     return list(itertools.product(scales_x, scales_y))
 
 
-def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
+def get_radom_offset(mesh_center, obj, rng=Random()):
+    obj_dim = np.array(obj.dimensions[0:2])
+    max_offset = [0.4, 0.3] + (obj_dim / 2) - 0.4
+    offset_x = (rng.random() - 0.5) * 2 * max_offset[0]
+    offset_y = (rng.random() - 0.5) * 2 * max_offset[1]
+    offset_loc = (offset_x, offset_y)
+    delta = mesh_center[0:2] - offset_loc
+
+    def sign(a):
+        return 1 if a >= 0 else -1
+
+    if abs(delta[0]) < obj.dimensions[0] / 2:
+        offset_x -= sign(delta[0]) * (abs(delta[0] - obj.dimensions[0] / 2)) * 1.1
+    if abs(delta[1]) < obj.dimensions[1] / 2:
+        offset_y -= sign(delta[1]) * (abs(delta[1] - obj.dimensions[1] / 2)) * 1.1
+    return offset_x, offset_y
+
+
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{meshes_dir}/transforms.json', 'r') as f:
         ops.ed.undo_push()
         ops.object.select_all(action='SELECT')
         ops.object.delete()
-        for mesh, transforms in json.load(f).items():
+        cfg = json.load(f)
+        for mesh, transforms in cfg.items():
             import_mesh(f'{meshes_dir}/{mesh}')
             rotations = parse_rotations(transforms['rotation'])
             scales = parse_scale(transforms['scale'])
@@ -65,17 +84,51 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str):
                 ops.object.select_all(action='SELECT')
                 ops.object.duplicate(linked=False)
                 obj = bpy.context.selected_objects[0]
+
                 obj.scale = mathutils.Vector((s[0], s[1], 1.0))
 
                 obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
 
-                ops.wm.obj_export(filepath=f'{dest_dir}/s{s[0]}-{s[1]}_r{r}_{mesh}',
+                save_dir = pathlib.Path(f'{dest_dir}/s{s[0]}-{s[1]}_r{r}_{pathlib.Path(mesh).stem}')
+                save_dir.mkdir(exist_ok=True, parents=True)
+
+                ops.wm.obj_export(filepath=f'{save_dir}/mesh.obj',
                                   forward_axis='Y',
                                   up_axis='Z',
                                   export_materials=False,
                                   export_selected_objects=True)
+
+                verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
+                verts = np.array(verts)
+                center = np.sum(verts, axis=0) / len(verts)
+
                 # Delete copy
                 ops.object.delete()
+
+                solid_mesh = list(cfg.keys())[rng.randint(0, len(cfg) - 1)]
+                import_mesh(f'{meshes_dir}/{solid_mesh}')
+                obj = bpy.context.selected_objects[0]
+
+                obj.rotation_euler = mathutils.Euler((0.0, 0.0, rng.random() * 360))
+                bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
+
+                bpy.ops.object.editmode_toggle()
+                bpy.ops.mesh.select_all(action='SELECT')
+
+                offset = get_radom_offset(center, obj)
+
+                bpy.ops.transform.translate(value=(offset[0], offset[1], 0),
+                                            orient_type='GLOBAL')
+                bpy.ops.object.editmode_toggle()
+
+                ops.wm.obj_export(filepath=f'{save_dir}/solid.obj',
+                                  forward_axis='Y',
+                                  up_axis='Z',
+                                  export_materials=False,
+                                  export_selected_objects=True)
+                # Delete solid
+                ops.object.delete()
+
             # Delete original
             ops.object.select_all(action='SELECT')
             ops.object.delete()
@@ -163,12 +216,13 @@ def set_decompose_par(case_path: str, n_proc: int):
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
-    meshes = glob.glob(f"{meshes_dir}/*.obj")
+    meshes = os.listdir(meshes_dir)
     for m in meshes:
-        case_path = f"{dest_dir}/{pathlib.Path(m).stem}"
+        case_path = f"{dest_dir}/{pathlib.Path(m)}"
         shutil.copytree('assets/openfoam-case-template', case_path)
-        shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
-        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
+        shutil.copyfile(f'{meshes_dir}/{m}/mesh.obj', f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+        shutil.copyfile(f'{meshes_dir}/{m}/solid.obj', f"{case_path}/snappyHexMesh/constant/triSurface/solid.obj")
+        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(f'{meshes_dir}/{m}/mesh.obj'))
 
         set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
         set_decompose_par(f'{case_path}/simpleFoam', n_proc)
@@ -209,6 +263,7 @@ def generate_meta(data_dir: str):
     elapse_times = []
 
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
+        print(case)
         b_data = parse_boundary(case, ['U'], ['p'])
         i_data = parse_internal_mesh(case, "U", "p")
         n_porous = np.count_nonzero(b_data[..., -1] > 0) + np.count_nonzero(i_data[..., -1] > 0)
@@ -281,7 +336,7 @@ if __name__ == '__main__':
     rng = Random(8421)
 
     for d in os.listdir('assets/meshes'):
-        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}')
+        generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}', rng=rng)
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
                                 f'data/{d}',
                                 args.openfoam_procs)

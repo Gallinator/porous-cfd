@@ -28,6 +28,7 @@ def build_arg_parser() -> ArgumentParser:
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
 
+    torch.manual_seed(8421)
     torch.set_float32_matmul_precision('high')
 
     batch_size = args.batch_size

@@ -39,6 +39,7 @@ def build_arg_parser() -> ArgumentParser:
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
+    torch.manual_seed(8421)
 
     plots_path = None
     if args.save_plots:

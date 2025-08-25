@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import numpy as np
+import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
 from matplotlib import pyplot as plt
@@ -35,6 +36,7 @@ def build_arg_parser() -> ArgumentParser:
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
+    torch.manual_seed(8421)
 
     plots_path = None
     if args.save_plots:

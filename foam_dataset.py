@@ -117,6 +117,14 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
+    def one_hot_encode_boundary(self, boundary_dict: dict):
+        labels = []
+        for i, d in enumerate(boundary_dict.values()):
+            labels += [i] * len(d)
+        labels = np.array(labels)
+        labels[labels == 4] -= 1
+        return np.eye(len(boundary_dict) - 1)[labels]
+
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
 

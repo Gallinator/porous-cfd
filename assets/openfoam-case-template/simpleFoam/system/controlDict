@@ -22,7 +22,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         4000;
+endTime         1000;
 
 deltaT          1;
 
@@ -131,7 +131,7 @@ functions
         writeControl    writeTime;
         surfaceFormat   foam;
     }
-       solid
+    solid
     {
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
@@ -142,7 +142,7 @@ functions
         fields          (U p div(phi) momentError);
         operation       none;
         regionType      patch;
-        name            solid;
+        names           (solid "solid.*");
 
         // Optional (inherited) entries
         writeFields     true;

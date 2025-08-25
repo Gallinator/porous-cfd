@@ -103,6 +103,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
 def plot_case(path: str):
     b_data = data_parser.parse_boundary(path, ['U'], ['p'])
+    b_data = np.concatenate(list(b_data.values()))
     i_data = parse_internal_mesh(path, "U", "p")
     data = np.vstack([b_data, i_data])
 
@@ -123,6 +124,7 @@ def plot_dataset_dist(path: str, save_path=None):
     for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
                       description="Reading data"):
         b_data = data_parser.parse_boundary(case, ['U'], ['p'])
+        b_data = np.concatenate(list(b_data.values()))
         i_data = parse_internal_mesh(case, "U", "p")
         data.extend(b_data)
         data.extend(i_data)

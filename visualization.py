@@ -52,16 +52,25 @@ def add_colorbar(fig, ax, plot):
     fig.colorbar(plot, cax=cax)
 
 
-def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
+def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax, meshes=None,
+                      show_points=True):
     ax.set_title(title, pad=20)
-    porous_zone = np.nonzero(porous > 0)[0]
-    fluid_zone = np.nonzero(porous == 0)[0]
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=25, zorder=1, c='#00000000',
-               label='Porous', edgecolors='black')
-    ax.scatter(points[..., 0], points[..., 1], s=5, zorder=1, c='black',
-               label='Collocation')
+    if show_points:
+        porous_zone = np.nonzero(porous > 0)[0]
+        ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=25, zorder=1, c='#00000000',
+                   label='Porous', edgecolors='black')
+        ax.scatter(points[..., 0], points[..., 1], s=5, zorder=1, c='black',
+                   label='Collocation')
 
     triangulation = tri.Triangulation(points[..., 0], points[..., 1])
+    if meshes:
+        mask = np.full((len(triangulation.triangles),), False)
+        for m in meshes:
+            tri_centers = points[triangulation.triangles].mean(axis=1)
+            inside = np.array(is_point_inside_mesh(tri_centers, m))
+            mask = np.logical_or(mask, inside)
+        triangulation.set_mask(mask)
+
     refiner = tri.UniformTriRefiner(triangulation)
     tri_points, tri_field = refiner.refine_field(value.flatten(), subdiv=3)
 
@@ -70,7 +79,8 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     ax.set_ymargin(0.025)
     ax.set_xmargin(0.02)
     add_colorbar(fig, ax, plot)
-    ax.legend(loc='upper right')
+    if show_points:
+        ax.legend(loc='upper right')
     ax.set_aspect('equal')
 
 
@@ -100,21 +110,21 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, p
 
 
 def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, plot_streams=True,
-                save_path=None):
+                save_path=None, meshes=None):
     fig = plt.figure(figsize=(16, 9), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure
-    plot_scalar_field(f'$p$ {M2_S2}', points, p, porous, fig, ax_p)
+    plot_scalar_field(f'$p$ {M2_S2}', points, p, porous, fig, ax_p, meshes)
 
     # Velocity
-    plot_scalar_field(f'$u_x$ {M_S}', points, u[:, 0], porous, fig, ax_u_x)
+    plot_scalar_field(f'$u_x$ {M_S}', points, u[:, 0], porous, fig, ax_u_x, meshes)
 
-    plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y)
+    plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y, meshes)
     if plot_streams:
         plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
     else:
-        plot_scalar_field(f'$u_y$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
+        plot_scalar_field(f'$u_y$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u, meshes)
 
     plot_or_save(fig, save_path)
 
@@ -125,11 +135,13 @@ def plot_case(path: str):
     i_data = parse_internal_mesh(path, "U", "p")
     data = np.vstack([b_data, i_data])
 
+    solid_meshes = glob.glob(f'{path}/constant/triSurface/solid_*.obj')
     plot_fields(Path(path).stem,
                 data[..., 0:2],
                 data[..., 2:4],
                 data[..., 4:5],
-                data[..., 5:6])
+                data[..., 5:6],
+                meshes=solid_meshes)
 
 
 def plot_histogram(ax, data, color: str, title: str, bins=100):

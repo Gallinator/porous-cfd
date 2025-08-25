@@ -38,7 +38,7 @@ boundaryField
         type            slip;
     }
 
-    solid
+    "solid.*"
     {
         type            slip;
     }

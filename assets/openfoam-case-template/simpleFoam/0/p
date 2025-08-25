@@ -44,7 +44,7 @@ boundaryField
     {
         type            empty;
     }
-    solid
+    "solid.*"
     {
         type            zeroGradient;
     }

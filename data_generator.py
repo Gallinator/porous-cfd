@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 import mathutils
 import bpy
 import numpy as np
-from foamlib import FoamFile
+from foamlib import FoamFile, FoamCase
 from rich.progress import track
 from bpy import ops
 from welford import Welford
@@ -255,6 +255,10 @@ def generate_data(cases_dir: str):
         shutil.move(f"{case}/simpleFoam", 'tmp')
         os.rmdir(f'{case}')
         shutil.move("tmp", f'{case}')
+
+        iters = len(FoamCase(f'{case}'))
+        if iters > 900:
+            print(f'Warning: {case} converged after {iters} iterations!')
 
 
 def generate_meta(data_dir: str):

@@ -87,13 +87,9 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     ax.set_aspect('equal')
 
 
-def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, plot_streamlines=True):
-    ax.set_title(title, pad=20)
+def plot_uneven_stream(title: str, points: np.array, field: np.array, zones_ids, fig, ax, meshes=None):
+    plot_scalar_field(title, points, np.linalg.norm(field, axis=1), zones_ids, fig, ax, meshes, show_points=False)
 
-    triangulation = tri.Triangulation(points[..., 0], points[..., 1])
-    refiner = tri.UniformTriRefiner(triangulation)
-    tri_points, tri_field = refiner.refine_field(np.linalg.norm(field, axis=1).flatten())
-    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='turbo')
     x = points[:, 0].flatten()
     y = points[:, 1].flatten()
     xx = np.linspace(x.min(), x.max(), 50)
@@ -106,9 +102,17 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, p
     g_x = griddata(points, field_x, (xi, yi), method='nearest')
     g_y = griddata(points, field_y, (xi, yi), method='nearest')
 
-    ax.streamplot(xx, yy, g_x, g_y, color='black', density=2, zorder=1)
+    if meshes:
+        p_x, p_y = np.vstack(xi.flatten()), np.vstack(yi.flatten())
+        mask = np.full((len(p_x),), False)
+        for m in meshes:
+            inside = np.array(is_point_inside_mesh(np.concatenate([p_x, p_y], axis=-1), m))
+            mask = np.logical_or(mask, inside)
+        mask = mask.reshape(xi.shape)
+        g_x[mask] = np.nan
+        g_y[mask] = np.nan
 
-    add_colorbar(fig, ax, plot)
+    ax.streamplot(xx, yy, g_x, g_y, color='black', density=2, zorder=1)
     ax.set_aspect('equal')
 
 
@@ -125,7 +129,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
 
     plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y, meshes)
     if plot_streams:
-        plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
+        plot_uneven_stream(f'$U$ {M_S}', points, u, porous, fig, ax_u, meshes)
     else:
         plot_scalar_field(f'$u_y$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u, meshes)
 

@@ -64,7 +64,11 @@ class FoamData:
 
     @property
     def div(self):
-        return self.data[..., -1:]
+        return self.data[..., 8:9]
+
+    @property
+    def boundary_id(self):
+        return self.data[..., 9:]
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)])

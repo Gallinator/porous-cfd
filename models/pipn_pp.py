@@ -74,7 +74,7 @@ class PipnPp(L.LightningModule):
         self.n_boundary = n_boundary
         self.encoder = EncoderPp()
         self.decoder = Decoder(3)
-        self.mu = 1489.4e-6  # As rho=1 mu and nu are the same
+        self.mu = 326.87e-6  # As rho=1 mu and nu are the same
         self.d = 14000
         self.f = 17.11
         self.training_loss_togger = LossLogger(self, 'Train loss',

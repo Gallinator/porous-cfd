@@ -129,7 +129,8 @@ class FoamDataset(Dataset):
         return np.concatenate((data[:, 0:2], data[:, 4:7], data[:, 8:9], data[:, 2:4], data[:, 7:8]), axis=1)
 
     def load_case(self, case_dir):
-        b_data = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        b_dict = parse_boundary(case_dir, ['momentError', 'U'], ['p', 'div(phi)'])
+        b_data = np.concatenate(list(b_dict.values()))
         b_samples = self.rng.choice(len(b_data), replace=False, size=self.n_boundary)
         b_data = b_data[b_samples]
 

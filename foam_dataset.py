@@ -150,6 +150,11 @@ class FoamDataset(Dataset):
         # Do not standardize zones indices
         data[:, 0:-4] = self.standard_scaler.transform(data[:, 0:-4])
 
+        b_ohe = self.one_hot_encode_boundary(b_dict)[b_samples]
+        i_ohe = np.zeros((i_data.shape[0], b_ohe.shape[1]))
+        ohe = np.concatenate([i_ohe, b_ohe])
+        data = np.concatenate([data, ohe], axis=-1)
+
         return (tensor(data, dtype=torch.float),
                 tensor(obs_samples, dtype=torch.int64).unsqueeze(dim=1))
 

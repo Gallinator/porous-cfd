@@ -72,7 +72,10 @@ castellatedMeshControls
         solid
         {
             level (0 2);
-            patchInfo { type patch; }
+            patchInfo {
+                type patch;
+                inGroups (solid);
+            }
             addBufferLayers false;
         }
     }

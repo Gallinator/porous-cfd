@@ -17,7 +17,7 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
         self.global_feature = nn.Sequential(
-            nn.Linear(65, 96),
+            nn.Linear(69, 96),
             nn.Tanh(),
             nn.Linear(96, 128),
             nn.Tanh(),
@@ -25,9 +25,9 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, zones_ids: Tensor, boundary_id: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
+        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids, boundary_id], dim=2))
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
@@ -92,8 +92,8 @@ class Pipn(L.LightningModule):
         self.boundary_loss = BoundaryLoss(n_internal)
         self.verbose_predict = False
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> Tensor:
-        local_features, global_feature = self.encoder.forward(x, zones_ids)
+    def forward(self, x: Tensor, zones_ids: Tensor, boundary_id: Tensor) -> Tensor:
+        local_features, global_feature = self.encoder.forward(x, zones_ids, boundary_id)
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         return self.decoder.forward(local_features, exp_global)
 
@@ -118,7 +118,7 @@ class Pipn(L.LightningModule):
         in_data = FoamData(batch)
         in_data.points.requires_grad = True
 
-        pred = self.forward(in_data.points, in_data.zones_ids)
+        pred = self.forward(in_data.points, in_data.zones_ids, in_data.boundary_id)
         pred_data = PdeData(pred)
         # i=0 is x, j=1 is y
         d_ux_x, diff_x = self.differentiate_field(in_data.points, pred_data.ux, 0, 1)
@@ -171,7 +171,7 @@ class Pipn(L.LightningModule):
 
     def validation_step(self, batch: list):
         batch_data = FoamData(batch)
-        pred = self.forward(batch_data.points, batch_data.zones_ids)
+        pred = self.forward(batch_data.points, batch_data.zones_ids, batch_data.boundary_id)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(batch_data.pde.p))
@@ -204,4 +204,4 @@ class Pipn(L.LightningModule):
 
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
-            return self.forward(in_data.points, in_data.zones_ids)
+            return self.forward(in_data.points, in_data.zones_ids, in_data.boundary_id)

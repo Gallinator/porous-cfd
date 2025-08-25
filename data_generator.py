@@ -246,14 +246,18 @@ def add_solid_meshes_to_case(case_path, meshes):
 
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
-
-    meshes = os.listdir(meshes_dir)
-    for m in meshes:
-        case_path = f"{dest_dir}/{pathlib.Path(m)}"
+    for case_meshes_dir in os.listdir(meshes_dir):
+        case_path = f"{dest_dir}/{pathlib.Path(case_meshes_dir)}"
         shutil.copytree('assets/openfoam-case-template', case_path)
-        shutil.copyfile(f'{meshes_dir}/{m}/mesh.obj', f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
-        shutil.copyfile(f'{meshes_dir}/{m}/solid.obj', f"{case_path}/snappyHexMesh/constant/triSurface/solid.obj")
-        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(f'{meshes_dir}/{m}/mesh.obj'))
+        shutil.copyfile(f'{meshes_dir}/{case_meshes_dir}/mesh.obj', f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+        write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(f'{meshes_dir}/{case_meshes_dir}/mesh.obj'))
+
+        solid_names = [pathlib.Path(s).stem for s in glob.glob(f"{meshes_dir}/{case_meshes_dir}/solid*")]
+        for s in solid_names:
+            shutil.copyfile(f'{meshes_dir}/{case_meshes_dir}/{s}.obj',
+                            f"{case_path}/snappyHexMesh/constant/triSurface/{s}.obj")
+
+        add_solid_meshes_to_case(f'{case_path}/snappyHexMesh', solid_names)
 
         set_decompose_par(f'{case_path}/snappyHexMesh', n_proc)
         set_decompose_par(f'{case_path}/simpleFoam', n_proc)

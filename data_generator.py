@@ -214,6 +214,36 @@ def set_decompose_par(case_path: str, n_proc: int):
     set_run_n_proc(f'{case_path}/Run', n_proc)
 
 
+def add_solid_meshes_to_case(case_path, meshes):
+    surface_extract = FoamFile(f'{case_path}/system/surfaceFeatureExtractDict')
+    template_extract = surface_extract['solid.obj'].as_dict()
+    surface_extract.pop('solid.obj')
+
+    snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
+    template_feat = snappy_dict['castellatedMeshControls']['features']
+    template_feat = [template_feat[0]]
+    snappy_dict['castellatedMeshControls']['features'] = template_feat
+    template_feat = template_feat[0]
+
+    template_geometry = snappy_dict['geometry']['solid.obj'].as_dict()
+    snappy_dict['geometry'].pop('solid.obj')
+
+    template_surf = snappy_dict['castellatedMeshControls']['refinementSurfaces']['solid'].as_dict()
+    snappy_dict['castellatedMeshControls']['refinementSurfaces'].pop('solid')
+
+    template_region = snappy_dict['castellatedMeshControls']['refinementRegions']['solid'].as_dict()
+    snappy_dict['castellatedMeshControls']['refinementRegions'].pop('solid')
+
+    for m in meshes:
+        surface_extract[f'{m}.obj'] = template_extract
+        template_geometry['name'] = m
+        snappy_dict['geometry'][f'{m}.obj'] = template_geometry
+        template_feat['file'] = f'{m}.eMesh'
+        snappy_dict['castellatedMeshControls']['features'].append(template_feat)
+        snappy_dict['castellatedMeshControls']['refinementSurfaces'][m] = template_surf
+        snappy_dict['castellatedMeshControls']['refinementRegions'][m] = template_region
+
+
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, n_proc: int):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 

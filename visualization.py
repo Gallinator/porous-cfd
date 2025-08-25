@@ -15,6 +15,24 @@ M_S = '$\left[ \\frac{m}{s} \\right]$'
 M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
 
 
+def is_point_inside_mesh(points, mesh):
+    ops.object.select_all(action='SELECT')
+    ops.object.delete()
+    import_mesh(mesh)
+    ops.object.select_all(action='SELECT')
+    obj = bpy.context.selected_objects[0]
+    is_inside = []
+    for p in points:
+        p_3d = Vector((*p, 0))
+        _, p, n, _ = obj.closest_point_on_mesh(p_3d)
+        dir_to_surf = p - p_3d
+        is_inside.append(dir_to_surf.dot(n) >= 0.0)
+
+    ops.object.select_all(action='SELECT')
+    ops.object.delete()
+    return is_inside
+
+
 def plot_or_save(fig, save_path):
     if fig._suptitle is not None:
         file_name = fig._suptitle.get_text()

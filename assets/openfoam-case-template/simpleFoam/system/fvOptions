@@ -23,7 +23,7 @@ porousFilter{
         type DarcyForchheimer;
 
         d   (14000 14000 14000);
-        f   (17.11 17.11 17.11);
+        f   (20 20 20);
 
         coordinateSystem{
             origin (0 0 0);

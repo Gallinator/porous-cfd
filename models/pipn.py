@@ -186,7 +186,7 @@ class Pipn(L.LightningModule):
         if self.verbose_predict:
             torch.set_grad_enabled(True)
             in_data.points.requires_grad = True
-            pred = self.forward(in_data.points, in_data.zones_ids)
+            pred = self.forward(in_data.points, in_data.zones_ids, in_data.boundary_id)
             pred_data = PdeData(pred)
 
             # i=0 is x, j=1 is y

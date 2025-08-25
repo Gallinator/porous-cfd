@@ -89,7 +89,7 @@ castellatedMeshControls
         solid
         {
             mode distance;
-            levels ((0.1 1));
+            levels ((0.03 1));
         }
     }
     locationInMesh (3.1 3.1 0.0001);

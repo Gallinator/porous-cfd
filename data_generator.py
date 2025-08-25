@@ -105,29 +105,30 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
                 # Delete copy
                 ops.object.delete()
 
-                solid_mesh = list(cfg.keys())[rng.randint(0, len(cfg) - 1)]
-                import_mesh(f'{meshes_dir}/{solid_mesh}')
-                obj = bpy.context.selected_objects[0]
+                for i in range(rng.randint(2, 4)):
+                    solid_mesh = list(cfg.keys())[rng.randint(0, len(cfg) - 1)]
+                    import_mesh(f'{meshes_dir}/{solid_mesh}')
+                    obj = bpy.context.selected_objects[0]
 
-                obj.rotation_euler = mathutils.Euler((0.0, 0.0, rng.random() * 360))
-                bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
+                    obj.rotation_euler = mathutils.Euler((0.0, 0.0, rng.random() * 360))
+                    bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
 
-                bpy.ops.object.editmode_toggle()
-                bpy.ops.mesh.select_all(action='SELECT')
+                    bpy.ops.object.editmode_toggle()
+                    bpy.ops.mesh.select_all(action='SELECT')
 
-                offset = get_radom_offset(center, obj, rng)
+                    offset = get_radom_offset(center, obj, rng)
 
-                bpy.ops.transform.translate(value=(offset[0], offset[1], 0),
-                                            orient_type='GLOBAL')
-                bpy.ops.object.editmode_toggle()
+                    bpy.ops.transform.translate(value=(offset[0], offset[1], 0),
+                                                orient_type='GLOBAL')
+                    bpy.ops.object.editmode_toggle()
 
-                ops.wm.obj_export(filepath=f'{save_dir}/solid.obj',
-                                  forward_axis='Y',
-                                  up_axis='Z',
-                                  export_materials=False,
-                                  export_selected_objects=True)
-                # Delete solid
-                ops.object.delete()
+                    ops.wm.obj_export(filepath=f'{save_dir}/solid_{i}.obj',
+                                      forward_axis='Y',
+                                      up_axis='Z',
+                                      export_materials=False,
+                                      export_selected_objects=True)
+                    # Delete solid
+                    ops.object.delete()
 
             # Delete original
             ops.object.select_all(action='SELECT')

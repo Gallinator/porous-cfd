@@ -25,6 +25,10 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
+def get_log_steps(n_data, batch_size):
+    return (n_data // batch_size) + min(1, n_data % batch_size)
+
+
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
 
@@ -51,8 +55,8 @@ if __name__ == '__main__':
     checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
 
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar(), LearningRateMonitor()],
-                        log_every_n_steps=int(len(train_data) / batch_size),
+                        callbacks=[RichProgressBar(), LearningRateMonitor(), checkpoint_callback],
+                        log_every_n_steps=get_log_steps(len(train_data), batch_size),
                         precision=args.precision)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

@@ -78,7 +78,7 @@ if __name__ == '__main__':
                 [avg_inference_time, val_timing['Average'] / 1e3],
                 plots_path)
 
-    errors, pred_residuals, cfd_residuals = [], [], []
+    errors, pred_residuals, cfd_residuals, zones_ids = [], [], [], []
     solid_errors = []
     pde_scaler = val_data.standard_scaler[3:7].to(model.device)
     for p, tgt_data in zip(pred, val_loader):
@@ -88,6 +88,7 @@ if __name__ == '__main__':
                               pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
 
         errors.extend(batch_error.numpy(force=True))
+        zones_ids.extend(tgt_data.zones_ids)
 
         solid_error = l1_loss(pde_scaler.inverse_transform(pred_data['solid'].data),
                               pde_scaler.inverse_transform(tgt_data['solid'].pde.data), reduction='none')
@@ -97,7 +98,7 @@ if __name__ == '__main__':
         cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.mom_z, tgt_data.div], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
-    errors = np.concatenate(errors)
+    errors, zones_ids = np.concatenate(errors), np.array(zones_ids).flatten()
     error_data = PdeData(errors)
     plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)
 
@@ -110,6 +111,10 @@ if __name__ == '__main__':
 
     solid_mae = np.average(solid_errors, axis=0)
     plot_errors('Solid Average relative error', solid_mae.tolist(), save_path=plots_path)
+
+    porous_mae, fluid_mae = np.average(errors[zones_ids > 0, :], axis=0), np.average(errors[zones_ids < 1, :], axis=0)
+    plot_errors('Porous region MAE', porous_mae.tolist(), save_path=plots_path)
+    plot_errors('Fluid region MAE', fluid_mae.tolist(), save_path=plots_path)
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)

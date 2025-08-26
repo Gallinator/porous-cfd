@@ -285,6 +285,7 @@ def generate_data(cases_dir: str):
         if process.returncode != 0:
             raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
 
+        shutil.move(f'{case}/snappyHexMesh/constant/triSurface', f'{case}/simpleFoam/constant/triSurface')
         clean_dir(f"{case}/snappyHexMesh")
         os.rmdir(f"{case}/snappyHexMesh")
         shutil.move(f"{case}/simpleFoam", 'tmp')

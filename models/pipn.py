@@ -28,7 +28,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        porous_zone = local_features[zones_ids.repeat(1, 1, 64) > 0].reshape((len(x), -1, 64))
+        porous_zone = local_features[zones_ids.repeat(1, 1, 64) < 1].reshape((len(x), -1, 64))
         global_feature = self.global_feature(porous_zone)
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature

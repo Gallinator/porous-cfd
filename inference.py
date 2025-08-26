@@ -1,4 +1,5 @@
 import argparse
+import glob
 import os
 from argparse import ArgumentParser
 from pathlib import Path
@@ -68,14 +69,16 @@ if __name__ == '__main__':
 
         plt.interactive(case_plot_path is None)
 
+        meshes = glob.glob(f'{glob.glob("data/val/*")[i]}/constant/triSurface/solid_*.obj')
+
         plot_fields('Predicted', raw_points, u_scaler.inverse_transform(pred.u[0]),
-                    p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids, save_path=case_plot_path)
+                    p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids, save_path=case_plot_path, meshes=meshes)
         plot_fields('Ground truth', raw_points, u_scaler.inverse_transform(tgt.pde.u),
-                    p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids, save_path=case_plot_path)
+                    p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids, save_path=case_plot_path, meshes=meshes)
 
         plt.interactive(False)
 
         u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
         p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
         plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), tgt.zones_ids, False,
-                    save_path=case_plot_path)
+                    save_path=case_plot_path, meshes=meshes)

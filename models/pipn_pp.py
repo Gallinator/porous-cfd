@@ -50,18 +50,17 @@ class EncoderPp(nn.Module):
             nn.Linear(64, 64),
             nn.Tanh()
         )
-        self.conv1 = SetAbstraction(0.5, 0.6, MLP([64 + 2, 64], act=nn.Tanh(), norm=None))
+        self.conv1 = SetAbstraction(0.5, 0.6, MLP([64 + 1 + 2, 64], act=nn.Tanh(), norm=None))
         self.conv2 = SetAbstraction(0.25, 1.2, MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
         self.conv3 = GlobalSetAbstraction(MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_in = local_features[zones_ids.repeat(1, 1, 64) < 1].reshape((len(x), -1, 64))
-        global_x = x[zones_ids.repeat(1, 1, 2) < 1].reshape((len(x), -1, 2))
-        batch = torch.concatenate([torch.tensor([i] * global_in.shape[-2]) for i in range(len(global_x))]).to(
+        batch = torch.concatenate([torch.tensor([i] * x.shape[-2]) for i in range(len(x))]).to(
             device=x.device,
             dtype=torch.int64)
-        out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*global_x]), batch)
+        global_in = torch.concatenate([(zones_ids - 0.5) * 2, local_features], dim=-1)
+        out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*x]), batch)
         out = self.conv2(*out)
         y, _, batch = self.conv3(*out)
         global_feature = torch.stack(unbatch(y, batch))

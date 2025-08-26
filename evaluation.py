@@ -54,24 +54,29 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
     pred = trainer.predict(model, dataloaders=val_loader)
 
-    errors, pred_residuals, cfd_residuals = [], [], []
-    for p, t in zip(pred, val_loader):
+    errors, pred_residuals, cfd_residuals, zones_ids = [], [], [], []
+    for i, (p, t) in enumerate(zip(pred, val_loader)):
         pred_data, phys_data = p
         tgt_data = FoamData(t)
         error = l1_loss(pred_data, tgt_data.pde.data, reduction='none')
         errors.extend(error.numpy(force=True))
+        zones_ids.extend(tgt_data.zones_ids)
 
         pred_residuals.extend(phys_data.numpy(force=True))
         res_tgt = torch.zeros_like(tgt_data.fx)
         cfd_res = torch.cat([res_tgt, res_tgt, res_tgt], dim=-1)
         cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
 
-    errors = np.concatenate(errors)
+    errors, zones_ids = np.concatenate(errors), np.array(zones_ids).flatten()
     error_data = PdeData(errors)
     plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)
 
     mae = np.average(errors, axis=0)
-    plot_errors(mae.tolist(), save_path=plots_path)
+    plot_errors('MAE', mae.tolist(), save_path=plots_path)
+
+    porous_mae, fluid_mae = np.average(errors[zones_ids > 0,:], axis=0), np.average(errors[zones_ids < 1,:], axis=0)
+    plot_errors('Porous region MAE', porous_mae.tolist(), save_path=plots_path)
+    plot_errors('Fluid region MAE', fluid_mae.tolist(), save_path=plots_path)
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)

@@ -56,8 +56,8 @@ class EncoderPp(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_in = local_features[zones_ids.repeat(1, 1, 64) > 0].reshape((len(x), -1, 64))
-        global_x = x[zones_ids.repeat(1, 1, 2) > 0].reshape((len(x), -1, 2))
+        global_in = local_features[zones_ids.repeat(1, 1, 64) < 1].reshape((len(x), -1, 64))
+        global_x = x[zones_ids.repeat(1, 1, 2) < 1].reshape((len(x), -1, 2))
         batch = torch.concatenate([torch.tensor([i] * global_in.shape[-2]) for i in range(len(global_x))]).to(
             device=x.device,
             dtype=torch.int64)

@@ -141,7 +141,8 @@ def generate_data(cases_dir: str):
 def generate_meta(data_dir: str):
     boundary_num_points, internal_num_points, porous_num_points = [], [], []
     for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_data = parse_boundary(case, [], [])
+        b_dict = parse_boundary(case, [], [])
+        b_data = np.concatenate(list(b_dict.values()))
         i_data = parse_internal_mesh(case, )
         n_porous = np.count_nonzero(b_data[..., -1] > 0) + np.count_nonzero(i_data[..., -1] > 0)
 

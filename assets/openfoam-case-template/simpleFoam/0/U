@@ -38,11 +38,6 @@ boundaryField
         type            slip;
     }
 
-    solid
-    {
-        type            slip;
-    }
-
     front
     {
         type            empty;

@@ -2,6 +2,7 @@ import torch
 from torch import nn, Tensor, autograd
 from torch.nn.functional import l1_loss
 import lightning as L
+from torch.optim.lr_scheduler import ExponentialLR
 from torch_cluster import fps, radius
 from torch_geometric.nn import MLP, global_max_pool, PointNetConv
 from torch_geometric.utils import unbatch
@@ -103,7 +104,9 @@ class PipnPp(L.LightningModule):
         return self.decoder.forward(local_features, exp_global)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.001, eps=10e-6)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-6)
+        scheduler = ExponentialLR(optimizer, 0.999)
+        return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:
         return autograd.grad(outputs, inputs,

@@ -59,7 +59,7 @@ class FoamDataset(Dataset):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.rng = rng
-        self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
+        self.samples = [d for d in sorted(Path(data_dir).iterdir()) if d.is_dir()]
         self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
         self.check_sample_size()
 

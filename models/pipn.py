@@ -18,7 +18,7 @@ class Encoder(nn.Module):
             nn.Tanh()
         )
         self.global_feature = nn.Sequential(
-            nn.Linear(64, 64),
+            nn.Linear(65, 64),
             nn.Tanh(),
             nn.Linear(64, 128),
             nn.Tanh(),
@@ -28,8 +28,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        porous_zone = local_features[zones_ids.repeat(1, 1, 64) < 1].reshape((len(x), -1, 64))
-        global_feature = self.global_feature(porous_zone)
+        global_feature = self.global_feature(torch.concatenate([local_features, (zones_ids - 0.5) * 2], dim=2))
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 

@@ -10,6 +10,8 @@ from foam_dataset import FoamDataset
 from models.pipn import Pipn
 import lightning as L
 
+from models.pipn_pp import PipnPp
+
 
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
@@ -22,6 +24,8 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--epochs', type=int, default=3000)
     arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd())
     arg_parser.add_argument('--name', type=str, default=None)
+    arg_parser.add_argument('--plusplus', action="store_true",
+                            help='save all the inference plots', default=False)
     return arg_parser
 
 
@@ -41,7 +45,7 @@ if __name__ == '__main__':
     val_data = FoamDataset('data/unseen', n_internal, n_boundary, 'data/standard', rng=rng)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
 
-    model = Pipn(n_internal, n_boundary)
+    model = PipnPp(n_internal, n_boundary) if args.plusplus else Pipn(n_internal, n_boundary)
 
     checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
     logger = TensorBoardLogger(save_dir='', version=args.name)

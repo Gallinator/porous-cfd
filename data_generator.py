@@ -207,6 +207,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
     with open(f'{case_config_dir}/config.json', 'r') as config:
         config = json.load(config)['cfd params']
         meshes = glob.glob(f"{meshes_dir}/*.obj")
+        houses = glob.glob(f'{meshes_dir}/houses/*.obj')
         params = list(itertools.product(meshes, config['inlet']))
         for m, inlet_ux in params:
             mesh_name = re.match('.+_(.+obj)', m)[1]
@@ -215,6 +216,10 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
             case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
             shutil.copytree('assets/openfoam-case-template', case_path)
             shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
+
+            rand_house = houses[rng.randint(0, len(houses) - 1)]
+            shutil.copyfile(rand_house, f"{case_path}/constant/triSurface/solid.obj")
+
             write_locations_in_mesh(f'{case_path}', get_location_inside(m))
 
             FoamFile(f'{case_path}/0/U')['internalField'] = [inlet_ux, 0, 0]

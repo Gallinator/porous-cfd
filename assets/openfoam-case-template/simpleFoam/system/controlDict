@@ -62,6 +62,26 @@ functions
         executeControl  writeTime;
         writeControl    writeTime;
     }
+    vorticity
+    {
+        type        vorticity;
+        libs        (fieldFunctionObjects);
+
+        // Optional (inherited) entries
+        field           U;
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+    magVorticity
+    {
+        type            mag;
+        libs            (fieldFunctionObjects);
+
+        field           vorticity;
+
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
     walls
     {
         // Mandatory entries (unmodifiable)
@@ -70,7 +90,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (U p div(phi) momentError mag(vorticity));
         operation       none;
         regionType      patch;
         name            walls;
@@ -87,7 +107,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (U p div(phi) momentError mag(vorticity);
         operation       none;
         regionType      patch;
         name            inlet;
@@ -104,7 +124,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (U p div(phi) momentError mag(vorticity);
         operation       none;
         regionType      patch;
         name            outlet;
@@ -120,7 +140,7 @@ functions
         libs            (fieldFunctionObjects);
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError);
+        fields          (U p div(phi) momentError mag(vorticity);
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;

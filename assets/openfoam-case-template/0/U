@@ -25,15 +25,17 @@ boundaryField
         type            fixedValue;
         value           $internalField;
     }
-
     outlet
     {
         type            inletOutlet;
         inletValue      uniform (0 0 0);
         outlet          $internalField;
     }
-
     front
+    {
+        type            slip;
+    }
+    solid
     {
         type            slip;
     }

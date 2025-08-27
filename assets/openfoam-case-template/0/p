@@ -35,6 +35,10 @@ boundaryField
     {
         type            zeroGradient;
     }
+    solid
+    {
+        type            zeroGradient;
+    }
 }
 
 

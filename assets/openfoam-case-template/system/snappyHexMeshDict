@@ -26,6 +26,11 @@ geometry
         type triSurfaceMesh;
         name mesh;
     }
+    solid.obj
+    {
+        type triSurfaceMesh;
+        name solid;
+    }
 }
 
 castellatedMeshControls
@@ -46,6 +51,10 @@ castellatedMeshControls
             file "mesh.eMesh";
             level 2;
         }
+        {
+            file "solid.eMesh";
+            level 2;
+        }
     );
 
     refinementSurfaces
@@ -61,6 +70,12 @@ castellatedMeshControls
             cellZoneInside insidePoint;
             addBufferLayers false;
         }
+        solid
+        {
+            level (0 2);
+            patchInfo { type patch; }
+            addBufferLayers false;
+        }
     }
 
     resolveFeatureAngle 30;
@@ -68,6 +83,11 @@ castellatedMeshControls
     refinementRegions
     {
         mesh
+        {
+            mode distance;
+            levels ((1 1));
+        }
+        solid
         {
             mode distance;
             levels ((1 1));

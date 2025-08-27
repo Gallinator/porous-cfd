@@ -28,7 +28,7 @@ class Encoder(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        global_feature = self.global_feature(torch.concatenate([local_features, (zones_ids - 0.5) * 2], dim=2))
+        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 

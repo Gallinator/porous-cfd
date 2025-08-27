@@ -82,4 +82,4 @@ if __name__ == '__main__':
         p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
         plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points, np.abs(u_error),
                     np.abs(p_error),
-                    tgt.zones_ids,case_plot_path)
+                    tgt.zones_ids, save_path=case_plot_path)

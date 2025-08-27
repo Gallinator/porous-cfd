@@ -107,7 +107,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity);
+        fields          (U p div(phi) momentError mag(vorticity));
         operation       none;
         regionType      patch;
         name            inlet;
@@ -124,7 +124,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity);
+        fields          (U p div(phi) momentError mag(vorticity));
         operation       none;
         regionType      patch;
         name            outlet;
@@ -140,7 +140,7 @@ functions
         libs            (fieldFunctionObjects);
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity);
+        fields          (U p div(phi) momentError mag(vorticity));
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;

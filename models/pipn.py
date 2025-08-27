@@ -88,7 +88,7 @@ class Pipn(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-6)
-        scheduler = ExponentialLR(optimizer, 0.999)
+        scheduler = ExponentialLR(optimizer, 0.9995)
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 
     def calculate_gradients(self, outputs: Tensor, inputs: Tensor) -> Tensor:

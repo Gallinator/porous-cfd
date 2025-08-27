@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     plots_path = None
     if args.save_plots:
-        plots_path = Path(args.checkpoint).parent / 'plots'
+        plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name
         plots_path.mkdir(exist_ok=True, parents=True)
 
     model = Pipn.load_from_checkpoint(args.checkpoint)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
         case_plot_path = None
         if plots_path is not None:
-            case_plot_path = plots_path / Path(args.data_dir).name / str(i)
+            case_plot_path = plots_path / str(i)
             case_plot_path.mkdir(exist_ok=True, parents=True)
 
         tgt = FoamData(tgt).numpy()

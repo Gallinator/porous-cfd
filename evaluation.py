@@ -14,6 +14,7 @@ from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from foam_dataset import FoamDataset, PdeData
 from models.pipn import Pipn, FoamData
+from models.pipn_pp import PipnPp
 from visualization import plot_data_dist, plot_errors, plot_residuals
 
 
@@ -31,6 +32,8 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of internal points to sample', default=667)
     arg_parser.add_argument('--n-boundary', type=int,
                             help='number of internal points to sample', default=168)
+    arg_parser.add_argument('--plusplus', action="store_true",
+                            help='save all the inference plots', default=False)
     return arg_parser
 
 
@@ -42,7 +45,8 @@ if __name__ == '__main__':
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name / 'stats'
         plots_path.mkdir(exist_ok=True, parents=True)
 
-    model = Pipn.load_from_checkpoint(args.checkpoint)
+    model = PipnPp.load_from_checkpoint(args.checkpoint) if args.plusplus else Pipn.load_from_checkpoint(
+        args.checkpoint)
     model.verbose_predict = True
 
     rng = default_rng(8421)

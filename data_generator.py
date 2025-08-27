@@ -113,6 +113,8 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
         ops.object.select_all(action='SELECT')
         ops.object.delete()
 
+        shutil.copytree(f'{meshes_dir}/houses', f'{dest_dir}/houses')
+
 
 def create_case_template_dirs():
     """

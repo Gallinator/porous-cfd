@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 import torch
 from lightning.pytorch.callbacks import RichProgressBar, ModelCheckpoint
+from lightning.pytorch.loggers import TensorBoardLogger
 from numpy.random import default_rng
 from torch.utils.data import DataLoader
 from foam_dataset import FoamDataset
@@ -20,6 +21,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--precision', type=str, default='32-true')
     arg_parser.add_argument('--epochs', type=int, default=3000)
     arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd())
+    arg_parser.add_argument('--name', type=str, default=None)
     return arg_parser
 
 
@@ -42,12 +44,14 @@ if __name__ == '__main__':
     model = Pipn(n_internal, n_boundary)
 
     checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
+    logger = TensorBoardLogger(save_dir='', version=args.name)
 
     trainer = L.Trainer(max_epochs=epochs,
                         callbacks=[RichProgressBar(), checkpoint_callback],
                         log_every_n_steps=int(len(train_data) / batch_size),
                         precision=args.precision,
-                        default_root_dir=args.logs_dir)
+                        default_root_dir=args.logs_dir,
+                        logger=logger)
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 

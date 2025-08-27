@@ -56,10 +56,10 @@ class EncoderPp(nn.Module):
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
-        batch = torch.concatenate([torch.tensor([i] * x.shape[-2]) for i in range(len(x))]).to(
-            device=x.device,
-            dtype=torch.int64)
-        global_in = torch.concatenate([(zones_ids - 0.5) * 2, local_features], dim=-1)
+        batch = torch.arange(0, len(x)).unsqueeze(-1).repeat(1, x.shape[-2])
+        batch = torch.cat([*batch]).to(device=x.device, dtype=torch.int64)
+
+        global_in = torch.concatenate([zones_ids, local_features], dim=-1)
         out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*x]), batch)
         out = self.conv2(*out)
         y, _, batch = self.conv3(*out)

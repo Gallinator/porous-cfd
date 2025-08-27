@@ -21,7 +21,7 @@ class SetAbstraction(torch.nn.Module):
 
     def forward(self, x, pos, batch):
         idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=1024)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=128)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]

@@ -39,7 +39,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     ax.scatter(points[porous_zone, 0], points[porous_zone, 1], points[porous_zone, 2], marker='o', s=50, zorder=-1,
                c='#ffffffff',
                label='Porous', edgecolors='black')
-    plot = ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=value, s=15, cmap='turbo')
+    plot = ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=value, s=2, cmap='turbo')
 
     ax.set_ymargin(0.025)
     ax.set_xmargin(0.02)

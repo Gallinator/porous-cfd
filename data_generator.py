@@ -247,7 +247,7 @@ def generate_data(cases_dir: str):
 
 
 def generate_meta(data_dir: str):
-    internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 4
+    internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 5
     d_max, f_max = np.ones(3) * sys.float_info.min, np.ones(3) * sys.float_info.min
     running_stats = Welford()
     elapse_times = []
@@ -276,7 +276,8 @@ def generate_meta(data_dir: str):
                        "front": boundary_min[0],
                        "inlet": boundary_min[1],
                        "interface": boundary_min[2],
-                       "outlet": boundary_min[3]}
+                       "outlet": boundary_min[3],
+                       "solid": boundary_min[4]}
     features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
     std_meta = {'Points': features_std[0:3], 'U': features_std[3:6], 'p': features_std[6]}
     mean_meta = {'Points': features_mean[0:3], 'U': features_mean[3:6], 'p': features_mean[6]}

@@ -13,7 +13,7 @@ from argparse import ArgumentParser
 import mathutils
 import bpy
 import numpy as np
-from foamlib import FoamFile
+from foamlib import FoamFile, FoamCase
 from rich.progress import track
 from bpy import ops
 from welford import Welford
@@ -179,6 +179,12 @@ def raise_with_log_text(case_path, text):
         raise RuntimeError(f'{text} {case_path}\n\n {log.read()}')
 
 
+def check_convergence(case_dir):
+    n_iter = len(FoamCase(case_dir))
+    if n_iter > 800:
+        print(f'Warning: case {case_dir} converged in {n_iter} iterations!')
+
+
 def generate_data(cases_dir: str):
     for case in track(glob.glob(f"{cases_dir}/*"), description="Generating geometries"):
         process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -195,6 +201,8 @@ def generate_data(cases_dir: str):
         process.wait()
         if process.returncode != 0:
             raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
+
+        check_convergence(case)
 
         clean_dir(f"{case}/snappyHexMesh")
         os.rmdir(f"{case}/snappyHexMesh")

@@ -23,8 +23,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--save-plots', action="store_true",
                             help='save all the inference plots', default=False)
     last_model = sorted(os.listdir('lightning_logs'))[-1]
-    default_model_path = Path('lightning_logs') / last_model / 'checkpoints'
-    default_model_path /= os.listdir(default_model_path)[0]
+    default_model_path = Path('lightning_logs') / last_model / 'model.ckpt'
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
     arg_parser.add_argument('--data-dir', type=str, default='data/standard')
     arg_parser.add_argument('--meta-dir', type=str, default='data/standard')
@@ -78,7 +77,7 @@ if __name__ == '__main__':
     mae = np.average(errors, axis=0)
     plot_errors('MAE', mae.tolist(), save_path=plots_path)
 
-    porous_mae, fluid_mae = np.average(errors[zones_ids > 0,:], axis=0), np.average(errors[zones_ids < 1,:], axis=0)
+    porous_mae, fluid_mae = np.average(errors[zones_ids > 0, :], axis=0), np.average(errors[zones_ids < 1, :], axis=0)
     plot_errors('Porous region MAE', porous_mae.tolist(), save_path=plots_path)
     plot_errors('Fluid region MAE', fluid_mae.tolist(), save_path=plots_path)
 

@@ -47,7 +47,7 @@ def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.
     refiner = tri.UniformTriRefiner(triangulation)
     tri_points, tri_field = refiner.refine_field(value.flatten(), subdiv=3)
 
-    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='turbo')
+    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='coolwarm')
 
     ax.set_ymargin(0.025)
     ax.set_xmargin(0.02)
@@ -62,7 +62,7 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax, p
     triangulation = tri.Triangulation(points[..., 0], points[..., 1])
     refiner = tri.UniformTriRefiner(triangulation)
     tri_points, tri_field = refiner.refine_field(np.linalg.norm(field, axis=1).flatten())
-    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='turbo')
+    plot = ax.tricontourf(tri_points, tri_field, levels=100, zorder=-1, cmap='coolwarm')
     x = points[:, 0].flatten()
     y = points[:, 1].flatten()
     xx = np.linspace(x.min(), x.max(), 50)

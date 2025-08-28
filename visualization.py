@@ -10,8 +10,8 @@ from scipy.interpolate import griddata
 import data_parser
 from data_parser import parse_internal_mesh
 
-M_S = '$\left[ \\frac{m}{s} \\right]$'
-M2_S2 = '$\left[ \\frac{m^2}{s^2} \\right]$'
+M_S = '\left[ \\frac{m}{s} \\right]'
+M2_S2 = '\left[ \\frac{m^2}{s^2} \\right]'
 
 
 def plot_or_save(fig, save_path):

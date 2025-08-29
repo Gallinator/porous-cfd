@@ -190,11 +190,11 @@ class FoamDataset(Dataset):
         for key in boundary_data.keys():
             if key == 'inlet':
                 inlet_ux = boundary_data[key][..., 4:5]
-                inlet_ux = self.standard_scaler[2:3].transform(inlet_ux)
                 inlet_data.append(inlet_ux)
             else:
                 inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
-        return np.concatenate(inlet_data)
+        inlet_data = np.concatenate(inlet_data)
+        return self.standard_scaler[2:3].transform(inlet_data)
 
     def extend_gather_indices(self, index, n_features: int) -> torch.Tensor:
         return tensor(index, dtype=torch.int64).unsqueeze(dim=1).repeat(1, n_features)
@@ -224,7 +224,8 @@ class FoamDataset(Dataset):
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
         i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
-        i_data = np.concatenate([i_data, np.zeros((len(i_data), 1))], axis=-1)
+        i_inlet_data = self.standard_scaler[2:3].transform(np.zeros((len(i_data), 1)))
+        i_data = np.concatenate([i_data, i_inlet_data], axis=-1)
 
         data = np.concatenate((i_data, b_data))
         data = self.reorder_data(data)

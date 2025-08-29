@@ -62,22 +62,61 @@ functions
         executeControl  writeTime;
         writeControl    writeTime;
     }
-    vorticity
+    Unorm
     {
-        type        vorticity;
-        libs        (fieldFunctionObjects);
+        // Mandatory entries
+        type            norm;
+        libs            (fieldFunctionObjects);
+        field           U;
+        norm            L2;
 
         // Optional (inherited) entries
-        field           U;
-        executeControl  writeTime;
+        result  Unorm;
+        writeFields     true;
         writeControl    writeTime;
     }
-    magVorticity
+    gradUnorm
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           Unorm;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    magGradUnorm
     {
         type            mag;
         libs            (fieldFunctionObjects);
 
-        field           vorticity;
+        field           grad(Unorm);
+
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+    gradp
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           p;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    magGradp
+    {
+        type            mag;
+        libs            (fieldFunctionObjects);
+
+        field           grad(p);
 
         executeControl  writeTime;
         writeControl    writeTime;
@@ -90,7 +129,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity));
+        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
         operation       none;
         regionType      patch;
         name            walls;
@@ -107,7 +146,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity));
+        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
         operation       none;
         regionType      patch;
         name            inlet;
@@ -124,7 +163,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity));
+        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
         operation       none;
         regionType      patch;
         name            outlet;
@@ -140,7 +179,7 @@ functions
         libs            (fieldFunctionObjects);
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(vorticity));
+        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;

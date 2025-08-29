@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 from pathlib import Path
 
+import matplotlib
 import numpy as np
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
@@ -41,6 +42,7 @@ if __name__ == '__main__':
 
     plots_path = None
     if args.save_plots:
+        matplotlib.use('Agg')
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name
         plots_path.mkdir(exist_ok=True, parents=True)
 

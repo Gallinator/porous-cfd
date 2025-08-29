@@ -40,11 +40,6 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.show_grid(all_edges=True)
     plotter.camera.position = (-80, -100, 50)
 
-    plot = ax.streamplot(xx, yy, g_x, g_y, color=g_s, density=2, cmap='turbo')
-    add_colorbar(fig, ax, plot.lines)
-    ax.set_ymargin(0)
-    ax.set_aspect('equal')
-
 
 def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
     plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[1920, 1080])

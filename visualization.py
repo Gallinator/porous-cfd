@@ -199,3 +199,18 @@ def plot_residuals(*args, trim, save_path=None):
     ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Continuity'])
     fig.tight_layout()
     plot_or_save(fig, save_path)
+
+
+def plot_u_direction_change(data_dir):
+    diff = []
+    for c in list(set(glob.glob(f'{data_dir}/*')) - set(glob.glob(f'{data_dir}/*.json'))):
+        data = parse_internal_mesh(c, 'mag(grad(Unorm))', 'mag(grad(p))')
+        diff.append(data[..., 2:4])
+
+    unorm_mean = [np.mean(d[..., 0], axis=0) for d in diff]
+    fig = plt.figure(layout='constrained')
+    ax_1, ax_2 = fig.subplots(2, 1).flatten()
+    ax_1.bar(np.arange(0, len(unorm_mean)), unorm_mean, color='lightblue')
+    ax_1.set_title('Average U direction change per case')
+    plot_histogram(ax_2, unorm_mean, 'salmon', 'Average U direction change distribution', 20)
+    plt.show()

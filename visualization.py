@@ -1,11 +1,13 @@
 import glob
+import os
+import random
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.linalg import norm
 import vtk
-from pyvista import Plotter, PolyData
+import pyvista as pv
+from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
 from rich.progress import track
 import data_parser
 from data_parser import parse_internal_mesh
@@ -41,7 +43,85 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.camera.position = (-80, -100, 50)
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
+def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):
+    mesh_slice = mesh.slice(normal=normal, origin=origin)
+    u_slice = np.copy(mesh_slice['Uinterp'])
+    u_slice[..., -1 if normal == 'z' else -2] = 0
+    mesh_slice['Uslice'] = u_slice
+    plane = 'xy' if normal == 'z' else 'xz'
+    colorbar = {'title': f'$U {plane} {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
+    plotter.add_mesh(mesh_slice,
+                     cmap='coolwarm',
+                     scalars='Uslice',
+                     scalar_bar_args=colorbar)
+
+    sliced_tree = tree.slice(normal=normal, origin=origin)
+    plotter.add_mesh(sliced_tree, color='black', line_width=5)
+
+    sliced_solid = solid.slice(normal=normal, origin=origin)
+    plotter.add_mesh(sliced_solid, color='black', line_width=5)
+    plotter.enable_parallel_projection()
+    match plane:
+        case 'xy':
+            plotter.view_xy()
+        case 'xz':
+            plotter.view_xz()
+    plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
+
+
+def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
+    empty_foam = f'{case_dir}/empty.foam'
+    open(empty_foam, 'w').close()
+
+    foam_reader = OpenFOAMReader(empty_foam)
+    foam_reader.set_active_time_value(foam_reader.time_values[-1])
+    foam_reader.cell_to_point_creation = True
+    mesh = foam_reader.read()
+
+    data_points = PolyData(points)
+    data_points['Uinterp'] = u
+
+    internal_mesh = mesh['internalMesh']
+    interp_mesh = internal_mesh.interpolate(data_points, radius=5)
+
+    foam_inlet = mesh['boundary']['inlet']
+    stream_start_points = np.array(foam_inlet.points)
+    stream_start_points = stream_start_points[stream_start_points[..., 0] == -20]
+    stream_start_points = PointSet(random.choices(stream_start_points, k=250))
+
+    colorbar = {'title': f'$U {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
+    streamlines = interp_mesh.streamlines_from_source(stream_start_points, vectors='Uinterp')
+
+    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[1920, 1080])
+
+    plotter.subplot(0, 0)
+    plotter.add_mesh(streamlines, render_lines_as_tubes=False,
+                     scalar_bar_args=colorbar,
+                     lighting=False,
+                     scalars='Uinterp',
+                     line_width=1,
+                     cmap='coolwarm')
+
+    # Add solid meshes
+    tree = pv.get_reader(f'{case_dir}/constant/triSurface/mesh.obj').read()
+    plotter.add_mesh(tree, color='mediumseagreen')
+    solid = pv.get_reader(f'{case_dir}/constant/triSurface/solid.obj').read()
+    plotter.add_mesh(solid, color='oldlace')
+    plotter.camera.position = (-80, -100, 50)
+    plotter.camera.zoom(0.5)
+    plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
+
+    plotter.subplot(0, 1)
+    plot_2d_slice(interp_mesh, tree, solid, 'z', (0, 0, solid.center[2]), plotter)
+
+    plotter.subplot(0, 2)
+    plot_2d_slice(interp_mesh, tree, solid, 'y', (0, solid.center[1], 0), plotter)
+
+    plotter.show(screenshot=save_path if save_path else False)
+    os.remove(empty_foam)
+
+
+def plot_fields(case_dir, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
     plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[1920, 1080])
 
     # Pressure

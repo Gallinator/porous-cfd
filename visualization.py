@@ -32,7 +32,7 @@ def plot_or_save(fig, save_path):
 def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plotter):
     points = PolyData(points)
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
-    plotter.add_mesh(points, scalars=value, scalar_bar_args=colorbar, point_size=3.0)
+    plotter.add_mesh(points, scalars=value, scalar_bar_args=colorbar, point_size=5.0, cmap='coolwarm')
     plotter.show_grid(all_edges=True)
     plotter.camera.position = (-80, -100, 50)
 

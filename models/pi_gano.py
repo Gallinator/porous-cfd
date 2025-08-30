@@ -347,7 +347,7 @@ class PiGano(L.LightningModule):
                                                    in_data['internal'].f,
                                                    d_uz_z,
                                                    *z_diff)
-
+            torch.set_grad_enabled(False)
             return pred_data.data, torch.cat([momentum_x, momentum_y, momentum_z, cont], dim=-1)
         else:
             return self.forward(in_data.points,

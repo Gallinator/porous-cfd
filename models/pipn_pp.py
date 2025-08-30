@@ -195,7 +195,7 @@ class PipnPp(L.LightningModule):
             momentum_y = self.momentum_y_loss.func(pred_data.uy, pred_data.ux, d_p_y, in_data.zones_ids, in_data.fy,
                                                    d_uy_y,
                                                    *diff_y)
-
+            torch.set_grad_enabled(True)
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
             return self.forward(in_data.points, in_data.zones_ids)

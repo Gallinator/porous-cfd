@@ -63,32 +63,12 @@ def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
-    empty_foam = f'{case_dir}/empty.foam'
-    open(empty_foam, 'w').close()
-
-    foam_reader = OpenFOAMReader(empty_foam)
-    foam_reader.set_active_time_value(foam_reader.time_values[-1])
-    foam_reader.cell_to_point_creation = True
-    mesh = foam_reader.read()
-
-    data_points = PolyData(points)
-    data_points['Uinterp'] = u
-
-    internal_mesh = mesh['internalMesh']
-    interp_mesh = internal_mesh.interpolate(data_points, radius=5)
-
-    foam_inlet = mesh['boundary']['inlet']
-    stream_start_points = np.array(foam_inlet.points)
+def plot_3d_streamlines(interp_mesh, inlet_mesh, tree, solid, plotter):
+    stream_start_points = np.array(inlet_mesh.points)
     stream_start_points = stream_start_points[stream_start_points[..., 0] == -20]
     stream_start_points = PointSet(random.choices(stream_start_points, k=250))
-
     colorbar = {'title': f'$U {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
     streamlines = interp_mesh.streamlines_from_source(stream_start_points, vectors='Uinterp')
-
-    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[1920, 1080])
-
-    plotter.subplot(0, 0)
     plotter.add_mesh(streamlines, render_lines_as_tubes=False,
                      scalar_bar_args=colorbar,
                      lighting=False,
@@ -97,13 +77,34 @@ def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
                      cmap='coolwarm')
 
     # Add solid meshes
-    tree = pv.get_reader(f'{case_dir}/constant/triSurface/mesh.obj').read()
     plotter.add_mesh(tree, color='mediumseagreen')
-    solid = pv.get_reader(f'{case_dir}/constant/triSurface/solid.obj').read()
     plotter.add_mesh(solid, color='oldlace')
     plotter.camera.position = (-80, -100, 50)
     plotter.camera.zoom(0.5)
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
+
+
+def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
+    empty_foam = f'{case_dir}/empty.foam'
+    open(empty_foam, 'w').close()
+
+    foam_reader = OpenFOAMReader(empty_foam)
+    foam_reader.set_active_time_value(foam_reader.time_values[-1])
+    foam_reader.cell_to_point_creation = True
+
+    mesh = foam_reader.read()
+    tree = pv.get_reader(f'{case_dir}/constant/triSurface/mesh.obj').read()
+    solid = pv.get_reader(f'{case_dir}/constant/triSurface/solid.obj').read()
+
+    data_points = PolyData(points)
+    data_points['Uinterp'] = u
+    internal_mesh = mesh['internalMesh']
+    interp_mesh = internal_mesh.interpolate(data_points, radius=5)
+
+    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[1920, 1080])
+
+    plotter.subplot(0, 0)
+    plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], tree, solid, plotter)
 
     plotter.subplot(0, 1)
     plot_2d_slice(interp_mesh, tree, solid, 'z', (0, 0, solid.center[2]), plotter)

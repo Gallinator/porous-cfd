@@ -290,7 +290,7 @@ class PiGano(L.LightningModule):
                                                    d_uy_y,
                                                    *y_diff)
             cont = self.continuity_loss.f(d_ux_x, d_uy_y)
-
+            torch.set_grad_enabled(False)
             return pred_data.data, torch.cat([momentum_x, momentum_y, cont], dim=2)
         else:
             return self.forward(in_data.points,

@@ -29,12 +29,6 @@ def plot_or_save(fig, save_path):
         plt.show()
 
 
-def add_colorbar(fig, ax, plot):
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="3%", pad=0.05)
-    fig.colorbar(plot, cax=cax)
-
-
 def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plotter):
     points = PolyData(points)
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}

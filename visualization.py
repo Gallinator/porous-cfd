@@ -1,5 +1,6 @@
 import glob
 from pathlib import Path
+from statistics import mean, stdev
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import tri
@@ -202,16 +203,28 @@ def plot_residuals(*args, trim, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_u_direction_change(data_dir):
+def plot_u_direction_change(data_dir, save_path=None):
     diff = []
     for c in list(set(glob.glob(f'{data_dir}/*')) - set(glob.glob(f'{data_dir}/*.json'))):
         data = parse_internal_mesh(c, 'mag(grad(Unorm))', 'mag(grad(p))')
         diff.append(data[..., 2:4])
 
-    unorm_mean = [np.mean(d[..., 0], axis=0) for d in diff]
+    unorm_means = [np.mean(d[..., 0], axis=0) for d in diff]
     fig = plt.figure(layout='constrained')
     ax_1, ax_2 = fig.subplots(2, 1).flatten()
-    ax_1.bar(np.arange(0, len(unorm_mean)), unorm_mean, color='lightblue')
+    ax_1.bar(np.arange(0, len(unorm_means)), unorm_means, color='lightblue')
     ax_1.set_title('Average U direction change per case')
-    plot_histogram(ax_2, unorm_mean, 'salmon', 'Average U direction change distribution', 20)
-    plt.show()
+    ax_1.set_xticks([])
+    ax_1.set_ylabel('U direction change')
+
+    plot_histogram(ax_2, unorm_means, 'salmon', 'Average U direction change distribution', 20)
+    props = dict(boxstyle='round', facecolor='white', alpha=0.5)
+    ax_2.text(0.985, 0.94, f'Mean: {mean(unorm_means):.2f}\nStd: {stdev(unorm_means):.2f}',
+              transform=ax_2.transAxes,
+              fontsize=8,
+              verticalalignment='top',
+              horizontalalignment='right',
+              bbox=props)
+    ax_2.set_xlabel('U direction change')
+    ax_2.set_ylabel('Frequency')
+    plot_or_save(fig, save_path)

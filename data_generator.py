@@ -186,12 +186,14 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                     continue
                 d = coeffs['d']
                 f = coeffs['f']
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
+                random_inlet = inlet_ux + (rng.random() - 0.5) * 2 * 0.015
+
+                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet:3.f}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 
                 write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
-                FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [inlet_ux, 0, 0]
+                FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [random_inlet, 0, 0]
                 fv_options = f'{case_path}/simpleFoam/system/fvOptions'
 
                 write_coefs(fv_options, d, 'd')

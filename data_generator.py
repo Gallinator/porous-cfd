@@ -69,9 +69,19 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, drop_p=0.5, rng=
                 ops.object.select_all(action='SELECT')
                 ops.object.duplicate(linked=False)
                 obj = bpy.context.selected_objects[0]
-                obj.scale = mathutils.Vector((s[0], s[1], 1.0))
 
+                obj.scale = mathutils.Vector((s[0], s[1], 1.0))
                 obj.rotation_euler = mathutils.Euler((0.0, 0.0, math.radians(-r)))
+                bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+                bpy.context.view_layer.objects.active = obj
+                bpy.ops.object.editmode_toggle()
+                bpy.ops.mesh.select_all(action='SELECT')
+
+                offset = (rng.random() * 0.15, (rng.random() - 0.5) * 2 * 0.1)
+                bpy.ops.transform.translate(value=(*offset, 0),
+                                            orient_type='GLOBAL')
+                bpy.ops.object.editmode_toggle()
 
                 ops.wm.obj_export(filepath=f'{dest_dir}/s{s[0]}-{s[1]}_r{r}_{mesh}',
                                   forward_axis='Y',

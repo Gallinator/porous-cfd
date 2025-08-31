@@ -198,7 +198,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                 f = coeffs['f']
                 random_inlet = inlet_ux + (rng.random() - 0.5) * 2 * 0.015
 
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet:3.f}"
+                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet:.4f}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 

@@ -201,7 +201,6 @@ class FoamDataset(Dataset):
         for key in boundary_data.keys():
             if key == 'inlet':
                 inlet_ux = boundary_data[key][..., 6:7]
-                inlet_ux = self.standard_scaler[3:4].transform(inlet_ux)
                 inlet_data.append(inlet_ux)
             else:
                 inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
@@ -247,6 +246,7 @@ class FoamDataset(Dataset):
         data[:, 0:7] = self.standard_scaler.transform(data[:, 0:7])
         data[:, 8:11] = self.d_normalizer.transform(data[:, 8:11])
         data[:, 11:14] = self.f_normalizer.transform(data[:, 11:14])
+        data[:, 14:15] = self.standard_scaler[3:4].transform(data[:, 14:15])
         return tensor(data, dtype=torch.float), obs_samples
 
     def __getitem__(self, item) -> tuple[Tensor, Tensor]:

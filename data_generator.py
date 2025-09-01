@@ -189,16 +189,20 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
     with open(f'{case_config_dir}/config.json', 'r') as config:
         config = json.load(config)['cfd params']
         params = list(itertools.product(config['inlet'], config['coeffs']))
-        for inlet_ux, coeffs in params:
+        inlet_angles = parse_angles(config)
+        for inlet_u, coeffs in params:
             meshes = glob.glob(f"{meshes_dir}/*.obj")
             for m in meshes:
                 if len(params) > 1 and rng.random() > drop_p:
                     continue
                 d = coeffs['d']
                 f = coeffs['f']
-                random_inlet = inlet_ux + (rng.random() - 0.5) * 2 * 0.015
+                random_inlet_u = inlet_u + (rng.random() - 0.5) * 2 * 0.015
+                inlet_angle = inlet_angles[rng.randint(0, len(inlet_angles) - 1)] * rng.random()
+                inlet_angle_rad = math.radians(inlet_angle)
+                u_x, u_y = random_inlet_u * math.cos(inlet_angle_rad), random_inlet_u * math.sin(inlet_angle_rad)
 
-                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet:.4f}"
+                case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet_u:.4f}_a{inlet_angle:.2f}"
                 shutil.copytree('assets/openfoam-case-template', case_path)
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 

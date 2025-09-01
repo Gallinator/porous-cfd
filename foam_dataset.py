@@ -28,20 +28,20 @@ class DomainData:
         return self.data[..., 8:10]
 
     @property
-    def inlet_ux(self):
-        return self.data[..., 10:11]
+    def inlet_u(self):
+        return self.data[..., 10:12]
 
     @property
     def mom_x(self):
-        return self.data[..., 11:12]
-
-    @property
-    def mom_y(self):
         return self.data[..., 12:13]
 
     @property
-    def div(self):
+    def mom_y(self):
         return self.data[..., 13:14]
+
+    @property
+    def div(self):
+        return self.data[..., 14:15]
 
 
 class PdeData:
@@ -189,12 +189,12 @@ class FoamDataset(Dataset):
         inlet_data = []
         for key in boundary_data.keys():
             if key == 'inlet':
-                inlet_ux = boundary_data[key][..., 4:5]
+                inlet_ux = boundary_data[key][..., 4:6]
                 inlet_data.append(inlet_ux)
             else:
-                inlet_data.append(np.zeros((len(boundary_data[key]), 1)))
+                inlet_data.append(np.zeros((len(boundary_data[key]), 2)))
         inlet_data = np.concatenate(inlet_data)
-        return self.standard_scaler[2:3].transform(inlet_data)
+        return self.standard_scaler[2:4].transform(inlet_data)
 
     def extend_gather_indices(self, index, n_features: int) -> torch.Tensor:
         return tensor(index, dtype=torch.int64).unsqueeze(dim=1).repeat(1, n_features)
@@ -224,7 +224,7 @@ class FoamDataset(Dataset):
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
         i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
-        i_inlet_data = self.standard_scaler[2:3].transform(np.zeros((len(i_data), 1)))
+        i_inlet_data = self.standard_scaler[2:4].transform(np.zeros((len(i_data), 2)))
         i_data = np.concatenate([i_data, i_inlet_data], axis=-1)
 
         data = np.concatenate((i_data, b_data))

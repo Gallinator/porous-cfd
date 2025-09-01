@@ -57,7 +57,7 @@ if __name__ == '__main__':
     logger = TensorBoardLogger(save_dir='', version=args.name)
 
     trainer = L.Trainer(max_epochs=epochs,
-                        callbacks=[RichProgressBar(), LearningRateMonitor()],
+                        callbacks=[RichProgressBar(), LearningRateMonitor(), checkpoint_callback],
                         log_every_n_steps=int(len(train_data) / batch_size),
                         precision=args.precision,
                         default_root_dir=args.logs_dir,

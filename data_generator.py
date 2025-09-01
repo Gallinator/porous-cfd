@@ -183,6 +183,13 @@ def write_coefs(fv_options_path: str, coefs: list, coef: str):
         f.write(lines)
 
 
+def parse_angles(config: dict):
+    if 'angle' in config.keys():
+        return np.linspace(*config['angle'])
+    else:
+        return [0]
+
+
 def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, drop_p=0.5, rng=Random()):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
@@ -207,7 +214,7 @@ def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str
                 shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 
                 write_locations_in_mesh(f'{case_path}/snappyHexMesh', get_location_inside(m))
-                FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [random_inlet, 0, 0]
+                FoamFile(f'{case_path}/simpleFoam/0/U')['internalField'] = [u_x, u_y, 0]
                 fv_options = f'{case_path}/simpleFoam/system/fvOptions'
 
                 write_coefs(fv_options, d, 'd')

@@ -12,7 +12,7 @@ from rich.progress import track
 
 from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
-from visualization import plot_fields, M_S
+from visualization import plot_fields, M_S, plot_streamlines
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -83,3 +83,5 @@ if __name__ == '__main__':
         plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points, np.abs(u_error),
                     np.abs(p_error),
                     tgt.zones_ids, save_path=case_plot_path)
+
+        plot_streamlines(val_data.samples[i], raw_points, u_scaler.inverse_transform(tgt.pde.u), )

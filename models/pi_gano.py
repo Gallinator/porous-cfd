@@ -20,7 +20,7 @@ class Branch(nn.Module):
         :param d: Darcy coefficients (B, M, 2)
         :param f: Forchheimer coefficients (B, M, 2)
         :param inlet_points: Coordinates of inlet boundary points(B, N, 2)
-        :param inlet_ux: inlet velocity along x (B, N, 1)
+        :param inlet_u: inlet velocity along x (B, N, 2)
         :return: Parameter embedding (B, 1, 64)
         """
         points = torch.cat([ceof_points, inlet_points], dim=-2)
@@ -28,7 +28,7 @@ class Branch(nn.Module):
         x = torch.zeros((points.shape[0], points.shape[1], par_dim), device=points.device)
         x[..., 0:ceof_points.shape[-2], 0:2] = d
         x[..., 0:ceof_points.shape[-2], 2:4] = f
-        x[..., ceof_points.shape[-2]:, 4:5] = inlet_ux
+        x[..., ceof_points.shape[-2]:, 4:6] = inlet_ux
         x = torch.cat([points, x], dim=-1)
         y = self.linear(x)
         return torch.max(y, dim=1, keepdim=True)[0]
@@ -163,7 +163,7 @@ class PiGano(L.LightningModule):
                             in_data['internal'].d,
                             in_data['internal'].f,
                             in_data['inlet'].points,
-                            in_data['inlet'].inlet_ux)
+                            in_data['inlet'].inlet_u)
 
         pred_data = PdeData(pred, self.domain_dict)
 
@@ -239,7 +239,7 @@ class PiGano(L.LightningModule):
                             batch_data['internal'].d,
                             batch_data['internal'].f,
                             batch_data['inlet'].points,
-                            batch_data['inlet'].inlet_ux)
+                            batch_data['inlet'].inlet_u)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
                           self.p_scaler.inverse_transform(batch_data.pde.p))
@@ -263,7 +263,7 @@ class PiGano(L.LightningModule):
                                 in_data['internal'].d,
                                 in_data['internal'].f,
                                 in_data['inlet'].points,
-                                in_data['inlet'].inlet_ux)
+                                in_data['inlet'].inlet_u)
             pred_data = PdeData(pred, self.domain_dict)
 
             # i=0 is x, j=1 is y
@@ -299,4 +299,4 @@ class PiGano(L.LightningModule):
                                 in_data['internal'].d,
                                 in_data['internal'].f,
                                 in_data['inlet'].points,
-                                in_data['inlet'].inlet_ux)
+                                in_data['inlet'].inlet_u)

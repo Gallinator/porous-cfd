@@ -112,11 +112,11 @@ def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
     plotter.subplot(0, 2)
     plot_2d_slice(interp_mesh, tree, solid, 'y', (0, solid.center[1], 0), plotter)
 
-    plotter.show(screenshot=save_path if save_path else False)
+    plotter.show(screenshot=f'{save_path}/streams.png' if save_path else False)
     os.remove(empty_foam)
 
 
-def plot_fields(case_dir, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
+def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
     plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[1920, 1080])
 
     # Pressure
@@ -130,7 +130,7 @@ def plot_fields(case_dir, points: np.array, u: np.array, p: np.array, porous: np
     plotter.subplot(1, 0)
     plot_scalar_field(rf'$u_z {M_S}$', points, u[:, 2], porous, plotter)
 
-    plotter.show(screenshot=save_path if save_path else False)
+    plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
 
 
 def plot_case(path: str):

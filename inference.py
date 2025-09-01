@@ -68,13 +68,13 @@ if __name__ == '__main__':
 
         d = np.max(val_data.d_normalizer.inverse_transform(tgt.d))
         f = np.max(val_data.f_normalizer.inverse_transform(tgt.d))
-        inlet_ux = np.max(u_scaler[0].inverse_transform(tgt.inlet_ux))
+        inlet_u = np.max(u_scaler.inverse_transform(tgt.inlet_u), axis=0)
 
         plt.interactive(case_plot_path is None)
-        plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points,
+        plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_u[0]:.3f}{inlet_u[1]:.3f} {M_S}', raw_points,
                     u_scaler.inverse_transform(pred.u[0]),
                     p_scaler.inverse_transform(pred.p[0]), tgt.zones_ids, save_path=case_plot_path)
-        plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points,
+        plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_u[0]:.3f}{inlet_u[1]:.3f}', raw_points,
                     u_scaler.inverse_transform(tgt.pde.u),
                     p_scaler.inverse_transform(tgt.pde.p), tgt.zones_ids, save_path=case_plot_path)
 
@@ -82,7 +82,8 @@ if __name__ == '__main__':
 
         u_error = u_scaler.inverse_transform(pred.u[0]) - u_scaler.inverse_transform(tgt.pde.u)
         p_error = p_scaler.inverse_transform(pred.p[0]) - p_scaler.inverse_transform(tgt.pde.p)
-        plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f} {M_S}', raw_points, np.abs(u_error),
+        plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_u[0]:.3f}{inlet_u[1]:.3f}', raw_points,
+                    np.abs(u_error),
                     np.abs(p_error),
                     tgt.zones_ids, False,
                     case_plot_path)

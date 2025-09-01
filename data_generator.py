@@ -43,7 +43,7 @@ def merge_trees(trees):
     return windbreak
 
 
-def create_windbreak(src_tree, n_trees, scales):
+def create_windbreak(src_tree, n_trees, scales, rng=Random()):
     trees = []
     prev_obj = src_tree
     for n in range(n_trees):
@@ -83,7 +83,7 @@ def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
 
             for i in range(transforms['n_windbreaks']):
 
-                trees = create_windbreak(src_obj, n_trees, scales)
+                trees = create_windbreak(src_obj, n_trees, scales, rng)
 
                 windbreak = merge_trees(trees)
 

@@ -182,7 +182,7 @@ class FoamDataset(Dataset):
     def reorder_data(self, data: np.ndarray) -> np.ndarray:
         points, pde, zones, d, f = data[..., 0:2], data[..., 4:7], data[..., 8:9], data[..., 9:11], data[..., 11:13]
         moment, div = data[..., 2:4], data[..., 7:8]
-        inlet = data[..., 13:14]
+        inlet = data[..., 13:15]
         return np.concatenate([points, pde, zones, d, f, inlet, moment, div], axis=1)
 
     def extract_inlet_conditions(self, boundary_data: dict[str:np.ndarray]) -> np.ndarray:
@@ -193,8 +193,7 @@ class FoamDataset(Dataset):
                 inlet_data.append(inlet_ux)
             else:
                 inlet_data.append(np.zeros((len(boundary_data[key]), 2)))
-        inlet_data = np.concatenate(inlet_data)
-        return self.standard_scaler[2:4].transform(inlet_data)
+        return np.concatenate(inlet_data)
 
     def extend_gather_indices(self, index, n_features: int) -> torch.Tensor:
         return tensor(index, dtype=torch.int64).unsqueeze(dim=1).repeat(1, n_features)
@@ -224,8 +223,7 @@ class FoamDataset(Dataset):
         i_data = parse_internal_mesh(case_dir, 'momentError', 'U', 'p', 'div(phi)')
         i_samples = self.rng.choice(len(i_data), replace=False, size=self.n_internal)
         i_data = i_data[i_samples]
-        i_inlet_data = self.standard_scaler[2:4].transform(np.zeros((len(i_data), 2)))
-        i_data = np.concatenate([i_data, i_inlet_data], axis=-1)
+        i_data = np.concatenate([i_data, np.zeros((len(i_data), 2))], axis=-1)
 
         data = np.concatenate((i_data, b_data))
         data = self.reorder_data(data)
@@ -235,6 +233,7 @@ class FoamDataset(Dataset):
 
         # Do not standardize zones indices
         data[:, 0:5] = self.standard_scaler.transform(data[:, 0:5])
+        data[:, 10:12] = self.standard_scaler[2:4].transform(data[:, 10:12])
         data[:, 6:8] = self.d_normalizer.transform(data[:, 6:8])
         data[:, 8:10] = self.f_normalizer.transform(data[:, 8:10])
 

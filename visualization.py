@@ -97,7 +97,7 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
     if plot_streams:
         plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
     else:
-        plot_scalar_field(f'$u_y$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
+        plot_scalar_field(f'$U$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
 
     plot_or_save(fig, save_path)
 

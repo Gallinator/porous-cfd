@@ -84,4 +84,5 @@ if __name__ == '__main__':
                     np.abs(p_error),
                     tgt.zones_ids, save_path=case_plot_path)
 
-        plot_streamlines(val_data.samples[i], raw_points, u_scaler.inverse_transform(tgt.pde.u), )
+        plot_streamlines('Predicted streamlines', val_data.samples[i], raw_points,
+                         u_scaler.inverse_transform(tgt.pde.u), save_path=case_plot_path)

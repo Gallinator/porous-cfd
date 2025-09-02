@@ -84,7 +84,7 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, tree, solid, plotter):
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
+def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=None):
     empty_foam = f'{case_dir}/empty.foam'
     open(empty_foam, 'w').close()
 
@@ -112,7 +112,7 @@ def plot_streamlines(case_dir, points: np.array, u: np.array, save_path=None):
     plotter.subplot(0, 2)
     plot_2d_slice(interp_mesh, tree, solid, 'y', (0, solid.center[1], 0), plotter)
 
-    plotter.show(screenshot=f'{save_path}/streams.png' if save_path else False)
+    plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
     os.remove(empty_foam)
 
 

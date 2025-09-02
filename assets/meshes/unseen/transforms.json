@@ -1,22 +1,22 @@
 {
   "circle_cut.obj": {
-    "rotation": [],
-    "scale": {"xy": []}
+    "rotation": [0, 135, 3],
+    "scale": {"x": [0.6, 1, 2], "y": [0.6, 1.2, 2]}
   },
   "angel.obj": {
-    "rotation": [],
-    "scale": {"xy": []}
+    "rotation": [0, 135, 3],
+    "scale": {"x": [0.6, 1.2, 2], "y": [0.6, 1.2, 2]}
   },
   "cutter.obj": {
-    "rotation": [],
-    "scale": {"xy": []}
+    "rotation": [0, 135, 3],
+    "scale": {"x": [0.6, 1.2, 2], "y": [0.6, 1.2, 2]}
   },
   "elliptic_octagon.obj": {
-    "rotation": [],
-    "scale": {"xy": []}
+    "rotation": [0, 135, 3],
+    "scale": {"x": [0.6, 1.2, 2], "y": [0.6, 1.2, 2]}
   },
   "pin.obj": {
-    "rotation": [],
-    "scale": {"xy": []}
+    "rotation": [0, 135, 3],
+    "scale": {"x": [0.6, 1.2, 2], "y": [0.6, 1.2, 2]}
   }
 }

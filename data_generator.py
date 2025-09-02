@@ -364,7 +364,7 @@ if __name__ == '__main__':
                                 f'{data_base_dir}/{d}',
                                 f'assets/meshes/{d}',
                                 args.openfoam_procs, rng=rng)
-        generate_split(f'{data_base_dir}/{d}', f'assets/meshes/{d}/config.json')
+        generate_split(f'{data_base_dir}/{d}', f'assets/meshes/{d}/config.json', rng=rng)
 
     for d in os.listdir(data_base_dir):
         generate_data(f'{data_base_dir}/{d}')

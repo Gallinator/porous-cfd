@@ -43,7 +43,7 @@ def merge_trees(trees):
     return windbreak
 
 
-def create_windbreak(src_tree, n_trees, scales, rng=Random()):
+def create_windbreak(src_tree, n_trees, scales, rng):
     trees = []
     prev_obj = src_tree
     for n in range(n_trees):
@@ -67,7 +67,7 @@ def create_windbreak(src_tree, n_trees, scales, rng=Random()):
     return trees
 
 
-def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng=Random()):
+def generate_transformed_meshes(meshes_dir: str, dest_dir: str, rng):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{meshes_dir}/transforms.json', 'r') as f:
@@ -201,7 +201,7 @@ def write_coefs(fv_options_path: str, coefs: list, coef: str):
         f.write(lines)
 
 
-def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, rng=Random()):
+def generate_openfoam_cases(meshes_dir: str, dest_dir: str, case_config_dir: str, n_proc, rng):
     pathlib.Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     with open(f'{case_config_dir}/config.json', 'r') as config:
@@ -295,7 +295,7 @@ def generate_meta(data_dir: str):
         meta.write(json.dumps(meta_dict, indent=4))
 
 
-def generate_split(data_path: str, config_path: str, rng=Random()):
+def generate_split(data_path: str, config_path: str, rng):
     if not os.path.exists(config_path):
         return
     with open(config_path) as f:

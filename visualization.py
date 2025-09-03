@@ -118,7 +118,7 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=N
 
 
 def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
-    plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[1920, 1080])
+    plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[2500, 1080])
 
     # Pressure
     plotter.subplot(1, 1)

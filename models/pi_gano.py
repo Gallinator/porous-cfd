@@ -148,7 +148,7 @@ class PiGano(L.LightningModule):
         return self.reduction.forward(y)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-6)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         scheduler = ExponentialLR(optimizer, 0.999)
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
 

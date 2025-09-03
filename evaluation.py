@@ -70,13 +70,20 @@ if __name__ == '__main__':
                 plots_path)
 
     errors, pred_residuals, cfd_residuals = [], [], []
+    solid_errors = []
     pde_scaler = val_data.standard_scaler[3:7].to(model.device)
     for p, t in zip(pred, val_loader):
         pred_data, phys_data = p
-        tgt_data = FoamData(t)
-        error = l1_loss(pde_scaler.inverse_transform(pred_data),
-                        pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
-        errors.extend(error.numpy(force=True))
+        pred_data = PdeData(pred_data, val_data.domain_dict)
+        tgt_data = FoamData(t, val_data.domain_dict)
+        batch_error = l1_loss(pde_scaler.inverse_transform(pred_data.data),
+                              pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
+
+        errors.extend(batch_error.numpy(force=True))
+
+        solid_error = l1_loss(pde_scaler.inverse_transform(pred_data['solid'].data),
+                              pde_scaler.inverse_transform(tgt_data['solid'].pde.data), reduction='none')
+        solid_errors.extend(solid_error.numpy(force=True))
 
         pred_residuals.extend(phys_data.numpy(force=True))
         cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.mom_z, tgt_data.div], dim=-1)
@@ -86,8 +93,15 @@ if __name__ == '__main__':
     error_data = PdeData(errors)
     plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)
 
+    solid_errors = np.concatenate(solid_errors)
+    solid_error_data = PdeData(solid_errors)
+    plot_data_dist('Solid Absolute error distribution', solid_error_data.u, solid_error_data.p, save_path=plots_path)
+
     mae = np.average(errors, axis=0)
-    plot_errors(mae.tolist(), save_path=plots_path)
+    plot_errors('Average relative error',mae.tolist(), save_path=plots_path)
+
+    solid_mae = np.average(solid_errors, axis=0)
+    plot_errors('Solid Average relative error',solid_mae.tolist(), save_path=plots_path)
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)

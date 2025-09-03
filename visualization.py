@@ -35,6 +35,7 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.add_mesh(points, scalars=value, scalar_bar_args=colorbar, point_size=5.0, cmap='coolwarm')
     plotter.show_grid(all_edges=True)
     plotter.camera.position = (-80, -100, 50)
+    plotter.camera.zoom(0.75)
 
 
 def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):

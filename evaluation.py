@@ -74,7 +74,7 @@ if __name__ == '__main__':
     for p, t in zip(pred, val_loader):
         pred_data, phys_data = p
         tgt_data = FoamData(t)
-        error = l1_loss(pde_scaler.inverse_transform(pred_data[..., 3:7]),
+        error = l1_loss(pde_scaler.inverse_transform(pred_data),
                         pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
         errors.extend(error.numpy(force=True))
 

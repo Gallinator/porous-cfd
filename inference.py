@@ -54,8 +54,8 @@ if __name__ == '__main__':
     predictions = trainer.predict(model, dataloaders=val_loader)
 
     for i, (tgt, pred) in enumerate(track(list(zip(val_data, predictions)), description='Saving plots...')):
-        pred = PdeData(pred).numpy()
-        tgt = FoamData(tgt).numpy()
+        pred = PdeData(pred[0].float().numpy(force=True))
+        tgt = FoamData((tgt[0].float().numpy(force=True), tgt[1].float().numpy(force=True)))
 
         case_plot_path = None
         if plots_path is not None:

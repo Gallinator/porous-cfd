@@ -34,6 +34,7 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of internal points to sample', default=700)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=1200)
+    arg_parser.add_argument('--precision', type=str, default='32-true')
     return arg_parser
 
 
@@ -53,7 +54,11 @@ if __name__ == '__main__':
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir, rng=rng)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
 
-    trainer = Trainer(logger=False, enable_checkpointing=False, inference_mode=False, callbacks=[RichProgressBar()])
+    trainer = Trainer(logger=False,
+                      enable_checkpointing=False,
+                      inference_mode=False,
+                      callbacks=[RichProgressBar()],
+                      precision=args.precision)
 
     start_time = time.perf_counter()
     pred = trainer.predict(model, dataloaders=val_loader)

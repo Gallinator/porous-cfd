@@ -233,18 +233,18 @@ class PiGano(L.LightningModule):
                                           d_uz_z,
                                           *z_diff)
 
-        loss = (cont_loss +
-                mom_loss_x +
-                mom_loss_y +
-                mom_loss_z +
+        loss = (cont_loss * 10 +
+                mom_loss_x * 10 +
+                mom_loss_y * 10 +
+                mom_loss_z * 10 +
                 boundary_p_loss +
                 boundary_ux_loss +
                 boundary_uy_loss +
                 boundary_uz_loss +
-                obs_p_loss * 100 +
-                obs_ux_loss * 100 +
-                obs_uy_loss * 100 +
-                obs_uz_loss * 100)
+                obs_p_loss +
+                obs_ux_loss +
+                obs_uy_loss +
+                obs_uz_loss)
 
         self.training_loss_togger.log(loss,
                                       cont_loss,

@@ -47,6 +47,11 @@ class DomainData:
     def div(self):
         return self.data[..., 18:19]
 
+    def pin_memory(self):
+        self.data.pin_memory()
+        self.points.pin_memory()
+        return self
+
 
 class PdeData:
     def __init__(self, data: Tensor | np.ndarray, domain_dict=None):
@@ -96,6 +101,11 @@ class FoamData(DomainData):
         if self.domain_dict is None:
             raise NotImplementedError('Subdomain indexing is not available')
         return DomainData(self.data[..., self.domain_dict[item], :])
+
+    def pin_memory(self):
+        super().pin_memory()
+        self.obs_samples.pin_memory()
+        return self
 
     def numpy(self):
         return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)], self.domain_dict)

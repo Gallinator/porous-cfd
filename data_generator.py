@@ -349,11 +349,11 @@ def build_arg_parser() -> ArgumentParser:
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
-    data_base_dir = args.data_base_dir
-    pathlib.Path(data_base_dir).mkdir(exist_ok=True, parents=True)
+    data_root_dir = args.data_base_dir
+    pathlib.Path(data_root_dir).mkdir(exist_ok=True, parents=True)
 
     create_case_template_dirs()
-    clean_dir(data_base_dir)
+    clean_dir(data_root_dir)
     clean_dir('assets/generated-meshes')
 
     rng = Random(8421)
@@ -361,12 +361,12 @@ if __name__ == '__main__':
     for d in os.listdir('assets/meshes'):
         generate_transformed_meshes(f'assets/meshes/{d}', f'assets/generated-meshes/{d}', rng=rng)
         generate_openfoam_cases(f'assets/generated-meshes/{d}',
-                                f'{data_base_dir}/{d}',
+                                f'{data_root_dir}/{d}',
                                 f'assets/meshes/{d}',
                                 args.openfoam_procs, rng=rng)
-        generate_split(f'{data_base_dir}/{d}', f'assets/meshes/{d}/config.json', rng=rng)
+        generate_split(f'{data_root_dir}/{d}', f'assets/meshes/{d}/config.json', rng=rng)
 
-    for d in os.listdir(data_base_dir):
-        generate_data(f'{data_base_dir}/{d}')
-        generate_meta(f'{data_base_dir}/{d}')
-    generate_min_points(data_base_dir)
+    for split in os.listdir(data_root_dir):
+        generate_data(f'{data_root_dir}/{split}')
+        generate_meta(f'{data_root_dir}/{split}')
+    generate_min_points(data_root_dir)

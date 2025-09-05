@@ -117,6 +117,27 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=N
     os.remove(empty_foam)
 
 
+def plot_houses(title, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_mesh_path, save_path=None):
+    house = pv.get_reader(house_mesh_path).read()
+    data = PolyData(points)
+    data['Uinterp'] = u
+    data['pinterp'] = p
+
+    plotter = Plotter(shape=(1, 2), off_screen=save_path is not None, window_size=[1920, 1080])
+
+    colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
+
+    plotter.subplot(0, 0)
+    plotter.add_mesh(house, scalar_bar_args=colorbar, opacity=0.75)
+    plot_scalar_field(f'U error ${M_S}$', points, np.linalg.norm(u, axis=1), None, plotter)
+
+    plotter.subplot(0, 1)
+    plotter.add_mesh(house, scalar_bar_args=colorbar, opacity=0.75)
+    plot_scalar_field(f'p error ${M2_S2}$', points, p, None, plotter)
+
+    plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
+
+
 def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
     plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[2500, 1080])
 

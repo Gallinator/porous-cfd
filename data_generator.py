@@ -346,6 +346,12 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
+def clean_processor_data(data_dir):
+    for case in glob.glob(f'{data_dir}/*/'):
+        for proc in glob.glob(f'{case}/processor*/'):
+            shutil.rmtree(proc)
+
+
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
@@ -369,4 +375,5 @@ if __name__ == '__main__':
     for split in os.listdir(data_root_dir):
         generate_data(f'{data_root_dir}/{split}')
         generate_meta(f'{data_root_dir}/{split}')
+        clean_processor_data(f'{data_root_dir}/{split}')
     generate_min_points(data_root_dir)

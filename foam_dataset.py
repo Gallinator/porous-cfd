@@ -151,6 +151,13 @@ class Normalizer:
         return StandardScaler(torch.tensor(self.min, device=device), torch.tensor(self.max, device=device))
 
 
+def collate_fn(samples: list[FoamData]) -> FoamData:
+    batch_data = torch.stack([s.data for s in samples])
+    batch_obs = torch.stack([s.obs_samples for s in samples])
+    domain_dict = samples[0].domain_dict
+    return FoamData(batch_data, batch_obs, domain_dict)
+
+
 class FoamDataset(Dataset):
     def __init__(self, data_dir: str, n_internal: int, n_boundary: int, n_obs: int, meta_dir=None, rng=default_rng()):
         self.n_boundary = n_boundary

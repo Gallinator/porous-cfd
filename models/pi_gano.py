@@ -126,6 +126,11 @@ class PiGano(L.LightningModule):
         self.points_scaler = self.points_scaler.to(*args, *kwargs)
         return res
 
+    def transfer_batch_to_device(self, batch: FoamData, device: torch.device, dataloader_idx: int) -> FoamData:
+        dev_data = batch.data.to(device)
+        dev_obs_samples = batch.obs_samples.to(device)
+        return FoamData(dev_data, dev_obs_samples, batch.domain_dict)
+
     def forward(self,
                 pred_points: Tensor,
                 zones_ids: Tensor,

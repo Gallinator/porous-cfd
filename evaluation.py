@@ -1,4 +1,5 @@
 import argparse
+import csv
 import os
 import time
 from argparse import ArgumentParser
@@ -17,6 +18,16 @@ from data_parser import parse_meta
 from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
+
+
+def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):
+    with open(f'{plots_path}/mae.csv', 'w') as f:
+        data = [
+            ['Region', *fields_labels]
+        ]
+        for e in errors.items():
+            data.append([e[0], *e[1]])
+        csv.writer(f).writerows(data)
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -98,10 +109,10 @@ if __name__ == '__main__':
     plot_data_dist('Solid Absolute error distribution', solid_error_data.u, solid_error_data.p, save_path=plots_path)
 
     mae = np.average(errors, axis=0)
-    plot_errors('Average relative error',mae.tolist(), save_path=plots_path)
+    plot_errors('Average relative error', mae.tolist(), save_path=plots_path)
 
     solid_mae = np.average(solid_errors, axis=0)
-    plot_errors('Solid Average relative error',solid_mae.tolist(), save_path=plots_path)
+    plot_errors('Solid Average relative error', solid_mae.tolist(), save_path=plots_path)
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)
@@ -111,3 +122,8 @@ if __name__ == '__main__':
     pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
     cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
+
+    if args.save_plots:
+        save_mae_to_csv({'Solid': solid_mae.tolist(), 'Total': mae.tolist()},
+                        ['ux', 'uy', 'uz', 'p'],
+                        plots_path)

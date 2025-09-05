@@ -84,7 +84,7 @@ class PdeData:
         return PdeData(self.data[..., self.domain_dict[item], :])
 
     def numpy(self):
-        return PdeData(self.data.numpy(force=True))
+        return PdeData(self.data.numpy(force=True), self.domain_dict)
 
 
 class FoamData(DomainData):
@@ -108,7 +108,7 @@ class FoamData(DomainData):
         return self
 
     def numpy(self):
-        return FoamData([self.data.numpy(force=True), self.obs_samples.numpy(force=True)], self.domain_dict)
+        return FoamData(self.data.numpy(force=True), self.obs_samples.numpy(force=True), self.domain_dict)
 
 
 class StandardScaler:

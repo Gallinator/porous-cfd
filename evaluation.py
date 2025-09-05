@@ -15,16 +15,14 @@ from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from data_parser import parse_meta
-from foam_dataset import FoamDataset, PdeData, FoamData
+from foam_dataset import FoamDataset, PdeData, collate_fn
 from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 
 def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):
     with open(f'{plots_path}/mae.csv', 'w') as f:
-        data = [
-            ['Region', *fields_labels]
-        ]
+        data = [['Region', *fields_labels]]
         for e in errors.items():
             data.append([e[0], *e[1]])
         csv.writer(f).writerows(data)
@@ -63,7 +61,7 @@ if __name__ == '__main__':
 
     rng = default_rng(8421)
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir, rng=rng)
-    val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True)
+    val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,
                       enable_checkpointing=False,
@@ -83,10 +81,9 @@ if __name__ == '__main__':
     errors, pred_residuals, cfd_residuals = [], [], []
     solid_errors = []
     pde_scaler = val_data.standard_scaler[3:7].to(model.device)
-    for p, t in zip(pred, val_loader):
+    for p, tgt_data in zip(pred, val_loader):
         pred_data, phys_data = p
         pred_data = PdeData(pred_data, val_data.domain_dict)
-        tgt_data = FoamData(t, val_data.domain_dict)
         batch_error = l1_loss(pde_scaler.inverse_transform(pred_data.data),
                               pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
 

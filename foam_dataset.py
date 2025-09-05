@@ -264,7 +264,7 @@ class FoamDataset(Dataset):
         data[:, 8:11] = self.d_normalizer.transform(data[:, 8:11])
         data[:, 11:14] = self.f_normalizer.transform(data[:, 11:14])
         data[:, 14:15] = self.standard_scaler[3:4].transform(data[:, 14:15])
-        return tensor(data, dtype=torch.float), obs_samples
+        return FoamData(tensor(data, dtype=torch.float), obs_samples, self.domain_dict)
 
-    def __getitem__(self, item) -> tuple[Tensor, Tensor]:
+    def __getitem__(self, item) -> FoamData:
         return self.data[item]

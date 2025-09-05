@@ -6,13 +6,12 @@ from pathlib import Path
 import numpy as np
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
-from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 from rich.progress import track
 
 from foam_dataset import FoamDataset, PdeData, FoamData
 from models.pi_gano import PiGano
-from visualization import plot_fields, M_S, plot_streamlines
+from visualization import plot_fields, plot_streamlines, plot_houses
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -95,7 +94,7 @@ if __name__ == '__main__':
                          u_scaler.inverse_transform(tgt.pde.u),
                          save_path=case_plot_path)
 
-        u_error = u_scaler.inverse_transform(pred.u) - u_scaler.inverse_transform(tgt.pde.u)
+        u_error = (u_scaler.inverse_transform(pred.u) - u_scaler.inverse_transform(tgt.pde.u))
         p_error = p_scaler.inverse_transform(pred.p) - p_scaler.inverse_transform(tgt.pde.p)
         plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}', raw_points,
                     np.abs(u_error),
@@ -106,3 +105,9 @@ if __name__ == '__main__':
                          raw_points,
                          np.abs(u_error),
                          save_path=case_plot_path)
+
+        solid_points = points_scaler.inverse_transform(tgt['solid'].points)
+        solid_u_error = u_scaler.inverse_transform(pred['solid'].u) - u_scaler.inverse_transform(tgt['solid'].pde.u)
+        solid_p_error = p_scaler.inverse_transform(pred['solid'].p) - p_scaler.inverse_transform(tgt['solid'].pde.p)
+        plot_houses('House', solid_points, np.abs(solid_u_error), np.abs(solid_p_error),
+                    f'{val_data.samples[i]}/constant/triSurface/solid.obj')

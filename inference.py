@@ -9,7 +9,7 @@ from lightning.pytorch.callbacks import RichProgressBar
 from torch.utils.data import DataLoader
 from rich.progress import track
 
-from foam_dataset import FoamDataset, PdeData, FoamData
+from foam_dataset import FoamDataset, PdeData, collate_fn
 from models.pi_gano import PiGano
 from visualization import plot_fields, plot_streamlines, plot_houses
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     model = PiGano.load_from_checkpoint(args.checkpoint)
 
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir)
-    val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True)
+    val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,
                       enable_checkpointing=False,
@@ -53,8 +53,8 @@ if __name__ == '__main__':
     predictions = trainer.predict(model, dataloaders=val_loader)
 
     for i, (tgt, pred) in enumerate(track(list(zip(val_data, predictions)), description='Saving plots...')):
-        pred = PdeData(pred[0].float().numpy(force=True), val_data.domain_dict)
-        tgt = FoamData((tgt[0].float().numpy(force=True), tgt[1].float().numpy(force=True)), val_data.domain_dict)
+        pred = PdeData(pred[0], tgt.domain_dict).numpy()
+        tgt = tgt.numpy()
 
         case_plot_path = None
         if plots_path is not None:

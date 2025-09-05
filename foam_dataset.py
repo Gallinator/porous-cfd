@@ -88,9 +88,9 @@ class PdeData:
 
 
 class FoamData(DomainData):
-    def __init__(self, batch: list, domain_dict=None):
-        super().__init__(batch[0])
-        self.obs_samples = batch[1]
+    def __init__(self, data, obs_samples, domain_dict=None):
+        super().__init__(data)
+        self.obs_samples = obs_samples
         self.domain_dict = domain_dict
 
     @property

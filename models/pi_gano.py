@@ -170,22 +170,20 @@ class PiGano(L.LightningModule):
                              grad_outputs=torch.ones_like(outputs),
                              retain_graph=True, create_graph=True)[0]
 
-    def training_step(self, batch: list, batch_idx: int):
-        in_data = FoamData(batch, self.domain_dict)
-
-        internal_points = in_data['internal'].points
+    def training_step(self, batch: FoamData, batch_idx: int):
+        internal_points = batch['internal'].points
         internal_points.requires_grad = True
-        in_points = torch.cat([internal_points, in_data['boundary'].points], dim=-2)
+        in_points = torch.cat([internal_points, batch['boundary'].points], dim=-2)
 
         pred = self.forward(in_points,
-                            in_data.zones_ids,
-                            in_data['internal'].points,
-                            in_data['internal'].d,
-                            in_data['internal'].f,
-                            in_data['inlet'].points,
-                            in_data['inlet'].inlet_ux)
+                            batch.zones_ids,
+                            batch['internal'].points,
+                            batch['internal'].d,
+                            batch['internal'].f,
+                            batch['inlet'].points,
+                            batch['inlet'].inlet_ux)
 
-        pred_data = PdeData(pred, self.domain_dict)
+        pred_data = PdeData(pred, batch.domain_dict)
 
         # i=0 is x, j=1 is y
         d_ux_x, x_diff = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1, 2)
@@ -197,24 +195,24 @@ class PiGano(L.LightningModule):
         d_p = self.calculate_gradients(pred_data['internal'].p, internal_points)
         d_p_x, d_p_y, d_p_z = d_p[..., 0:1], d_p[..., 1:2], d_p[..., 2:3]
 
-        obs_ux_loss = mse_loss(pred_data.ux.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.ux)
-        obs_uy_loss = mse_loss(pred_data.uy.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uy)
-        obs_uz_loss = mse_loss(pred_data.uz.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.uz)
-        obs_p_loss = mse_loss(pred_data.p.gather(1, in_data.obs_samples[..., 0:1]), in_data.obs.pde.p)
+        obs_ux_loss = mse_loss(pred_data.ux.gather(1, batch.obs_samples[..., 0:1]), batch.obs.pde.ux)
+        obs_uy_loss = mse_loss(pred_data.uy.gather(1, batch.obs_samples[..., 0:1]), batch.obs.pde.uy)
+        obs_uz_loss = mse_loss(pred_data.uz.gather(1, batch.obs_samples[..., 0:1]), batch.obs.pde.uz)
+        obs_p_loss = mse_loss(pred_data.p.gather(1, batch.obs_samples[..., 0:1]), batch.obs.pde.p)
 
-        boundary_p_loss = mse_loss(pred_data['boundary'].p, in_data['boundary'].pde.p)
-        boundary_ux_loss = mse_loss(pred_data['boundary'].ux, in_data['boundary'].pde.ux)
-        boundary_uy_loss = mse_loss(pred_data['boundary'].uy, in_data['boundary'].pde.uy)
-        boundary_uz_loss = mse_loss(pred_data['boundary'].uz, in_data['boundary'].pde.uz)
+        boundary_p_loss = mse_loss(pred_data['boundary'].p, batch['boundary'].pde.p)
+        boundary_ux_loss = mse_loss(pred_data['boundary'].ux, batch['boundary'].pde.ux)
+        boundary_uy_loss = mse_loss(pred_data['boundary'].uy, batch['boundary'].pde.uy)
+        boundary_uz_loss = mse_loss(pred_data['boundary'].uz, batch['boundary'].pde.uz)
 
         cont_loss = self.continuity_loss(d_ux_x, d_uy_y, d_uz_z)
         mom_loss_x = self.momentum_x_loss(pred_data['internal'].ux,
                                           pred_data['internal'].uy,
                                           pred_data['internal'].uz,
                                           d_p_x,
-                                          in_data['internal'].zones_ids,
-                                          in_data['internal'].d,
-                                          in_data['internal'].f,
+                                          batch['internal'].zones_ids,
+                                          batch['internal'].d,
+                                          batch['internal'].f,
                                           d_ux_x,
                                           *x_diff)
 
@@ -222,9 +220,9 @@ class PiGano(L.LightningModule):
                                           pred_data['internal'].ux,
                                           pred_data['internal'].uz,
                                           d_p_y,
-                                          in_data['internal'].zones_ids,
-                                          in_data['internal'].d,
-                                          in_data['internal'].f,
+                                          batch['internal'].zones_ids,
+                                          batch['internal'].d,
+                                          batch['internal'].f,
                                           d_uy_y,
                                           *y_diff)
 
@@ -232,9 +230,9 @@ class PiGano(L.LightningModule):
                                           pred_data['internal'].ux,
                                           pred_data['internal'].uy,
                                           d_p_z,
-                                          in_data['internal'].zones_ids,
-                                          in_data['internal'].d,
-                                          in_data['internal'].f,
+                                          batch['internal'].zones_ids,
+                                          batch['internal'].d,
+                                          batch['internal'].f,
                                           d_uz_z,
                                           *z_diff)
 
@@ -265,52 +263,50 @@ class PiGano(L.LightningModule):
                                       obs_uy_loss,
                                       obs_uz_loss,
                                       l1_loss(self.p_scaler.inverse_transform(pred_data.p),
-                                              self.p_scaler.inverse_transform(in_data.pde.p)),
+                                              self.p_scaler.inverse_transform(batch.pde.p)),
                                       l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
-                                              self.u_scaler[0].inverse_transform(in_data.pde.ux)),
+                                              self.u_scaler[0].inverse_transform(batch.pde.ux)),
                                       l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
-                                              self.u_scaler[1].inverse_transform(in_data.pde.uy)),
+                                              self.u_scaler[1].inverse_transform(batch.pde.uy)),
                                       l1_loss(self.u_scaler[2].inverse_transform(pred_data.uz),
-                                              self.u_scaler[2].inverse_transform(in_data.pde.uz)))
+                                              self.u_scaler[2].inverse_transform(batch.pde.uz)))
 
         return loss
 
-    def validation_step(self, batch: list):
-        batch_data = FoamData(batch, self.domain_dict)
-        pred = self.forward(batch_data.points,
-                            batch_data.zones_ids,
-                            batch_data['internal'].points,
-                            batch_data['internal'].d,
-                            batch_data['internal'].f,
-                            batch_data['inlet'].points,
-                            batch_data['inlet'].inlet_ux)
+    def validation_step(self, batch: FoamData):
+        pred = self.forward(batch.points,
+                            batch.zones_ids,
+                            batch['internal'].points,
+                            batch['internal'].d,
+                            batch['internal'].f,
+                            batch['inlet'].points,
+                            batch['inlet'].inlet_ux)
         pred_data = PdeData(pred)
         p_error = l1_loss(self.p_scaler.inverse_transform(pred_data.p),
-                          self.p_scaler.inverse_transform(batch_data.pde.p))
+                          self.p_scaler.inverse_transform(batch.pde.p))
         ux_error = l1_loss(self.u_scaler[0].inverse_transform(pred_data.ux),
-                           self.u_scaler[0].inverse_transform(batch_data.pde.ux))
+                           self.u_scaler[0].inverse_transform(batch.pde.ux))
         uy_error = l1_loss(self.u_scaler[1].inverse_transform(pred_data.uy),
-                           self.u_scaler[1].inverse_transform(batch_data.pde.uy))
+                           self.u_scaler[1].inverse_transform(batch.pde.uy))
         uz_error = l1_loss(self.u_scaler[2].inverse_transform(pred_data.uz),
-                           self.u_scaler[2].inverse_transform(batch_data.pde.uz))
+                           self.u_scaler[2].inverse_transform(batch.pde.uz))
         self.val_loss_logger.log(p_error, ux_error, uy_error, uz_error)
 
-    def predict_step(self, batch: Tensor) -> tuple[Tensor, Tensor] | Tensor:
-        in_data = FoamData(batch, self.domain_dict)
+    def predict_step(self, batch: FoamData) -> tuple[Tensor, Tensor] | Tensor:
         if self.verbose_predict:
             torch.set_grad_enabled(True)
-            internal_points = in_data['internal'].points
+            internal_points = batch['internal'].points
             internal_points.requires_grad = True
-            in_points = torch.cat([internal_points, in_data['boundary'].points], dim=-2)
+            in_points = torch.cat([internal_points, batch['boundary'].points], dim=-2)
 
             pred = self.forward(in_points,
-                                in_data.zones_ids,
-                                in_data['internal'].points,
-                                in_data['internal'].d,
-                                in_data['internal'].f,
-                                in_data['inlet'].points,
-                                in_data['inlet'].inlet_ux)
-            pred_data = PdeData(pred, self.domain_dict)
+                                batch.zones_ids,
+                                batch['internal'].points,
+                                batch['internal'].d,
+                                batch['internal'].f,
+                                batch['inlet'].points,
+                                batch['inlet'].inlet_ux)
+            pred_data = PdeData(pred, batch.domain_dict)
 
             # i=0 is x, j=1 is y
             d_ux_x, x_diff = self.differentiate_field(internal_points, pred_data['internal'].ux, 0, 1, 2)
@@ -327,9 +323,9 @@ class PiGano(L.LightningModule):
                                                    pred_data['internal'].uy,
                                                    pred_data['internal'].uz,
                                                    d_p_x,
-                                                   in_data['internal'].zones_ids,
-                                                   in_data['internal'].d,
-                                                   in_data['internal'].f,
+                                                   batch['internal'].zones_ids,
+                                                   batch['internal'].d,
+                                                   batch['internal'].f,
                                                    d_ux_x,
                                                    *x_diff)
 
@@ -337,9 +333,9 @@ class PiGano(L.LightningModule):
                                                    pred_data['internal'].ux,
                                                    pred_data['internal'].uz,
                                                    d_p_y,
-                                                   in_data['internal'].zones_ids,
-                                                   in_data['internal'].d,
-                                                   in_data['internal'].f,
+                                                   batch['internal'].zones_ids,
+                                                   batch['internal'].d,
+                                                   batch['internal'].f,
                                                    d_uy_y,
                                                    *y_diff)
 
@@ -347,18 +343,18 @@ class PiGano(L.LightningModule):
                                                    pred_data['internal'].ux,
                                                    pred_data['internal'].uy,
                                                    d_p_z,
-                                                   in_data['internal'].zones_ids,
-                                                   in_data['internal'].d,
-                                                   in_data['internal'].f,
+                                                   batch['internal'].zones_ids,
+                                                   batch['internal'].d,
+                                                   batch['internal'].f,
                                                    d_uz_z,
                                                    *z_diff)
             torch.set_grad_enabled(False)
             return pred_data.data, torch.cat([momentum_x, momentum_y, momentum_z, cont], dim=-1)
         else:
-            return self.forward(in_data.points,
-                                in_data.zones_ids,
-                                in_data['internal'].points,
-                                in_data['internal'].d,
-                                in_data['internal'].f,
-                                in_data['inlet'].points,
-                                in_data['inlet'].inlet_ux)
+            return self.forward(batch.points,
+                                batch.zones_ids,
+                                batch['internal'].points,
+                                batch['internal'].d,
+                                batch['internal'].f,
+                                batch['inlet'].points,
+                                batch['inlet'].inlet_ux)

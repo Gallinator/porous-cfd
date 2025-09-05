@@ -110,4 +110,4 @@ if __name__ == '__main__':
         solid_u_error = u_scaler.inverse_transform(pred['solid'].u) - u_scaler.inverse_transform(tgt['solid'].pde.u)
         solid_p_error = p_scaler.inverse_transform(pred['solid'].p) - p_scaler.inverse_transform(tgt['solid'].pde.p)
         plot_houses('House', solid_points, np.abs(solid_u_error), np.abs(solid_p_error),
-                    f'{val_data.samples[i]}/constant/triSurface/solid.obj')
+                    f'{val_data.samples[i]}/constant/triSurface/solid.obj', save_path=case_plot_path)

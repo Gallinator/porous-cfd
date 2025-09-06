@@ -102,7 +102,7 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=N
     internal_mesh = mesh['internalMesh']
     interp_mesh = internal_mesh.interpolate(data_points, radius=5)
 
-    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[1920, 1080])
+    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[3840, 1440])
 
     plotter.subplot(0, 0)
     plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], tree, solid, plotter)
@@ -123,7 +123,7 @@ def plot_houses(title, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_m
     data['Uinterp'] = u
     data['pinterp'] = p
 
-    plotter = Plotter(shape=(1, 2), off_screen=save_path is not None, window_size=[1920, 1080])
+    plotter = Plotter(shape=(1, 2), off_screen=save_path is not None, window_size=[3840, 1440])
 
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
 

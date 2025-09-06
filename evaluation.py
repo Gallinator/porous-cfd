@@ -126,6 +126,9 @@ if __name__ == '__main__':
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
 
     if args.save_plots:
-        save_mae_to_csv({'Solid': solid_mae.tolist(), 'Total': mae.tolist()},
+        save_mae_to_csv({'Solid': solid_mae.tolist(),
+                         'Total': mae.tolist(),
+                         'Fluid': fluid_mae.tolist(),
+                         'Porous': porous_mae.tolist()},
                         ['ux', 'uy', 'uz', 'p'],
                         plots_path)

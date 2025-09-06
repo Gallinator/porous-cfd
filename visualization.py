@@ -128,11 +128,11 @@ def plot_houses(title, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_m
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
 
     plotter.subplot(0, 0)
-    plotter.add_mesh(house, scalar_bar_args=colorbar, opacity=0.75)
+    plotter.add_mesh(house, scalar_bar_args=colorbar, color='oldlace')
     plot_scalar_field(f'U error ${M_S}$', points, np.linalg.norm(u, axis=1), None, plotter)
 
     plotter.subplot(0, 1)
-    plotter.add_mesh(house, scalar_bar_args=colorbar, opacity=0.75)
+    plotter.add_mesh(house, scalar_bar_args=colorbar, color='oldlace')
     plot_scalar_field(f'p error ${M2_S2}$', points, p, None, plotter)
 
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)

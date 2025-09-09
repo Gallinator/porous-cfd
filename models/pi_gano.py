@@ -120,11 +120,13 @@ class PiGano(L.LightningModule):
         self.save_hyperparameters()
 
     def to(self, *args, **kwargs):
-        res = super().to(*args, *kwargs)
-        self.u_scaler = self.u_scaler.to(*args, *kwargs)
-        self.p_scaler = self.p_scaler.to(*args, *kwargs)
-        self.points_scaler = self.points_scaler.to(*args, *kwargs)
-        return res
+        super().to(*args, *kwargs)
+        self.u_scaler.to(*args, *kwargs)
+        self.p_scaler.to(*args, *kwargs)
+        self.points_scaler.to(*args, *kwargs)
+        self.p_scaler.to(*args, *kwargs)
+        self.f_scaler.to(*args, *kwargs)
+        return self
 
     def transfer_batch_to_device(self, batch: FoamData, device: torch.device, dataloader_idx: int) -> FoamData:
         dev_data = batch.data.to(device)

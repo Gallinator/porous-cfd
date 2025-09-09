@@ -6,7 +6,7 @@ import torch
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor, ModelCheckpoint
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
-from foam_dataset import FoamDataset
+from dataset.foam_dataset import FoamDataset
 from models.pi_gano import PiGano
 import lightning as L
 

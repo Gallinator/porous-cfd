@@ -28,8 +28,9 @@ class StandardScaler:
         return StandardScaler(self.std[item], self.mean[item])
 
     def to(self, *args, **kwargs):
-        return StandardScaler(torch.tensor(self.std).to(*args, *kwargs),
-                              torch.tensor(self.mean).to(*args, *kwargs))
+        self.std = torch.tensor(self.std).to(*args, *kwargs)
+        self.mean = torch.tensor(self.mean).to(*args, *kwargs)
+        return self
 
 
 class Normalizer:

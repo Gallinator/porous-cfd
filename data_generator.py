@@ -22,6 +22,16 @@ from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
 OPENFOAM_COMMAND = ""
 
 
+class MinMaxTracker:
+    def __init__(self):
+        self.min, self.max = None, None
+
+    def update(self, value: np.ndarray):
+        min_val, max_val = np.min(value, axis=0), np.max(value, axis=0)
+        self.min = min_val if self.min is None else np.min(np.stack([self.min, min_val]), axis=0)
+        self.max = max_val if self.max is None else np.max(np.stack([self.max, max_val]), axis=0)
+
+
 def import_mesh(mesh: str):
     ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
 

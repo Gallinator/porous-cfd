@@ -60,8 +60,8 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, fields, variable_boundaries, normalize_fields, n_internal, n_boundary, n_obs, rng,
-                 meta_dir=None):
+    def __init__(self, data_dir, fields, n_internal, n_boundary, n_obs, rng,
+                 variable_boundaries=None, normalize_fields=None, meta_dir=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs

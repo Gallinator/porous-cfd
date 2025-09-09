@@ -121,6 +121,9 @@ class FoamDataset(Dataset):
         samples = self.rng.choice(len(internal_fields), replace=False, size=self.n_internal)
         return internal_fields.iloc[samples]
 
+    def sample_obs(self, boundary_fields, internal_fields) -> np.ndarray:
+        return self.rng.choice(len(internal_fields), replace=False, size=self.n_obs)
+
     def decompose_multidim_label(self, label, size) -> list[str]:
         """
         Extracts labelled dimensions for a multidimensional label. Currently supports only x,y,z.
@@ -194,7 +197,7 @@ class FoamDataset(Dataset):
         domain = self.get_domain(boundary_fields, internal_fields)
         labels = self.get_labels(domain_data)
 
-        domain['obs'] = self.rng.choice(len(internal_fields), replace=False, size=self.n_obs)
+        domain['obs'] = self.sample_obs(boundary_fields, internal_fields)
         domain = {d: torch.tensor(s, dtype=torch.int64) for d, s in domain.items()}
 
         return FoamData(tensor(domain_data.to_numpy(), dtype=torch.float), labels, domain)

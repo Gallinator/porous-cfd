@@ -194,6 +194,7 @@ class FoamDataset(Dataset):
         labels = self.get_labels(domain_data)
 
         domain['obs'] = self.rng.choice(len(internal_fields), replace=False, size=self.n_obs)
+        domain = {d: torch.tensor(s, dtype=torch.int64) for d, s in domain.items()}
 
         return FoamData(tensor(domain_data.to_numpy(), dtype=torch.float), labels, domain)
 

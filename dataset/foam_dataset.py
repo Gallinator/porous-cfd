@@ -184,10 +184,11 @@ class FoamDataset(Dataset):
         # Sampling
         boundary_fields = self.sample_boundary(boundary_fields)
         internal_fields = self.sample_internal(internal_fields)
-        variable_fields = self.get_variable_boundaries(boundary_fields)
 
         if self.variable_boundaries is not None:
+            variable_fields = self.get_variable_boundaries(boundary_fields)
             boundary_fields = pandas.concat([boundary_fields, variable_fields], axis=1)
+
         domain_data = pandas.concat([internal_fields, boundary_fields]).fillna(0)
 
         domain = self.get_domain(boundary_fields, internal_fields)

@@ -216,7 +216,7 @@ class FoamDataset(Dataset):
             domain[b] = np.arange(b_range.start, b_range.stop) + n_internal
         return domain
 
-    def normalize_fields(self, fields: DataFrame):
+    def normalize(self, fields: DataFrame):
         """
         Scales or standardize fields using the normalizers passed to the constructor.
         The fields are normalized in-place.
@@ -232,8 +232,8 @@ class FoamDataset(Dataset):
 
         # Normalize
         if self.normalize_fields is not None:
-            self.normalize_fields(internal_fields)
-            self.normalize_fields(boundary_fields)
+            self.normalize(internal_fields)
+            self.normalize(boundary_fields)
 
         # Sampling
         boundary_fields = self.sample_boundary(boundary_fields)

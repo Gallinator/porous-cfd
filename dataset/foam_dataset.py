@@ -103,8 +103,9 @@ class FoamDataset(Dataset):
 
     def sample_boundary(self, boundary_fields: DataFrame) -> DataFrame:
         """
-        Selects which boundary points to sample
-        :param boundary_fields: parsed boundary points
+        Samples the boundary points. Return internal_fields to avoid sampling.
+        :param boundary_fields:
+        :return: The samples boundary_fields
         """
         boundary_names = boundary_fields.index.unique()
         tot = sum([self.min_points[bound] for bound in boundary_names])
@@ -126,15 +127,29 @@ class FoamDataset(Dataset):
         return pandas.concat(sampled_df)
 
     def sample_internal(self, internal_fields: DataFrame) -> DataFrame:
+        """
+        Samples the internal points. Return internal_fields to avoid sampling.
+        :param internal_fields:
+        :return: The samples internal_fields
+        """
         samples = self.rng.choice(len(internal_fields), replace=False, size=self.n_internal)
         return internal_fields.iloc[samples]
 
     def sample_obs(self, boundary_fields, internal_fields) -> np.ndarray:
+        """
+        Samples the observations points.
+        This function must return a vector whose values are the indices of the observation points.
+        It is assumed that internal fields and boundary fields to be concatenated in that order.
+        :param boundary_fields:
+        :param internal_fields:
+        :return: Vector of indices corresponding to observation points.
+        """
         return self.rng.choice(len(internal_fields), replace=False, size=self.n_obs)
 
     def decompose_multidim_label(self, label, size) -> list[str]:
         """
-        Extracts labelled dimensions for a multidimensional label. Currently supports only x,y,z.
+        Extracts labelled dimensions for a multidimensional label.
+        Currently supports only x,y,z.
         :param label: the label name
         :param size: the number of components of a label
         :return: the labels for each component of label
@@ -143,7 +158,7 @@ class FoamDataset(Dataset):
 
     def get_labels(self, domain_fields: DataFrame) -> dict:
         """
-        Create labels required by FoamDataset. Fields with more than one component are split.
+        Create labels required by FoamDataset. Fields with more than one dimension are split.
         :param domain_fields:
         :return: the labels
         """
@@ -163,6 +178,12 @@ class FoamDataset(Dataset):
         return labels
 
     def get_variable_boundaries(self, boundary_fields: DataFrame) -> DataFrame:
+        """
+        Creates a dataframe of variable boundary conditions.
+        NANs are added to unaffected subdomains.
+        :param boundary_fields:
+        :return:
+        """
         result_df = DataFrame(index=boundary_fields.index)
         columns_df = boundary_fields.columns.to_frame()
 
@@ -178,7 +199,14 @@ class FoamDataset(Dataset):
 
         return result_df.fillna(0)
 
-    def get_domain(self, boundary_fields: DataFrame, internal_fields: DataFrame):
+    def get_domain(self, boundary_fields: DataFrame, internal_fields: DataFrame) -> dict[str, np.ndarray]:
+        """
+        Creates a domain dictionary whose keys are subdomain names and values are lists of indices.
+        It is assumed internal and boundary fields to be concatenated in that order.
+        :param boundary_fields:
+        :param internal_fields:
+        :return:
+        """
         n_internal = len(internal_fields)
         domain = {'internal': np.arange(n_internal),
                   'boundary': np.arange(len(boundary_fields)) + n_internal}
@@ -198,7 +226,7 @@ class FoamDataset(Dataset):
         for f, norm in self.normalizers.items():
             fields[f] = norm.transform(fields[f].to_numpy())
 
-    def load_case(self, case_dir):
+    def load_case(self, case_dir) -> FoamData:
         boundary_fields = parse_boundary_fields(case_dir, *self.fields)
         internal_fields = parse_internal_fields(case_dir, *self.fields)
 
@@ -211,6 +239,7 @@ class FoamDataset(Dataset):
         boundary_fields = self.sample_boundary(boundary_fields)
         internal_fields = self.sample_internal(internal_fields)
 
+        # Add variable boundary conditions
         if self.variable_boundaries is not None:
             variable_fields = self.get_variable_boundaries(boundary_fields)
             boundary_fields = pandas.concat([boundary_fields, variable_fields], axis=1)

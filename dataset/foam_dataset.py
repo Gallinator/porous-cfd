@@ -49,8 +49,10 @@ class Normalizer:
     def __getitem__(self, item):
         return Normalizer(self.min[item], self.max[item])
 
-    def to_torch(self, device=None):
-        return StandardScaler(torch.tensor(self.min, device=device), torch.tensor(self.max, device=device))
+    def to(self, *args, **kwargs):
+        self.min = torch.tensor(self.min).to(*args, **kwargs)
+        self.max = torch.tensor(self.max).to(*args, **kwargs)
+        return self
 
 
 def collate_fn(samples: list[FoamData]) -> FoamData:

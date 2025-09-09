@@ -6,7 +6,7 @@ import torch
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor, ModelCheckpoint
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
-from dataset.foam_dataset import FoamDataset
+from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pi_gano import PiGano
 import lightning as L
 
@@ -39,19 +39,32 @@ if __name__ == '__main__':
     n_obs = args.n_observations
     epochs = args.epochs
 
+    fields = ['C', 'U', 'p', 'cellToRegion', 'd', 'f']
+    variable_inlet = {'Ux': 'inlet'}
+    normalize_fields = {'Scale': ['d', 'f'], 'Standardize': ['C', 'U', 'p']}
+
     rng = default_rng(8421)
-    train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
-    train_loader = DataLoader(train_data, batch_size, True, num_workers=8)
-    val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, args.train_dir, rng=rng)
-    val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True)
+    train_data = FoamDataset(args.train_dir,
+                             fields,
+                             n_internal,
+                             n_boundary,
+                             n_obs,
+                             normalize_fields=normalize_fields,
+                             variable_boundaries=variable_inlet,
+                             rng=rng)
+    train_loader = DataLoader(train_data, batch_size, True, num_workers=8, collate_fn=collate_fn)
 
-    scalers = {'U': train_data.standard_scaler[3:6],
-               'p': train_data.standard_scaler[6],
-               'Points': train_data.standard_scaler[0:3],
-               'd': train_data.d_normalizer,
-               'f': train_data.f_normalizer}
+    val_data = FoamDataset(args.val_dir,
+                           fields,
+                           n_internal,
+                           n_boundary,
+                           n_obs,
+                           normalize_fields=normalize_fields,
+                           variable_boundaries=variable_inlet,
+                           rng=rng)
+    val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
-    model = PiGano(train_data.domain_dict, scalers)
+    model = PiGano(train_data.normalizers)
 
     checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
 

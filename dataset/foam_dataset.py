@@ -8,7 +8,7 @@ from pandas import DataFrame
 from rich.progress import track
 from torch import tensor
 from torch.utils.data import Dataset
-from data_parser import parse_meta, parse_boundary_fields, parse_internal_fields
+from dataset.data_parser import parse_meta, parse_boundary_fields, parse_internal_fields
 from dataset.foam_data import FoamData
 
 

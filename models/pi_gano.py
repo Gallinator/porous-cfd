@@ -65,7 +65,7 @@ class NeuralOperator(nn.Module):
 
 
 class PiGano(L.LightningModule):
-    def __init__(self, domain_dict: dict[str, slice], scalers: dict[str, StandardScaler | Normalizer]):
+    def __init__(self, scalers: dict[str, StandardScaler | Normalizer]):
         super().__init__()
 
         self.branch = Branch()
@@ -77,7 +77,6 @@ class PiGano(L.LightningModule):
         self.neural_op4 = NeuralOperator(512, 512)
         self.reduction = nn.Linear(512, 4)
 
-        self.domain_dict = domain_dict
         self.mu = 14.61e-6
 
         self.u_scaler = scalers['U']

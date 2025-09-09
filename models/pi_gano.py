@@ -249,7 +249,8 @@ class PiGano(L.LightningModule):
                 obs_uy_loss +
                 obs_uz_loss)
 
-        self.training_loss_togger.log(loss,
+        self.training_loss_togger.log(len(batch.data),
+                                      loss,
                                       cont_loss,
                                       mom_loss_x,
                                       mom_loss_y,
@@ -290,7 +291,7 @@ class PiGano(L.LightningModule):
                            self.u_scaler[1].inverse_transform(batch.pde.uy))
         uz_error = l1_loss(self.u_scaler[2].inverse_transform(pred_data.uz),
                            self.u_scaler[2].inverse_transform(batch.pde.uz))
-        self.val_loss_logger.log(p_error, ux_error, uy_error, uz_error)
+        self.val_loss_logger.log(len(batch.data), p_error, ux_error, uy_error, uz_error)
 
     def predict_step(self, batch: FoamData) -> tuple[Tensor, Tensor] | Tensor:
         if self.verbose_predict:

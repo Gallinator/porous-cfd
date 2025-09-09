@@ -14,8 +14,9 @@ from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
-from data_parser import parse_meta
-from foam_dataset import FoamDataset, PdeData, collate_fn
+from dataset.data_parser import parse_meta
+from dataset.foam_data import FoamData
+from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pi_gano import PiGano
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
@@ -59,6 +60,8 @@ if __name__ == '__main__':
     model = PiGano.load_from_checkpoint(args.checkpoint)
     model.verbose_predict = True
 
+    error_labels = {'momentx': None, 'momenty': None, 'momentz': None, 'div': None,
+                    'moment': ['momentx', 'momenty', 'momentz']}
     rng = default_rng(8421)
     val_data = FoamDataset(args.data_dir,
                            ['C', 'U', 'p', 'cellToRegion', 'd', 'f', 'momentError', 'div(phi)'],
@@ -88,32 +91,40 @@ if __name__ == '__main__':
 
     errors, pred_residuals, cfd_residuals, zones_ids = [], [], [], []
     solid_errors = []
-    pde_scaler = val_data.standard_scaler[3:7].to(model.device)
+    u_scaler = val_data.normalizers['U'].to(model.device)
+    p_scaler = val_data.normalizers['p'].to(model.device)
+
     for p, tgt_data in zip(pred, val_loader):
         pred_data, phys_data = p
-        pred_data = PdeData(pred_data, val_data.domain_dict)
-        batch_error = l1_loss(pde_scaler.inverse_transform(pred_data.data),
-                              pde_scaler.inverse_transform(tgt_data.pde.data), reduction='none')
+        pred_data = FoamData(pred_data, model.pred_labels, tgt_data.domain)
+        # Total error
+        u_error = l1_loss(u_scaler.inverse_transform(pred_data['U']),
+                          u_scaler.inverse_transform(tgt_data['U']), reduction='none')
+        p_error = l1_loss(p_scaler.inverse_transform(pred_data['p']),
+                          p_scaler.inverse_transform(tgt_data['p']), reduction='none')
+        pde_error = torch.cat([u_error, p_error], dim=-1)
+        errors.extend(pde_error.numpy(force=True))
+        zones_ids.extend(tgt_data['cellToRegion'].numpy(force=True))
 
-        errors.extend(batch_error.numpy(force=True))
-        zones_ids.extend(tgt_data.zones_ids)
+        # Solid error
+        solid_u_error = l1_loss(u_scaler.inverse_transform(pred_data['solid']['U']),
+                                u_scaler.inverse_transform(tgt_data['solid']['U']), reduction='none')
+        solid_p_error = l1_loss(p_scaler.inverse_transform(pred_data['solid']['p']),
+                                p_scaler.inverse_transform(tgt_data['solid']['p']), reduction='none')
+        solid_pde_error = torch.cat([solid_u_error, solid_p_error], dim=-1)
+        solid_errors.extend(solid_pde_error.numpy(force=True))
 
-        solid_error = l1_loss(pde_scaler.inverse_transform(pred_data['solid'].data),
-                              pde_scaler.inverse_transform(tgt_data['solid'].pde.data), reduction='none')
-        solid_errors.extend(solid_error.numpy(force=True))
-
+        # Equation residuals
         pred_residuals.extend(phys_data.numpy(force=True))
-        cfd_res = torch.cat([tgt_data.mom_x, tgt_data.mom_y, tgt_data.mom_z, tgt_data.div], dim=-1)
-        cfd_residuals.extend(cfd_res[..., :args.n_internal, :].numpy(force=True))
+        cfd_res = torch.cat([tgt_data['internal']['momentError'], tgt_data['internal']['div(phi)']], dim=-1)
+        cfd_residuals.extend(cfd_res.numpy(force=True))
 
     errors, zones_ids = np.concatenate(errors), np.array(zones_ids).flatten()
-    error_data = PdeData(errors)
-    plot_data_dist('Absolute error distribution', error_data.u, error_data.p, save_path=plots_path)
+    plot_data_dist('Absolute error distribution', errors[..., 0:3], errors[..., 3:4], save_path=plots_path)
 
     solid_errors = np.concatenate(solid_errors)
-    solid_error_data = PdeData(solid_errors)
-    plot_data_dist('Solid Absolute error distribution', solid_error_data.u, solid_error_data.p, save_path=plots_path)
-
+    plot_data_dist('Solid Absolute error distribution', solid_errors[..., 0:3], solid_errors[..., 3:4],
+                   save_path=plots_path)
     mae = np.average(errors, axis=0)
     plot_errors('Average relative error', mae.tolist(), save_path=plots_path)
 

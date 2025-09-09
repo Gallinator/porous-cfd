@@ -169,7 +169,8 @@ class FoamDataset(Dataset):
 
     def get_domain(self, boundary_fields: DataFrame, internal_fields: DataFrame):
         n_internal = len(internal_fields)
-        domain = {'internal': np.arange(n_internal)}
+        domain = {'internal': np.arange(n_internal),
+                  'boundary': np.arange(len(boundary_fields)) + n_internal}
 
         for b in boundary_fields.index.unique():
             b_range = boundary_fields.index.get_loc(b)

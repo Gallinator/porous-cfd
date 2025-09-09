@@ -202,6 +202,11 @@ class FoamDataset(Dataset):
         boundary_fields = parse_boundary_fields(case_dir, *self.fields)
         internal_fields = parse_internal_fields(case_dir, *self.fields)
 
+        # Normalize
+        if self.normalize_fields is not None:
+            self.normalize_fields(internal_fields)
+            self.normalize_fields(boundary_fields)
+
         # Sampling
         boundary_fields = self.sample_boundary(boundary_fields)
         internal_fields = self.sample_internal(internal_fields)

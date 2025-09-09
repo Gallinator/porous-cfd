@@ -130,5 +130,5 @@ if __name__ == '__main__':
                          'Total': mae.tolist(),
                          'Fluid': fluid_mae.tolist(),
                          'Porous': porous_mae.tolist()},
-                        ['ux', 'uy', 'uz', 'p'],
+                        ['Ux', 'Uy', 'Uz', 'p'],
                         plots_path)

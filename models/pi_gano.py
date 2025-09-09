@@ -81,7 +81,7 @@ class PiGano(L.LightningModule):
 
         self.u_scaler = scalers['U']
         self.p_scaler = scalers['p']
-        self.points_scaler = scalers['Points']
+        self.points_scaler = scalers['C']
         self.d_scaler = scalers['d']
         self.f_scaler = scalers['f']
 

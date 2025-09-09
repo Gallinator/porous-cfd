@@ -13,11 +13,11 @@ from argparse import ArgumentParser
 import bpy
 import numpy as np
 from foamlib import FoamFile
+from pandas import DataFrame
 from rich.progress import track
 from bpy import ops
 from welford import Welford
-
-from data_parser import parse_boundary, parse_internal_mesh, parse_elapsed_time
+from dataset.data_parser import parse_boundary_fields, parse_internal_fields, parse_elapsed_time
 
 OPENFOAM_COMMAND = ""
 
@@ -256,50 +256,47 @@ def generate_data(cases_dir: str):
             raise_with_log_text(f'{case}', 'Failed to run ')
 
 
-def generate_meta(data_dir: str):
-    internal_min, boundary_min = sys.float_info.max, [sys.float_info.max] * 5
-    d_max, f_max = np.ones(3) * sys.float_info.min, np.ones(3) * sys.float_info.min
-    running_stats = Welford()
+def generate_meta(data_dir: str, *fields):
+    min_points = {'internal': sys.maxsize}
+    min_max_tracker = MinMaxTracker()
+    stats_tracker = Welford()
+    fields_columns = None
     elapse_times = []
 
-    for case in track(glob.glob(f'{data_dir}/*'), description='Generating metadata'):
-        b_data = parse_boundary(case, ['U'], ['p'])
-        boundary_min = [min(boundary_min[i], len(d)) for i, d in enumerate(b_data.values())]
+    for case in track(glob.glob(f'{data_dir}/*/'), description='Generating metadata'):
+        internal_fields = parse_internal_fields(case, *fields)
+        boundary_fields = parse_boundary_fields(case, *fields)
 
-        b_data = np.concatenate(list(b_data.values()))
-        i_data = parse_internal_mesh(case, "U", "p")
+        if fields_columns is None:
+            fields_columns = internal_fields.columns
 
-        internal_min = min(internal_min, len(i_data))
+        min_points['internal'] = min(min_points['internal'], len(internal_fields))
+        for bound in boundary_fields.index.unique():
+            bound_size = len(boundary_fields.loc[bound])
+            min_points[bound] = min(min_points[bound], bound_size) if bound in min_points.keys() else bound_size
 
-        d = np.max(i_data[:, -6:-3], axis=0)
-        f = np.max(i_data[:, -3:], axis=0)
-        d_max = np.maximum(d, d_max)
-        f_max = np.maximum(f, f_max)
+        data = np.concatenate([internal_fields.to_numpy(), boundary_fields.to_numpy()])
 
-        data = np.concatenate((i_data, b_data))
-
-        running_stats.add_all(data[..., 0:7])
-
+        min_max_tracker.update(data)
+        stats_tracker.add_all(data)
         elapse_times.append(parse_elapsed_time(case) / 1e6)
 
-    min_points_meta = {"internal": internal_min,
-                       "front": boundary_min[0],
-                       "inlet": boundary_min[1],
-                       "interface": boundary_min[2],
-                       "outlet": boundary_min[3],
-                       "solid": boundary_min[4]}
-    features_std, features_mean = np.sqrt(running_stats.var_p).tolist(), running_stats.mean.tolist()
-    std_meta = {'Points': features_std[0:3], 'U': features_std[3:6], 'p': features_std[6]}
-    mean_meta = {'Points': features_mean[0:3], 'U': features_mean[3:6], 'p': features_mean[6]}
-    timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
-    coefs_meta = {"d": {'Min': [0, 0, 0], 'Max': d_max.tolist()},
-                  "f": {'Min': [0, 0, 0], 'Max': f_max.tolist()}}
+    min_df = DataFrame(np.expand_dims(min_max_tracker.min, 0), columns=fields_columns)
+    max_df = DataFrame(np.expand_dims(min_max_tracker.max, 0), columns=fields_columns)
+    mean_df = DataFrame(np.expand_dims(stats_tracker.mean, 0), columns=fields_columns)
+    std_df = DataFrame(np.expand_dims(np.sqrt(stats_tracker.var_p), 0), columns=fields_columns)
+    fields_meta = {}
 
-    meta_dict = {"Min points": min_points_meta,
-                 'Mean': mean_meta,
-                 'Std': std_meta,
-                 'Coefs': coefs_meta,
-                 'Timing': timing_meta}
+    for f in fields_columns.get_level_values(0).unique():
+        fields_meta[f] = {
+            'Min': min_df[f].to_numpy().flatten().tolist(),
+            'Max': max_df[f].to_numpy().flatten().tolist(),
+            'Mean': mean_df[f].to_numpy().flatten().tolist(),
+            'Std': std_df[f].to_numpy().flatten().tolist()
+        }
+
+    meta_dict = {"Min points": min_points,
+                 'Stats': fields_meta}
 
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))
@@ -384,6 +381,6 @@ if __name__ == '__main__':
 
     for split in os.listdir(data_root_dir):
         generate_data(f'{data_root_dir}/{split}')
-        generate_meta(f'{data_root_dir}/{split}')
+        generate_meta(f'{data_root_dir}/{split}', 'C', 'U', 'p', 'd', 'f')
         clean_processor_data(f'{data_root_dir}/{split}')
     generate_min_points(data_root_dir)

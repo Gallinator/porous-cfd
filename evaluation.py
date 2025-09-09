@@ -60,7 +60,15 @@ if __name__ == '__main__':
     model.verbose_predict = True
 
     rng = default_rng(8421)
-    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, args.meta_dir, rng=rng)
+    val_data = FoamDataset(args.data_dir,
+                           ['C', 'U', 'p', 'cellToRegion', 'd', 'f', 'momentError', 'div(phi)'],
+                           args.n_internal,
+                           args.n_boundary,
+                           args.n_observations,
+                           rng,
+                           {'Ux': 'inlet'},
+                           {'Scale': ['d', 'f'], 'Standardize': ['C', 'U', 'p']},
+                           args.meta_dir)
     val_loader = DataLoader(val_data, 2, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,

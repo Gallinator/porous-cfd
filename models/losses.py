@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn.functional import mse_loss
 import lightning as L
-from foam_dataset import StandardScaler, Normalizer
+from dataset.foam_dataset import StandardScaler, Normalizer
 
 
 class LossLogger:

@@ -4,13 +4,12 @@ import random
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas
 from numpy.linalg import norm
-import vtk
 import pyvista as pv
 from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
 from rich.progress import track
-import data_parser
-from data_parser import parse_internal_mesh
+from dataset import data_parser
 
 M_S = '\left[ \\frac{m}{s} \\right]'
 M2_S2 = '\left[ \\frac{m^2}{s^2} \\right]'
@@ -156,16 +155,12 @@ def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.ar
 
 
 def plot_case(path: str):
-    b_data = data_parser.parse_boundary(path, ['U'], ['p'])
-    b_data = np.concatenate(list(b_data.values()))
-    i_data = parse_internal_mesh(path, "U", "p")
-    data = np.vstack([b_data, i_data])
-
+    fields = data_parser.parse_case_fields(path, 'C', 'U', 'p', 'cellToRegion')
     plot_fields(Path(path).stem,
-                data[..., 0:3],
-                data[..., 3:6],
-                data[..., 6:7],
-                data[..., 7:8])
+                fields['C'].to_numpy(),
+                fields['U'].to_numpy(),
+                fields['p'].to_numpy(),
+                fields['cellToRegion'])
 
 
 def plot_histogram(ax, data, color: str, title: str, bins=100):
@@ -175,27 +170,24 @@ def plot_histogram(ax, data, color: str, title: str, bins=100):
 
 def plot_dataset_dist(path: str, save_path=None):
     data = []
-    for case in track(list(set(glob.glob(f"{path}/*")) - set(glob.glob(f'{path}/meta.json'))),
+    for case in track(list(set(glob.glob(f"{path}/*/")) - set(glob.glob(f'{path}/meta.json'))),
                       description="Reading data"):
-        b_data = data_parser.parse_boundary(case, ['U'], ['p'])
-        b_data = np.concatenate(list(b_data.values()))
-        i_data = parse_internal_mesh(case, "U", "p")
-        data.extend(b_data)
-        data.extend(i_data)
+        case_data = data_parser.parse_case_fields(case, 'U', 'p', 'cellToRegion')
+        data.append(case_data)
 
-    data = np.array(data)
-    plot_data_dist(f'{path} distribution', data[..., 3:6], data[..., 6:7], data[..., -1:], save_path)
+    data = pandas.concat(data)
+    plot_data_dist(f'{path} distribution', data['U'], data['p'], data['cellToRegion'], save_path)
 
 
 def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
-    ux, uy, uz = u[..., 0], u[..., 1], u[..., 2]
     fig = plt.figure(layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_ux, ax_uy, ax_uz, ax_p, ax_zones, _ = fig.subplots(ncols=3, nrows=2).flatten()
 
-    plot_histogram(ax_ux, ux, 'lightsteelblue', '$U_x$')
-    plot_histogram(ax_uy, uy, 'lemonchiffon', '$U_y$')
-    plot_histogram(ax_uz, uz, 'thistle', '$U_z$')
+    plot_histogram(ax_ux, u['x'], 'lightsteelblue', '$U_x$')
+    plot_histogram(ax_uy, u['y'], 'lemonchiffon', '$U_y$')
+    if u.shape[-1] > 2:
+        plot_histogram(ax_uz, u['z'], 'thistle', '$U_z$')
     plot_histogram(ax_p, p, 'lightsalmon', '$p$')
     if zones_ids is not None:
         plot_histogram(ax_zones, zones_ids, 'palegreen', 'Material zones', 2)

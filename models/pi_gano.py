@@ -116,6 +116,7 @@ class PiGano(L.LightningModule):
                                           'Val error ux',
                                           'Val error uy',
                                           'Val error uz')
+        self.pred_labels = {'Ux': None, 'Uy': None, 'Uz': None, 'p': None, 'U': ['Ux', 'Uy', 'Uz']}
         self.save_hyperparameters()
 
     def to(self, *args, **kwargs):

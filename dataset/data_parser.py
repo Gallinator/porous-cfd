@@ -177,17 +177,3 @@ def parse_meta(data_dir: str) -> dict:
 def parse_elapsed_time(case_dir: str) -> int:
     with open(Path(case_dir, 'timing.txt'), 'r') as f:
         return int(f.readline())
-
-
-# x = parse_boundary_fields('../data/test/10_eucalyptus_d12.804_40.928_in5e-06', 'U', 'C', 'p', 'd')
-# lab = x.columns.to_frame()
-# for f in x.columns.levels[0]:
-#     print(dict(zip(lab.loc[f][1].to_list(), [None] * len(lab.loc[f][1]))))
-#     print('\n')
-#
-# x = DataFrame(index=['internal'] * 100 + ['solid'] * 50)
-# x.loc['solid', [('u', 'x'), ('u', 'y')]] = [10, 11]
-# print(x.columns.to_frame().loc['u'][1])
-# x.loc['internal', 'v'] = 10
-# x = pandas.concat([x, DataFrame(index=['wall'] * 2)]).fillna(0)
-# print(x['u'].iloc[0].to_list())

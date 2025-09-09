@@ -4,12 +4,13 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import numpy as np
+import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
 from torch.utils.data import DataLoader
 from rich.progress import track
-
-from foam_dataset import FoamDataset, PdeData, collate_fn
+from dataset.foam_data import FoamData
+from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pi_gano import PiGano
 from visualization import plot_fields, plot_streamlines, plot_houses
 
@@ -63,61 +64,71 @@ if __name__ == '__main__':
     predictions = trainer.predict(model, dataloaders=val_loader)
 
     for i, (tgt, pred) in enumerate(track(list(zip(val_data, predictions)), description='Saving plots...')):
-        pred = PdeData(pred[0], tgt.domain_dict).numpy()
-        tgt = tgt.numpy()
+        pred = FoamData(pred[0], model.pred_labels, tgt.domain)
 
         case_plot_path = None
         if plots_path is not None:
             case_plot_path = plots_path / Path(val_data.samples[i]).name
             case_plot_path.mkdir(exist_ok=True, parents=True)
 
-        points_scaler = val_data.standard_scaler[0:3]
-        u_scaler = val_data.standard_scaler[3:6]
-        p_scaler = val_data.standard_scaler[6]
+        points_scaler = val_data.normalizers['C'].to()
+        u_scaler = val_data.normalizers['U'].to()
+        p_scaler = val_data.normalizers['p'].to()
+        d_scaler = val_data.normalizers['d'].to()
+        f_scaler = val_data.normalizers['f'].to()
 
-        raw_points = points_scaler.inverse_transform(tgt.points)
+        raw_points = points_scaler.inverse_transform(tgt['C']).numpy(force=True)
 
-        d = np.max(val_data.d_normalizer.inverse_transform(tgt.d))
-        f = np.max(val_data.f_normalizer.inverse_transform(tgt.d))
-        inlet_ux = np.max(u_scaler[0].inverse_transform(tgt.inlet_ux))
+        d = torch.max(d_scaler.inverse_transform(tgt['d']))
+        f = torch.max(f_scaler.inverse_transform(tgt['f']))
+        inlet_ux = torch.max(u_scaler[0].inverse_transform(tgt['Ux-inlet']))
 
         plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                     raw_points,
-                    u_scaler.inverse_transform(pred.u),
-                    p_scaler.inverse_transform(pred.p),
-                    tgt.zones_ids,
+                    u_scaler.inverse_transform(pred['U']).numpy(force=True),
+                    p_scaler.inverse_transform(pred['p']).numpy(force=True),
+                    tgt['cellToRegion'].numpy(force=True),
                     save_path=case_plot_path)
         plot_streamlines('Predicted streamlines',
-                         val_data.samples[i], raw_points,
-                         u_scaler.inverse_transform(pred.u),
+                         val_data.samples[i],
+                         raw_points,
+                         u_scaler.inverse_transform(pred['U']).numpy(force=True),
                          save_path=case_plot_path)
 
         plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                     raw_points,
-                    u_scaler.inverse_transform(tgt.pde.u),
-                    p_scaler.inverse_transform(tgt.pde.p),
-                    tgt.zones_ids,
+                    u_scaler.inverse_transform(tgt['U']).numpy(force=True),
+                    p_scaler.inverse_transform(tgt['p']).numpy(force=True),
+                    tgt['cellToRegion'].numpy(force=True),
                     save_path=case_plot_path)
         plot_streamlines('True streamlines',
                          val_data.samples[i],
                          raw_points,
-                         u_scaler.inverse_transform(tgt.pde.u),
+                         u_scaler.inverse_transform(tgt['U'].numpy(force=True)),
                          save_path=case_plot_path)
 
-        u_error = (u_scaler.inverse_transform(pred.u) - u_scaler.inverse_transform(tgt.pde.u))
-        p_error = p_scaler.inverse_transform(pred.p) - p_scaler.inverse_transform(tgt.pde.p)
-        plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}', raw_points,
+        u_error = (u_scaler.inverse_transform(pred['U']) - u_scaler.inverse_transform(tgt['U'])).numpy(force=True)
+        p_error = p_scaler.inverse_transform(pred['p']) - p_scaler.inverse_transform(tgt['p']).numpy(force=True)
+        plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
+                    raw_points,
                     np.abs(u_error),
                     np.abs(p_error),
-                    tgt.zones_ids,
+                    tgt['cellToRegion'].numpy(force=True),
                     save_path=case_plot_path)
-        plot_streamlines('Error streamlines', val_data.samples[i],
+        plot_streamlines('Error streamlines',
+                         val_data.samples[i],
                          raw_points,
                          np.abs(u_error),
                          save_path=case_plot_path)
 
-        solid_points = points_scaler.inverse_transform(tgt['solid'].points)
-        solid_u_error = u_scaler.inverse_transform(pred['solid'].u) - u_scaler.inverse_transform(tgt['solid'].pde.u)
-        solid_p_error = p_scaler.inverse_transform(pred['solid'].p) - p_scaler.inverse_transform(tgt['solid'].pde.p)
-        plot_houses('House', solid_points, np.abs(solid_u_error), np.abs(solid_p_error),
-                    f'{val_data.samples[i]}/constant/triSurface/solid.obj', save_path=case_plot_path)
+        solid_points = points_scaler.inverse_transform(tgt['solid']['C']).numpy(force=True)
+        solid_u_error = u_scaler.inverse_transform(pred['solid']['U']) - u_scaler.inverse_transform(
+            tgt['solid']['U']).numpy(force=True)
+        solid_p_error = p_scaler.inverse_transform(pred['solid']['p']) - p_scaler.inverse_transform(
+            tgt['solid']['p']).numpy(force=True)
+        plot_houses('House',
+                    solid_points,
+                    np.abs(solid_u_error),
+                    np.abs(solid_p_error),
+                    f'{val_data.samples[i]}/constant/triSurface/solid.obj',
+                    save_path=case_plot_path)

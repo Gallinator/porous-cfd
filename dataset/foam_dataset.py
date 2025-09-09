@@ -188,6 +188,16 @@ class FoamDataset(Dataset):
             domain[b] = np.arange(b_range.start, b_range.stop) + n_internal
         return domain
 
+    def normalize_fields(self, fields: DataFrame):
+        """
+        Scales or standardize fields using the normalizers passed to the constructor.
+        The fields are normalized in-place.
+        :param fields: Fields to normalize
+        :return:
+        """
+        for f, norm in self.normalizers.items():
+            fields[f] = norm.transform(fields[f].to_numpy())
+
     def load_case(self, case_dir):
         boundary_fields = parse_boundary_fields(case_dir, *self.fields)
         internal_fields = parse_internal_fields(case_dir, *self.fields)

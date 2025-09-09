@@ -72,14 +72,20 @@ class FoamDataset(Dataset):
         self.normalize_fields = normalize_fields
 
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
-        self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
-        stats = self.meta['Stats']
-        self.standard_scaler = StandardScaler(np.array(stats['C']['Std'] + stats['U']['Std'] + stats['p']['Std']),
-                                              np.array(stats['C']['Mean'] + stats['U']['Mean'] + stats['p']['Mean']))
-        self.d_normalizer = Normalizer(np.array(stats['d']['Min']), np.array(stats['d']['Max']))
-        self.f_normalizer = Normalizer(np.array(stats['d']['Min']), np.array(stats['f']['Max']))
 
-        with open(Path(data_dir).parent / 'min_points.json') as f:  self.min_points = json.load(f)
+        if normalize_fields is not None:
+            self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
+            stats = self.meta['Stats']
+            self.normalizers = {}
+            for field in normalize_fields['Standardize']:
+                field_stats = stats[field]
+                self.normalizers[field] = StandardScaler(np.array(field_stats['Std']), np.array(field_stats['Mean']))
+            for field in normalize_fields['Scale']:
+                field_stats = stats[field]
+                self.normalizers[field] = Normalizer(np.array(field_stats['Min']), np.array(field_stats['Max']))
+
+        with open(Path(data_dir).parent / 'min_points.json') as f:
+            self.min_points = json.load(f)
         self.min_boundary = sum([self.min_points[k] for k in self.min_points.keys() if k != 'internal'])
 
         self.check_sample_size()

@@ -1,5 +1,5 @@
 import torch
-from torch import nn, Tensor
+from torch import nn
 from torch.nn.functional import mse_loss
 import lightning as L
 from dataset.foam_dataset import StandardScaler, Normalizer

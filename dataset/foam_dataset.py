@@ -52,6 +52,7 @@ class Normalizer:
     def to(self, *args, **kwargs):
         self.min = torch.tensor(self.min).to(*args, **kwargs)
         self.max = torch.tensor(self.max).to(*args, **kwargs)
+        self.range = torch.tensor(self.range).to(*args, **kwargs)
         return self
 
 

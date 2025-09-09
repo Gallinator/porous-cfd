@@ -4,13 +4,12 @@ from pathlib import Path
 import numpy as np
 import pandas
 import torch
-from pandas import DataFrame, MultiIndex
+from pandas import DataFrame
 from rich.progress import track
 from torch import tensor
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from data_parser import parse_meta, parse_boundary_fields, parse_internal_fields
 from dataset.foam_data import FoamData
-from visualization import plot_case, plot_fields
 
 
 class StandardScaler:
@@ -199,14 +198,3 @@ class FoamDataset(Dataset):
 
     def __getitem__(self, item) -> FoamData:
         return self.data[item]
-
-
-data = FoamDataset('data/test',
-                   ['C', 'U', 'p', 'cellToRegion', 'd', 'f'],
-                   {'Ux': 'inlet'},
-                   3000, 700, 1500, np.random.default_rng())
-loader = DataLoader(data, collate_fn=collate_fn)
-# for d in loader:
-d = data[0]
-# d = d['solid']
-plot_fields('', d['C'].numpy(), d['U'].numpy(), d['Ux-inlet'].numpy(), d['cellToRegion'].numpy())

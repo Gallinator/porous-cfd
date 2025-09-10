@@ -39,30 +39,11 @@ if __name__ == '__main__':
     n_obs = args.n_observations
     epochs = args.epochs
 
-    fields = ['C', 'U', 'p', 'cellToRegion', 'd', 'f']
-    variable_inlet = {'Ux': 'inlet'}
-    normalize_fields = {'Scale': ['d', 'f'], 'Standardize': ['C', 'U', 'p']}
-
     rng = default_rng(8421)
-    train_data = FoamDataset(args.train_dir,
-                             fields,
-                             n_internal,
-                             n_boundary,
-                             n_obs,
-                             normalize_fields=normalize_fields,
-                             variable_boundaries=variable_inlet,
-                             rng=rng)
+    train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     train_loader = DataLoader(train_data, batch_size, True, num_workers=8, collate_fn=collate_fn)
 
-    val_data = FoamDataset(args.val_dir,
-                           fields,
-                           n_internal,
-                           n_boundary,
-                           n_obs,
-                           normalize_fields=normalize_fields,
-                           variable_boundaries=variable_inlet,
-                           rng=rng,
-                           meta_dir=args.train_dir)
+    val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     model = PiGano(train_data.normalizers)

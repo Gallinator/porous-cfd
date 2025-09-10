@@ -46,15 +46,7 @@ if __name__ == '__main__':
 
     model = PiGano.load_from_checkpoint(args.checkpoint)
 
-    val_data = FoamDataset(args.data_dir,
-                           ['C', 'U', 'p', 'cellToRegion', 'd', 'f'],
-                           args.n_internal,
-                           args.n_boundary,
-                           args.n_observations,
-                           rng,
-                           {'Ux': 'inlet'},
-                           {'Scale': ['d', 'f'], 'Standardize': ['C', 'U', 'p']},
-                           args.meta_dir)
+    val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir)
     val_loader = DataLoader(val_data, 1, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,

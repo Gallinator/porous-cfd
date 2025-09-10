@@ -237,6 +237,7 @@ def plot_residuals(*args, trim, save_path=None):
     fig, ax = plt.subplots()
     colors = ['salmon', 'lightblue']
     labels = ['PINN', 'OpenFoam']
+    u_dims = len(args[0] - 1)
     ax.set_title(f'Absolute average residuals (trimmed {trim})', pad=10)
     w = 0.01
     x = np.array([x * 0.03 for x in range(len(args[0]))])
@@ -247,6 +248,7 @@ def plot_residuals(*args, trim, save_path=None):
 
     ax.legend()
     ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
-    ax.set_xticks(x + w / 2, ['Momentum x', 'Momentum y', 'Momentum z', 'Continuity'])
+    labels = ['Momentum x', 'Momentum y', 'Momentum z'][:u_dims] + ['Continuity']
+    ax.set_xticks(x + w / 2, labels)
     fig.tight_layout()
     plot_or_save(fig, save_path)

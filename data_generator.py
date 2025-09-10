@@ -295,8 +295,11 @@ def generate_meta(data_dir: str, *fields):
             'Std': std_df[f].to_numpy().flatten().tolist()
         }
 
+    timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
+
     meta_dict = {"Min points": min_points,
-                 'Stats': fields_meta}
+                 'Stats': fields_meta,
+                 'Timing': timing_meta}
 
     with open(f'{data_dir}/meta.json', 'w') as meta:
         meta.write(json.dumps(meta_dict, indent=4))

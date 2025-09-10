@@ -61,7 +61,8 @@ if __name__ == '__main__':
                            n_obs,
                            normalize_fields=normalize_fields,
                            variable_boundaries=variable_inlet,
-                           rng=rng)
+                           rng=rng,
+                           meta_dir=args.train_dir)
     val_loader = DataLoader(val_data, batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     model = PiGano(train_data.normalizers)

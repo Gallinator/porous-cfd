@@ -64,31 +64,33 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, fields, n_internal, n_boundary, n_obs, rng, dims=2,
-                 variable_boundaries=None, normalize_fields=None, meta_dir=None):
+    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
         self.rng = rng
-        self.fields = fields
-        self.variable_boundaries = variable_boundaries
-        self.dims = ['x', 'y', 'z'][:dims]
-        self.normalize_fields = normalize_fields
+
+        with open(Path(data_dir) / 'data_config.json') as f:
+            data_cfg = json.load(f)
+            self.fields = data_cfg['Fields']
+            self.variable_boundaries = data_cfg['Variable boundaries']
+            self.dims = data_cfg['Dims']
+            self.normalize_fields = data_cfg['Normalize fields']
 
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
 
-        if normalize_fields is not None:
+        if self.normalize_fields is not None:
             self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
             stats = self.meta['Stats']
             self.normalizers = {}
-            for field in normalize_fields['Standardize']:
+            for field in self.normalize_fields['Standardize']:
                 field_stats = stats[field]
-                self.normalizers[field] = StandardScaler(np.array(field_stats['Std'])[:dims],
-                                                         np.array(field_stats['Mean'])[:dims])
-            for field in normalize_fields['Scale']:
+                self.normalizers[field] = StandardScaler(np.array(field_stats['Std']),
+                                                         np.array(field_stats['Mean']))
+            for field in self.normalize_fields['Scale']:
                 field_stats = stats[field]
-                self.normalizers[field] = Normalizer(np.array(field_stats['Min'])[:dims],
-                                                     np.array(field_stats['Max'])[:dims])
+                self.normalizers[field] = Normalizer(np.array(field_stats['Min']),
+                                                     np.array(field_stats['Max']))
 
         with open(Path(data_dir).parent / 'min_points.json') as f:
             self.min_points = json.load(f)

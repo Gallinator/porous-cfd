@@ -172,7 +172,7 @@ class FoamDataset(Dataset):
 
         for f in domain_fields.columns.get_level_values(0).unique():
             dims = multi_index.loc[f][1]
-            if dims[0] == '':
+            if dims.iloc[0] == '':
                 labels[f] = None
             else:
                 dim = [f'{f}{d}' for d in dims]

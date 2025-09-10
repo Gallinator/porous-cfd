@@ -44,7 +44,7 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of internal points to sample', default=700)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=1200)
-    arg_parser.add_argument('--precision', type=str, default='32-true')
+    arg_parser.add_argument('--precision', type=str, default='bf16-mixed')
     arg_parser.add_argument('--subdomain', type=str, default='')
     return arg_parser
 

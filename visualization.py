@@ -222,9 +222,11 @@ def plot_timing(total: list, average: list, save_path=None):
 
 def plot_errors(title, *args, save_path=None):
     fig, ax = plt.subplots()
-    colors = ['salmon', 'lightblue', 'palegreen', 'moccasin']
-    labels = [f'$U_x {M_S}$', f'$U_y {M_S}$', f'$U_z {M_S}$', f'$p {M2_S2}$']
-
+    colors = ['salmon', 'lightblue', 'palegreen']
+    labels = [f'$U_x {M_S}$', f'$U_y {M_S}$', f'$p {M2_S2}$']
+    if len(*args) > 3:
+        colors.append('moccasin')
+        labels.insert(-1, f'$U_z {M_S}$', )
     plot_barh(ax, title, *args, labels, colors)
 
     fig.tight_layout()

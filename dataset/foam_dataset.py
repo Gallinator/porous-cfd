@@ -64,7 +64,7 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, fields, n_internal, n_boundary, n_obs, rng,
+    def __init__(self, data_dir, fields, n_internal, n_boundary, n_obs, rng, dims=2,
                  variable_boundaries=None, normalize_fields=None, meta_dir=None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
@@ -72,7 +72,7 @@ class FoamDataset(Dataset):
         self.rng = rng
         self.fields = fields
         self.variable_boundaries = variable_boundaries
-        self.dims = ['x', 'y', 'z']
+        self.dims = ['x', 'y', 'z'][:dims]
         self.normalize_fields = normalize_fields
 
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
@@ -83,10 +83,12 @@ class FoamDataset(Dataset):
             self.normalizers = {}
             for field in normalize_fields['Standardize']:
                 field_stats = stats[field]
-                self.normalizers[field] = StandardScaler(np.array(field_stats['Std']), np.array(field_stats['Mean']))
+                self.normalizers[field] = StandardScaler(np.array(field_stats['Std'])[:dims],
+                                                         np.array(field_stats['Mean'])[:dims])
             for field in normalize_fields['Scale']:
                 field_stats = stats[field]
-                self.normalizers[field] = Normalizer(np.array(field_stats['Min']), np.array(field_stats['Max']))
+                self.normalizers[field] = Normalizer(np.array(field_stats['Min'])[:dims],
+                                                     np.array(field_stats['Max'])[:dims])
 
         with open(Path(data_dir).parent / 'min_points.json') as f:
             self.min_points = json.load(f)
@@ -231,8 +233,8 @@ class FoamDataset(Dataset):
             fields[f] = norm.transform(fields[f].to_numpy())
 
     def load_case(self, case_dir) -> FoamData:
-        boundary_fields = parse_boundary_fields(case_dir, *self.fields)
-        internal_fields = parse_internal_fields(case_dir, *self.fields)
+        boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=len(self.dims))
+        internal_fields = parse_internal_fields(case_dir, *self.fields, max_dim=len(self.dims))
 
         # Normalize
         if self.normalize_fields is not None:

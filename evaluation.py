@@ -18,6 +18,8 @@ from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pi_gano import PiGano
+from models.pipn_foam import PipnFoam
+from models.pipn_pp_foam import PipnPpFoam
 from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
 
 
@@ -27,6 +29,17 @@ def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):
         for e in errors.items():
             data.append([e[0], *e[1]])
         csv.writer(f).writerows(data)
+
+
+def load_model(model_type: str, checkpoint):
+    match model_type:
+        case 'pipn-foam':
+            return PipnFoam.load_from_checkpoint(checkpoint)
+        case 'pipn-pp-foam':
+            return PipnPpFoam.load_from_checkpoint(checkpoint)
+        case 'pi-gano-3d':
+            return PiGano.load_from_checkpoint(checkpoint)
+    raise NotImplementedError(f'{model_type} is not available!')
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -58,7 +71,7 @@ if __name__ == '__main__':
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name / 'stats'
         plots_path.mkdir(exist_ok=True, parents=True)
 
-    model = PiGano.load_from_checkpoint(args.checkpoint)
+    model = load_model(args.model, args.checkpoint)
     model.verbose_predict = True
 
     error_labels = {'momentx': None, 'momenty': None, 'momentz': None, 'div': None,

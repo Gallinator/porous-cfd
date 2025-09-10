@@ -20,7 +20,7 @@ from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pi_gano import PiGano
 from models.pipn_foam import PipnFoam
 from models.pipn_pp_foam import PipnPpFoam
-from visualization import plot_data_dist, plot_timing, plot_errors, plot_residuals
+from visualization.common import plot_data_dist, plot_residuals, plot_errors, plot_timing
 
 
 def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):

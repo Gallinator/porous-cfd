@@ -379,7 +379,7 @@ if __name__ == '__main__':
                                 args.openfoam_procs, rng=rng)
         generate_split(f'{data_root_dir}/{d}', f'assets/meshes/{d}/config.json', rng=rng)
 
-    for split in os.listdir(data_root_dir):
+    for split in glob.glob(f'{data_root_dir}/*/'):
         generate_data(f'{data_root_dir}/{split}')
         generate_meta(f'{data_root_dir}/{split}', 'C', 'U', 'p', 'd', 'f')
         clean_processor_data(f'{data_root_dir}/{split}')

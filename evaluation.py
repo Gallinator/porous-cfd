@@ -45,6 +45,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=1200)
     arg_parser.add_argument('--precision', type=str, default='32-true')
+    arg_parser.add_argument('--subdomain', type=str, default='')
     return arg_parser
 
 
@@ -90,7 +91,7 @@ if __name__ == '__main__':
                 plots_path)
 
     errors, pred_residuals, cfd_residuals, zones_ids = [], [], [], []
-    solid_errors = []
+    additional_errors = []
     u_scaler = val_data.normalizers['U'].to(model.device)
     p_scaler = val_data.normalizers['p'].to(model.device)
 
@@ -106,13 +107,13 @@ if __name__ == '__main__':
         errors.extend(pde_error.numpy(force=True))
         zones_ids.extend(tgt_data['cellToRegion'].numpy(force=True))
 
-        # Solid error
-        solid_u_error = l1_loss(u_scaler.inverse_transform(pred_data['solid']['U']),
-                                u_scaler.inverse_transform(tgt_data['solid']['U']), reduction='none')
-        solid_p_error = l1_loss(p_scaler.inverse_transform(pred_data['solid']['p']),
-                                p_scaler.inverse_transform(tgt_data['solid']['p']), reduction='none')
-        solid_pde_error = torch.cat([solid_u_error, solid_p_error], dim=-1)
-        solid_errors.extend(solid_pde_error.numpy(force=True))
+        if args.subdomain != '':
+            additional_u_error = l1_loss(u_scaler.inverse_transform(pred_data['solid']['U']),
+                                         u_scaler.inverse_transform(tgt_data['solid']['U']), reduction='none')
+            additional_p_error = l1_loss(p_scaler.inverse_transform(pred_data['solid']['p']),
+                                         p_scaler.inverse_transform(tgt_data['solid']['p']), reduction='none')
+            additional_pde_error = torch.cat([additional_u_error, additional_p_error], dim=-1)
+            additional_errors.extend(additional_pde_error.numpy(force=True))
 
         # Equation residuals
         pred_residuals.extend(phys_data.numpy(force=True))
@@ -120,24 +121,32 @@ if __name__ == '__main__':
         cfd_residuals.extend(cfd_res.numpy(force=True))
 
     errors, zones_ids = np.concatenate(errors), np.array(zones_ids).flatten()
-    plot_data_dist('Absolute error distribution', errors[..., 0:3], errors[..., 3:4], save_path=plots_path)
-
-    solid_errors = np.concatenate(solid_errors)
-    plot_data_dist('Solid Absolute error distribution', solid_errors[..., 0:3], solid_errors[..., 3:4],
+    plot_data_dist('Absolute error distribution',
+                   errors[..., :model.dims],
+                   errors[..., model.dims:],
                    save_path=plots_path)
-    mae = np.average(errors, axis=0)
-    plot_errors('Average relative error', mae.tolist(), save_path=plots_path)
+    mae = np.average(errors, axis=0).tolist()
+    plot_errors('Average relative error', mae, save_path=plots_path)
 
-    solid_mae = np.average(solid_errors, axis=0)
-    plot_errors('Solid Average relative error', solid_mae.tolist(), save_path=plots_path)
+    if args.subdomain != '':
+        additional_errors = np.concatenate(additional_errors)
+        plot_data_dist(f'{args.subdomain.capitalize()} Absolute error distribution',
+                       additional_errors[..., :model.dims],
+                       additional_errors[..., model.dims:],
+                       save_path=plots_path)
+        additional_mae = np.average(additional_errors, axis=0).tolist()
+        plot_errors(f'{args.subdomain.capitalize()} Average relative error', additional_mae, save_path=plots_path)
 
-    porous_mae, fluid_mae = np.average(errors[zones_ids > 0, :], axis=0), np.average(errors[zones_ids < 1, :], axis=0)
-    plot_errors('Porous region MAE', porous_mae.tolist(), save_path=plots_path)
-    plot_errors('Fluid region MAE', fluid_mae.tolist(), save_path=plots_path)
+    fluid_mae = np.average(errors[zones_ids < 1, :], axis=0).tolist()
+    porous_mae = np.average(errors[zones_ids > 0, :], axis=0).tolist()
+    plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
+    plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
 
     pred_residuals = np.concatenate(pred_residuals)
     cfd_residuals = np.concatenate(cfd_residuals)
-    plot_data_dist('Absolute residuals', np.abs(pred_residuals[..., 0:3]), np.abs(pred_residuals[..., 3:4]),
+    plot_data_dist('Absolute residuals',
+                   np.abs(pred_residuals[..., :model.dims]),
+                   np.abs(pred_residuals[..., model.dims:]),
                    save_path=plots_path)
 
     pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
@@ -145,9 +154,9 @@ if __name__ == '__main__':
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
 
     if args.save_plots:
-        save_mae_to_csv({'Solid': solid_mae.tolist(),
-                         'Total': mae.tolist(),
-                         'Fluid': fluid_mae.tolist(),
-                         'Porous': porous_mae.tolist()},
-                        ['Ux', 'Uy', 'Uz', 'p'],
-                        plots_path)
+        errors_dict = {'Total': mae,
+                       'Fluid': fluid_mae,
+                       'Porous': porous_mae}
+        if args.subdomain != '':
+            errors_dict[f'{args.subdomain.capitalize()}'] = additional_mae
+        save_mae_to_csv(errors_dict, ['Ux', 'Uy', 'Uz'][:model.dims] + ['p'], plots_path)

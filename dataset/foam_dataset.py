@@ -235,6 +235,9 @@ class FoamDataset(Dataset):
         for f, norm in self.normalizers.items():
             fields[f] = norm.transform(fields[f].to_numpy())
 
+    def add_features(self, internal_fields: DataFrame, boundary_fields):
+        return
+
     def load_case(self, case_dir) -> FoamData:
         boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=self.n_dims)
         internal_fields = parse_internal_fields(case_dir, *self.fields, max_dim=self.n_dims)
@@ -252,6 +255,8 @@ class FoamDataset(Dataset):
         if self.variable_boundaries is not None:
             variable_fields = self.get_variable_boundaries(boundary_fields)
             boundary_fields = pandas.concat([boundary_fields, variable_fields], axis=1)
+
+        self.add_features(internal_fields, boundary_fields)
 
         domain_data = pandas.concat([internal_fields, boundary_fields]).fillna(0)
 

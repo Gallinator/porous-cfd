@@ -64,7 +64,7 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None):
+    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None, extra_fields=[]):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
@@ -72,7 +72,7 @@ class FoamDataset(Dataset):
 
         with open(Path(data_dir) / 'data_config.json') as f:
             data_cfg = json.load(f)
-            self.fields = data_cfg['Fields']
+            self.fields = data_cfg['Fields'] + extra_fields
             self.variable_boundaries = data_cfg['Variable boundaries']
             self.dims = data_cfg['Dims']
             self.normalize_fields = data_cfg['Normalize fields']

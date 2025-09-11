@@ -18,20 +18,90 @@ class LossLogger:
             self.module.log(label, loss, on_step=False, on_epoch=True, batch_size=batch_size)
 
 
-class MomentumLoss(nn.Module):
-    def __init__(self, i, j, k, mu,
-                 u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler,
-                 d_scaler: Normalizer, f_scaler: Normalizer):
+class ContinuityLoss(nn.Module):
+    def func(self, d_ux_x, d_uy_y):
+        return d_ux_x + d_uy_y
+
+    def forward(self, d_ux_x, d_uy_y):
+        pde = self.func(d_ux_x, d_uy_y)
+        return mse_loss(pde, torch.zeros_like(pde))
+
+
+class MomentumLossFluid(nn.Module):
+    def __init__(self, mu):
         super().__init__()
         self.mu = mu
+
+    def func(self, ui, uj, d_p_i, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j, f_i):
+        return d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i - f_i
+
+    def forward(self, *args):
+        pde = self.func(*args)
+        return mse_loss(pde, torch.zeros_like(pde))
+
+
+class MomentumLoss2d(nn.Module):
+    def __init__(self, mu, d, f):
+        super().__init__()
+        self.mu = mu
+        self.d = d
+        self.f = f
+
+    def func(self, ui, uj, d_p_i, zones_ids, fi, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
+        source = ui * (self.d * self.mu + 1 / 2 * torch.sqrt(ui ** 2 + uj ** 2) * self.f)
+        return d_ui_i * ui + d_ui_j * uj - self.mu * (dd_ui_i + dd_ui_j) + d_p_i + source * zones_ids - fi
+
+    def forward(self, *args):
+        res = self.func(*args)
+        return mse_loss(res, torch.zeros_like(res))
+
+
+class MomentumLoss2dScaled(nn.Module):
+    def __init__(self, i, j, mu, d, f, u_scaler: StandardScaler, points_scaler: StandardScaler,
+                 p_scaler: StandardScaler):
+        super().__init__()
+        self.i = i
+        self.j = j
+        self.mu = mu
+        self.d = d
+        self.f = f
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
-        self.p_stats = p_scaler
-        self.d_scaler = d_scaler
-        self.f_scaler = f_scaler
+        self.p_scaler = p_scaler
+
+    def func(self, ui, uj, d_p_i, zones_ids, d_ui_i, d_ui_j, dd_ui_i, dd_ui_j):
+        i, j = self.i, self.j
+        norm_d_ui_i = (self.u_scaler.std[i] / self.points_scaler.std[i])
+        norm_d_ui_j = (self.u_scaler.std[i] / self.points_scaler.std[j])
+        norm_dd_ui_i = norm_d_ui_i * (1 / self.points_scaler.std[i])
+        norm_dd_ui_j = norm_d_ui_j * (1 / self.points_scaler.std[j])
+        ui_raw = ui * self.u_scaler.std[i] + self.u_scaler.mean[i]
+        uj_raw = uj * self.u_scaler.std[j] + self.u_scaler.mean[j]
+
+        source = ui_raw * (self.d * self.mu + 1 / 2 * torch.sqrt(ui_raw ** 2 + uj_raw ** 2) * self.f)
+
+        return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw -
+                self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j) +
+                (self.p_scaler.std / self.points_scaler.std[i]) * d_p_i + source * zones_ids)
+
+    def forward(self, *args):
+        pde = self.func(*args)
+        return mse_loss(pde, torch.zeros_like(pde))
+
+
+class MomentumLoss3dScaled(nn.Module):
+    def __init__(self, i, j, k, mu, u_scaler: StandardScaler, points_scaler: StandardScaler, p_scaler: StandardScaler,
+                 d_scaler: Normalizer, f_scaler: Normalizer):
+        super().__init__()
         self.i = i
         self.j = j
         self.k = k
+        self.mu = mu
+        self.u_scaler = u_scaler
+        self.points_scaler = points_scaler
+        self.p_scaler = p_scaler
+        self.d_scaler = d_scaler
+        self.f_scaler = f_scaler
 
     def func(self, ui, uj, uk, d_p_i, zones_ids, d, f, d_ui_i, d_ui_j, d_ui_k, dd_ui_i, dd_ui_j, dd_ui_k):
         i, j, k = self.i, self.j, self.k
@@ -52,24 +122,31 @@ class MomentumLoss(nn.Module):
 
         return (norm_d_ui_i * d_ui_i * ui_raw + norm_d_ui_j * d_ui_j * uj_raw + norm_d_ui_k * d_ui_k * uk_raw -
                 self.mu * (norm_dd_ui_i * dd_ui_i + norm_dd_ui_j * dd_ui_j + norm_dd_ui_k * dd_ui_k) +
-                (self.p_stats.std / self.points_scaler.std[i]) * d_p_i + source * zones_ids)
+                (self.p_scaler.std / self.points_scaler.std[i]) * d_p_i + source * zones_ids)
 
     def forward(self, *args):
-        res = self.func(*args)
-        return mse_loss(res, torch.zeros_like(res))
+        pde = self.func(*args)
+        return mse_loss(pde, torch.zeros_like(pde))
 
 
-class ContinuityLoss(nn.Module):
+class ContinuityLossScaled(nn.Module):
     def __init__(self, u_scaler: StandardScaler, points_scaler: StandardScaler):
         super().__init__()
         self.u_scaler = u_scaler
         self.points_scaler = points_scaler
 
-    def func(self, d_ux_x, d_uy_y, d_uz_z):
-        return ((self.u_scaler[0].std / self.points_scaler[0].std) * d_ux_x +
-                (self.u_scaler[1].std / self.points_scaler[1].std) * d_uy_y +
-                (self.u_scaler[2].std / self.points_scaler[2].std) * d_uz_z)
+    def func(self, *args):
+        """
+          :param args: Partial derivatives in the following order: x,y,z.
+          :return: the continuity residual
+          """
+        pde = [(self.u_scaler[i].std / self.points_scaler[i].std) * d for i, d in enumerate(args)]
+        return torch.sum(torch.stack(pde), dim=0)
 
     def forward(self, *args):
+        """
+        :param args: Partial derivatives in the following order: x,y,z.
+        :return: the mse loss
+        """
         res = self.func(*args)
         return mse_loss(res, torch.zeros_like(res))

@@ -65,15 +65,15 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure
-    plot_scalar_field(f'$p$ {M2_S2}', points, p, porous, fig, ax_p)
+    plot_scalar_field(f'$p {M2_S2}$', points, p, porous, fig, ax_p)
 
     # Velocity
-    plot_scalar_field(f'$u_x$ {M_S}', points, u[:, 0], porous, fig, ax_u_x)
+    plot_scalar_field(f'$u_x {M_S}$', points, u[:, 0], porous, fig, ax_u_x)
 
     plot_scalar_field(f'$u_y$ {M_S}', points, u[:, 1], porous, fig, ax_u_y)
     if plot_streams:
-        plot_uneven_stream(f'$U$ {M_S}', points, u, fig, ax_u)
+        plot_uneven_stream(f'$U {M_S}$', points, u, fig, ax_u)
     else:
-        plot_scalar_field(f'$U$ {M_S}', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
+        plot_scalar_field(f'$U {M_S}$', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
 
     plot_or_save(fig, save_path)

@@ -1,6 +1,6 @@
 {
   "Fields": ["C", "U", "p", "cellToRegion"],
-  "Variable inlet": {},
+  "Variable boundary": {},
   "Normalize fields": {
     "Scale": [], "Standardize": ["C", "U", "p"]
   },

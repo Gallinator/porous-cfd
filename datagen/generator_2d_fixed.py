@@ -1,4 +1,5 @@
 import glob
+import itertools
 import json
 import math
 import shutil
@@ -36,7 +37,7 @@ class Generator2DFixed(Generator2DBase):
                 self.import_mesh(f'{meshes_dir}/{mesh}')
                 rotations = self.parse_rotations(transforms['rotation'])
                 scales = self.parse_scale(transforms['scale'])
-                for r, s in self.itertools.product(rotations, scales):
+                for r, s in itertools.product(rotations, scales):
                     ops.object.select_all(action='SELECT')
                     ops.object.duplicate(linked=False)
                     obj = bpy.context.selected_objects[0]

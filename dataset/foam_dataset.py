@@ -74,10 +74,11 @@ class FoamDataset(Dataset):
             data_cfg = json.load(f)
             self.fields = data_cfg['Fields'] + extra_fields
             self.variable_boundaries = data_cfg['Variable boundaries']
-            self.dims = data_cfg['Dims']
+            self.dim_labels = data_cfg['Dims']
             self.normalize_fields = data_cfg['Normalize fields']
 
         self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
+        self.n_dims = len(self.dim_labels)
 
         if self.normalize_fields is not None:
             self.meta = parse_meta(data_dir if meta_dir is None else meta_dir)
@@ -162,7 +163,7 @@ class FoamDataset(Dataset):
         :param size: the number of components of a label
         :return: the labels for each component of label
         """
-        return [label + self.dims[i] for i in range(size)]
+        return [label + self.dim_labels[i] for i in range(size)]
 
     def get_labels(self, domain_fields: DataFrame) -> dict:
         """
@@ -235,8 +236,8 @@ class FoamDataset(Dataset):
             fields[f] = norm.transform(fields[f].to_numpy())
 
     def load_case(self, case_dir) -> FoamData:
-        boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=len(self.dims))
-        internal_fields = parse_internal_fields(case_dir, *self.fields, max_dim=len(self.dims))
+        boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=self.n_dims)
+        internal_fields = parse_internal_fields(case_dir, *self.fields, max_dim=self.n_dims)
 
         # Normalize
         if self.normalize_fields is not None:

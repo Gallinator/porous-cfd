@@ -1,0 +1,8 @@
+{
+  "Fields": ["C", "U", "p"],
+  "Variable boundaries": {},
+  "Normalize fields": {
+    "Scale": [], "Standardize": []
+  },
+  "Dims": ["x", "y"]
+}

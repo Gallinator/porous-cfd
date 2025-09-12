@@ -1,8 +1,0 @@
-{
-  "Fields": ["C", "U", "p", "cellToRegion"],
-  "Variable inlet": {"U": "inlet"},
-  "Normalize fields": {
-    "Scale": ["d", "f"], "Standardize": ["C", "U", "p"]
-  },
-  "Dims": ["x", "y"]
-}

@@ -13,11 +13,8 @@ def add_colorbar(fig, ax, plot):
     fig.colorbar(plot, cax=cax)
 
 
-def plot_scalar_field(title: str, points: np.array, value: np.array, porous: np.array or None, fig, ax):
+def plot_scalar_field(title: str, points: np.array, value: np.array, fig, ax):
     ax.set_title(title, pad=20)
-    porous_zone = np.nonzero(porous > 0)[0]
-    ax.scatter(points[porous_zone, 0], points[porous_zone, 1], marker='o', s=25, zorder=1, c='#00000000',
-               label='Porous', edgecolors='black')
     ax.scatter(points[..., 0], points[..., 1], s=5, zorder=1, c='black',
                label='Collocation')
 
@@ -59,21 +56,21 @@ def plot_uneven_stream(title: str, points: np.array, field: np.array, fig, ax):
     ax.set_aspect('equal')
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, plot_streams=True,
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, plot_streams=True,
                 save_path=None):
     fig = plt.figure(figsize=(16, 9), layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_u_x, ax_u_y, ax_p, ax_u = fig.subplots(ncols=2, nrows=2).flatten()
     # Pressure
-    plot_scalar_field(f'$p {M2_S2}$', points, p, porous, fig, ax_p)
+    plot_scalar_field(f'$p {M2_S2}$', points, p, fig, ax_p)
 
     # Velocity
-    plot_scalar_field(f'$u_x {M_S}$', points, u[:, 0], porous, fig, ax_u_x)
+    plot_scalar_field(f'$u_x {M_S}$', points, u[:, 0], fig, ax_u_x)
 
-    plot_scalar_field(f'$u_y {M_S}$', points, u[:, 1], porous, fig, ax_u_y)
+    plot_scalar_field(f'$u_y {M_S}$', points, u[:, 1], fig, ax_u_y)
     if plot_streams:
         plot_uneven_stream(f'$U {M_S}$', points, u, fig, ax_u)
     else:
-        plot_scalar_field(f'$U {M_S}$', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
+        plot_scalar_field(f'$U {M_S}$', points, np.linalg.norm(u, axis=1), fig, ax_u)
 
     plot_or_save(fig, save_path)

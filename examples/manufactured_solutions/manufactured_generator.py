@@ -1,15 +1,30 @@
+import glob
 import json
 import math
+import shutil
 from pathlib import Path
 
 import bpy
 import mathutils
 from bpy import ops
 from datagen.data_generator import build_arg_parser
-from examples.duct_fixed_boundary.generator_2d_fixed import Generator2DFixed
+from datagen.generator_2d import Generator2DBase
 
 
-class GeneratorManufactured(Generator2DFixed):
+class GeneratorManufactured(Generator2DBase):
+    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+        dest_dir.mkdir(parents=True, exist_ok=True)
+
+        meshes = glob.glob(f"{meshes_dir}/*.obj")
+        for m in meshes:
+            case_path = f"{dest_dir}/{Path(m).stem}"
+            shutil.copytree(self.case_template_dir, case_path)
+            shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
+            self.write_locations_in_mesh(f'{case_path}/snappyHexMesh', self.get_location_inside(m))
+
+            self.set_decompose_par(f'{case_path}/snappyHexMesh')
+            self.set_decompose_par(f'{case_path}/simpleFoam')
+
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)
 

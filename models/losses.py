@@ -1,8 +1,21 @@
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn.functional import mse_loss
 import lightning as L
 from dataset.foam_dataset import StandardScaler, Normalizer
+
+
+def vector_loss(input: Tensor, target: Tensor, loss_fn) -> Tensor:
+    """
+    Vectorized mse loss
+    :param input: (B,N,D)
+    :param target: (B,N,D)
+    :param loss_fn: supports mse_loss, l1_loss
+    :return: (1,D)
+    """
+    loss = loss_fn(input, target, reduction='none')
+    loss = loss.reshape((-1, loss.shape[-1]))
+    return torch.mean(loss, dim=-2, keepdim=True).squeeze()
 
 
 class LossLogger:

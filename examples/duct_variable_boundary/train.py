@@ -1,7 +1,8 @@
 from numpy.random import default_rng
+
+from common.training import train, build_arg_parser
 from dataset.foam_dataset import FoamDataset
-from models.pipn_foam import PipnFoam
-from training.common import train, build_arg_parser
+from models.pi_gano_2d import PiGano2d
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
@@ -14,6 +15,6 @@ if __name__ == '__main__':
     train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
-    model = PipnFoam(train_data.normalizers)
+    model = PiGano2d(train_data.normalizers)
 
     train(args, model, train_data, val_data)

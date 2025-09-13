@@ -6,7 +6,7 @@ import bpy
 import mathutils
 from bpy import ops
 from datagen.data_generator import build_arg_parser
-from datagen.generator_2d_fixed import Generator2DFixed
+from examples.duct_fixed_boundary.generator_2d_fixed import Generator2DFixed
 
 
 class GeneratorManufactured(Generator2DFixed):

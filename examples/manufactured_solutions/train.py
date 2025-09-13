@@ -1,7 +1,8 @@
 from numpy.random import default_rng
-from dataset.manufactured_dataset import ManufacturedDataset
+
+from common.training import build_arg_parser, train
+from manufactured_dataset import ManufacturedDataset
 from models.pipn_baseline import PipnPorous
-from training.common import train, build_arg_parser
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()

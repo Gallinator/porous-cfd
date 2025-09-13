@@ -1,12 +1,10 @@
 from pathlib import Path
-
 from matplotlib import pyplot as plt
-
-from common import create_plots_root, create_case_plot_dir
 import numpy as np
+
+from common.inference import create_case_plot_dir, build_arg_parser, create_plots_root, predict
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
-from common import build_arg_parser, predict
 from models.pipn_foam import PipnFoam
 from visualization.visualization_2d import plot_fields
 

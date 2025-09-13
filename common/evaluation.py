@@ -79,7 +79,7 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
     results = []
     for predicted, target in zip(predictions, data_loader):
         pde, extras = predicted
-        pde = FoamData(pde, model.pred_labels, target.domain)
+        pde = FoamData(pde, model.predicted_labels, target.domain)
         for i, r in enumerate(sample_process_fn(data, pde, target, extras)):
             if len(results) == i:
                 results.append([*r])

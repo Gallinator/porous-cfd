@@ -58,6 +58,6 @@ def predict(args, model, data: FoamDataset, result_process_fn: Callable[[FoamDat
     predictions = trainer.predict(model, dataloaders=data_loader)
 
     for i, (tgt, pred) in enumerate(track(list(zip(data, predictions)), description='Saving plots...')):
-        pred = FoamData(pred[0], model.pred_labels, tgt.domain)
+        pred = FoamData(pred[0], model.predicted_labels, tgt.domain)
         case_path = Path(data.samples[i])
         result_process_fn(data, tgt, pred, case_path)

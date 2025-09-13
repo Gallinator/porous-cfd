@@ -2,14 +2,14 @@ from pathlib import Path
 
 from matplotlib import pyplot as plt
 
-from common import create_plots_root, create_case_plot_dir
 import numpy as np
+
+from common.inference import create_case_plot_dir, build_arg_parser, create_plots_root, predict
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
-from common import build_arg_parser, predict
-from dataset.manufactured_dataset import ManufacturedDataset
 from models.pipn_baseline import PipnPorous
 from visualization.visualization_2d import plot_fields
+from manufactured_dataset import ManufacturedDataset
 
 
 def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path):

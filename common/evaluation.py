@@ -54,7 +54,7 @@ def build_arg_parser() -> ArgumentParser:
 
 
 def evaluate(args, model, data: FoamDataset, enable_timing,
-             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, Tensor], tuple],
+             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], tuple],
              postprocess_fn: Callable[[FoamDataset, tuple, Path], None]):
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args)

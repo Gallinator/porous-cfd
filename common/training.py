@@ -10,6 +10,10 @@ import lightning as L
 from dataset.foam_dataset import collate_fn
 
 
+def get_log_steps(n_data, batch_size):
+    return (n_data // batch_size) + min(1, n_data % batch_size)
+
+
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--n-internal', type=int,
@@ -38,7 +42,7 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
 
     trainer = L.Trainer(max_epochs=args.epochs,
                         callbacks=[RichProgressBar(), checkpoint_callback, LearningRateMonitor()],
-                        log_every_n_steps=int(len(train_data) / args.batch_size),
+                        log_every_n_steps=get_log_steps(len(train_data), args.batch_size),
                         precision=args.precision,
                         default_root_dir=args.logs_dir)
 

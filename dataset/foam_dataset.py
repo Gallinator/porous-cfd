@@ -222,6 +222,8 @@ class FoamDataset(Dataset):
 
         for b in boundary_fields.index.unique():
             b_range = boundary_fields.index.get_loc(b)
+            if b_range == 0:
+                continue
             domain[b] = np.arange(b_range.start, b_range.stop) + n_internal
         return domain
 
@@ -248,8 +250,8 @@ class FoamDataset(Dataset):
             self.normalize(boundary_fields)
 
         # Sampling
-        boundary_fields = self.sample_boundary(boundary_fields)
-        internal_fields = self.sample_internal(internal_fields)
+        boundary_fields = self.sample_boundary(boundary_fields).sort_index(axis=0)
+        internal_fields = self.sample_internal(internal_fields).sort_index(axis=0)
 
         # Add variable boundary conditions
         if self.variable_boundaries is not None:

@@ -19,12 +19,12 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
     plot_fields(f'Predicted', target['C'],
                 predicted['U'],
                 predicted['p'],
-                target['cellToRegion'].numpy(force=True),
+                target['cellToRegion'].numpy(),
                 save_path=case_plot_path)
     plot_fields(f'Ground truth', target['C'],
                 target['U'],
                 target['p'],
-                target['cellToRegion'].numpy(force=True),
+                target['cellToRegion'].numpy(),
                 save_path=case_plot_path)
 
     plt.interactive(False)
@@ -35,7 +35,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 target['C'],
                 np.abs(u_error),
                 np.abs(p_error),
-                target['cellToRegion'].numpy(force=True),
+                target['cellToRegion'].numpy(),
                 False,
                 case_plot_path)
 

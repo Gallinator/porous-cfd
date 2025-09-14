@@ -18,13 +18,13 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
     # Domain
     u_error = l1_loss(predicted['U'], target['U'], reduction='none')
     p_error = l1_loss(predicted['p'], target['p'], reduction='none')
-    error = torch.cat([u_error, p_error], dim=-1).numpy(force=True)
+    error = torch.cat([u_error, p_error], dim=-1)
 
-    zones_ids = target['cellToRegion'].numpy(force=True)
+    zones_ids = target['cellToRegion']
 
     # Equation residuals
-    momentum_residuals = extras['Momentum'].numpy(force=True)
-    div_residuals = extras['div'].numpy(force=True)
+    momentum_residuals = extras['Momentum']
+    div_residuals = extras['div']
 
     return error, momentum_residuals, div_residuals, zones_ids
 

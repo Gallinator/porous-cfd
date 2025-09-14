@@ -15,6 +15,6 @@ if __name__ == '__main__':
     train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
-    model = PipnFoam(train_data.normalizers)
+    model = PipnFoam(nu=1489.4e-6, d=14000, f=17.11, in_dim=2, out_features=3, scalers=train_data.normalizers)
 
     train(args, model, train_data, val_data)

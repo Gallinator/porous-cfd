@@ -2,9 +2,10 @@ from torch.nn import Dropout, Linear, Tanh
 import torch
 from torch import nn, Tensor
 from torch_cluster import fps, radius
-from torch_geometric.nn import PointNetConv, global_max_pool, MLP
+from torch_geometric.nn import PointNetConv, global_max_pool
 from torch_geometric.utils import unbatch
-
+import torch_geometric.nn as gnn
+import torchvision.ops as vnn
 
 class MLP(nn.Sequential):
     def __init__(self, in_features, out_features, layers: list, activation, dropout: list | None, last_activation=True):
@@ -57,7 +58,7 @@ class PipnDecoder(nn.Module):
 class Branch(nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()
-        self.linear = MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
+        self.linear = vnn.MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
 
     def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_u: Tensor):
         """
@@ -83,7 +84,7 @@ class Branch(nn.Module):
 class GeometryEncoder(nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()
-        self.linear = MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
+        self.linear = vnn.MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
 
     def forward(self, points: Tensor, zones_ids: Tensor) -> Tensor:
         """
@@ -148,9 +149,10 @@ class EncoderPp(nn.Module):
             nn.Linear(64, 64),
             nn.Tanh()
         )
-        self.conv1 = SetAbstraction(0.5, 0.5, MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
-        self.conv2 = SetAbstraction(0.25, 1.0, MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
-        self.conv3 = GlobalSetAbstraction(MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
+
+        self.conv1 = SetAbstraction(0.5, 0.5, gnn.MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
+        self.conv2 = SetAbstraction(0.25, 1.0, gnn.MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
+        self.conv3 = GlobalSetAbstraction(gnn.MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)

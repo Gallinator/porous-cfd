@@ -79,8 +79,8 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
     results = []
     for predicted, target in zip(predictions, data_loader):
         pde, extras = predicted
-        pde.data = pde.data.to('cpu')
-        extras.data = extras.data.to('cpu')
+        pde.data = pde.data.to('cpu').detach()
+        extras.data = extras.data.to('cpu').detach()
         for i, r in enumerate(sample_process_fn(data, pde, target, extras)):
             if len(results) == i:
                 results.append([*r])

@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
-from torch import Tensor
 from torch.nn.functional import l1_loss
 
 from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate
@@ -13,7 +12,7 @@ from models.pipn_foam import PipnFoam
 from visualization.common import plot_data_dist, plot_residuals, plot_errors
 
 
-def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: Tensor) -> tuple:
+def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> tuple:
     u_scaler = data.normalizers['U'].to(model.device)
     p_scaler = data.normalizers['p'].to(model.device)
 
@@ -24,17 +23,16 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
                       p_scaler.inverse_transform(target['p']), reduction='none')
     error = torch.cat([u_error, p_error], dim=-1)
 
-    zones_ids = target['cellToRegion'].numpy(force=True)
+    zones_ids = target['cellToRegion']
 
     # Equation residuals
-    predicted_residuals = extras.numpy(force=True)
     target_residuals = torch.cat([target['internal']['momentError'], target['internal']['div(phi)']], dim=-1)
 
-    return error, predicted_residuals, target_residuals, zones_ids
+    return error, extras['Momentum'], extras['div'], target_residuals, zones_ids
 
 
 def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
-    errors, predicted_residuals, target_residuals, zones_ids = results
+    errors, predicted_momentum, predicted_div, target_residuals, zones_ids = results
 
     errors = np.concatenate(errors)
     zones_ids = np.array(zones_ids).flatten()
@@ -50,15 +48,17 @@ def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
     plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
     plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
 
-    pred_residuals = np.concatenate(predicted_residuals)
-    cfd_residuals = np.concatenate(target_residuals)
+    predicted_div = np.concatenate(predicted_div)
+    predicted_momentum = np.concatenate(predicted_momentum)
     plot_data_dist('Absolute residuals',
-                   np.abs(pred_residuals[..., :data.n_dims]),
-                   np.abs(pred_residuals[..., data.n_dims:]),
+                   np.abs(predicted_momentum),
+                   np.abs(predicted_div),
                    save_path=plots_path)
 
-    pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
-    cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
+    target_residuals = np.concatenate(target_residuals)
+    predicted_residuals = np.concatenate([predicted_momentum, predicted_div], axis=-1)
+    pred_res_avg = trimmed_mean(np.abs(predicted_residuals), limits=[0, 0.05], axis=0)
+    cfd_res_avg = trimmed_mean(np.abs(target_residuals), limits=[0, 0.05], axis=0)
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
 
     if args.save_plots:

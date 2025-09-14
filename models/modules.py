@@ -1,9 +1,57 @@
-from torchvision.ops import MLP
+from torch.nn import Dropout, Linear, Tanh
 import torch
 from torch import nn, Tensor
 from torch_cluster import fps, radius
 from torch_geometric.nn import PointNetConv, global_max_pool, MLP
 from torch_geometric.utils import unbatch
+
+
+class MLP(nn.Sequential):
+    def __init__(self, in_features, out_features, layers: list, activation, dropout: list | None, last_activation=True):
+        super().__init__()
+
+        if dropout is not None and len(layers) + 1 != len(dropout):
+            raise AssertionError(
+                f'Mismatching number of layers ({len(layers) + 1}) and dropout ({len(dropout)}).')
+
+        n_in = in_features
+
+        for i, l in enumerate(layers):
+            self.add_module(f'Linear {i}', Linear(n_in, l))
+            self.add_module(f'Activation {i}', activation())
+            if dropout is not None and dropout[i] > 0:
+                self.add_module(f'Dropout {i}', Dropout(dropout[i]))
+            n_in = l
+
+        # Out layers
+        self.add_module(f'Linear out', Linear(n_in, out_features))
+        if last_activation:
+            self.add_module(f'Activation out', activation())
+        if dropout is not None and dropout[-1] > 0:
+            self.add_module('Dropout out', Dropout(dropout[-1]))
+
+
+class PipnEncoder(nn.Module):
+    def __init__(self, in_features, local_features, global_features, local_layers, global_layers, activation=Tanh):
+        super().__init__()
+        self.local_feature = MLP(in_features, local_features, local_layers, activation, None)
+        self.global_feature = MLP(local_features + 1, global_features, global_layers, activation, None)
+
+    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(x)
+        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
+        global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
+        return local_features, global_feature
+
+
+class PipnDecoder(nn.Module):
+    def __init__(self, n_pde, local_features, global_features, layers, dropout=None, activation=Tanh):
+        super().__init__()
+        self.decoder = MLP(local_features + global_features, n_pde, layers, activation, dropout, last_activation=False)
+
+    def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
+        x = torch.concatenate([local_features, global_feature], 2)
+        return self.decoder(x)
 
 
 class Branch(nn.Module):

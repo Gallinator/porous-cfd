@@ -14,7 +14,7 @@ from visualization.common import plot_data_dist, plot_residuals, plot_errors
 from manufactured_dataset import ManufacturedDataset
 
 
-def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: Tensor) -> tuple:
+def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> tuple:
     # Domain
     u_error = l1_loss(predicted['U'], target['U'], reduction='none')
     p_error = l1_loss(predicted['p'], target['p'], reduction='none')
@@ -23,13 +23,14 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
     zones_ids = target['cellToRegion'].numpy(force=True)
 
     # Equation residuals
-    predicted_residuals = extras.numpy(force=True)
+    momentum_residuals = extras['Momentum'].numpy(force=True)
+    div_residuals = extras['div'].numpy(force=True)
 
-    return error, predicted_residuals, zones_ids
+    return error, momentum_residuals, div_residuals, zones_ids
 
 
 def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
-    errors, predicted_residuals, zones_ids = results
+    errors, momentum_residuals, div_residuals, zones_ids = results
 
     errors = np.concatenate(errors)
     zones_ids = np.array(zones_ids).flatten()
@@ -45,16 +46,17 @@ def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
     plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
     plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
 
-    pred_residuals = np.concatenate(predicted_residuals)
-    cfd_residuals = np.zeros_like(pred_residuals)
+    momentum_residuals = np.concatenate(momentum_residuals)
+    div_residuals = np.concatenate(div_residuals)
     plot_data_dist('Absolute residuals',
-                   np.abs(pred_residuals[..., :data.n_dims]),
-                   np.abs(pred_residuals[..., data.n_dims:]),
+                   np.abs(momentum_residuals),
+                   np.abs(div_residuals),
                    save_path=plots_path)
 
-    pred_res_avg = trimmed_mean(np.abs(pred_residuals), limits=[0, 0.05], axis=0)
-    cfd_res_avg = trimmed_mean(np.abs(cfd_residuals), limits=[0, 0.05], axis=0)
-    plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
+    predicted_residuals = np.concatenate([momentum_residuals, div_residuals], -1)
+    predicted_res_avg = trimmed_mean(np.abs(predicted_residuals), limits=[0, 0.05], axis=0)
+    cfd_residuals_avg = np.zeros_like(predicted_res_avg)
+    plot_residuals(predicted_res_avg, cfd_residuals_avg, trim=0.05, save_path=plots_path)
 
     if args.save_plots:
         errors_dict = {'Total': mae, 'Fluid': fluid_mae, 'Porous': porous_mae}

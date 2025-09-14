@@ -20,16 +20,29 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
 
     plt.interactive(case_plot_path is None)
 
-    plot_fields('Predicted', raw_points, u_scaler.inverse_transform(predicted['U']),
-                p_scaler.inverse_transform(predicted['p']), target['cellToRegion'], save_path=case_plot_path)
-    plot_fields('Ground truth', raw_points, u_scaler.inverse_transform(target['U']),
-                p_scaler.inverse_transform(target['p']), target['cellToRegion'], save_path=case_plot_path)
+    plot_fields('Predicted',
+                raw_points,
+                u_scaler.inverse_transform(predicted['U']),
+                p_scaler.inverse_transform(predicted['p']),
+                target['cellToRegion'].numpy(),
+                save_path=case_plot_path)
+    plot_fields('Ground truth',
+                raw_points,
+                u_scaler.inverse_transform(target['U']),
+                p_scaler.inverse_transform(target['p']),
+                target['cellToRegion'].numpy(),
+                save_path=case_plot_path)
 
     plt.interactive(False)
 
     u_error = u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(target['U'])
     p_error = p_scaler.inverse_transform(predicted['p']) - p_scaler.inverse_transform(target['p'])
-    plot_fields('Absolute error', raw_points, np.abs(u_error), np.abs(p_error), target['cellToRegion'], False,
+    plot_fields('Absolute error',
+                raw_points,
+                np.abs(u_error),
+                np.abs(p_error),
+                target['cellToRegion'].numpy(),
+                False,
                 save_path=case_plot_path)
 
 

@@ -1,6 +1,4 @@
-from abc import abstractmethod
 from typing import Any, Self
-
 import lightning as L
 import torch
 from torch import Tensor, autograd

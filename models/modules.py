@@ -8,7 +8,7 @@ import torch_geometric.nn as gnn
 import torchvision.ops as vnn
 
 class MLP(nn.Sequential):
-    def __init__(self, in_features, out_features, layers: list, activation, dropout: list | None, last_activation=True):
+    def __init__(self, in_features, layers: list, activation, dropout=None, last_activation=True):
         super().__init__()
 
         if dropout is not None and len(layers) + 1 != len(dropout):
@@ -19,17 +19,11 @@ class MLP(nn.Sequential):
 
         for i, l in enumerate(layers):
             self.add_module(f'Linear {i}', Linear(n_in, l))
-            self.add_module(f'Activation {i}', activation())
+            if i < len(layers) - 1 or last_activation:
+                self.add_module(f'Activation {i}', activation())
             if dropout is not None and dropout[i] > 0:
                 self.add_module(f'Dropout {i}', Dropout(dropout[i]))
             n_in = l
-
-        # Out layers
-        self.add_module(f'Linear out', Linear(n_in, out_features))
-        if last_activation:
-            self.add_module(f'Activation out', activation())
-        if dropout is not None and dropout[-1] > 0:
-            self.add_module('Dropout out', Dropout(dropout[-1]))
 
 
 class PipnEncoder(nn.Module):

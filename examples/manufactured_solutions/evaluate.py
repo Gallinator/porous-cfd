@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
-from torch import Tensor
 from torch.nn.functional import l1_loss
 
 from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate

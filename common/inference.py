@@ -59,6 +59,6 @@ def predict(args, model, data: FoamDataset, result_process_fn: Callable[[FoamDat
 
     for i, (target, predicted) in enumerate(track(list(zip(data, predictions)), description='Saving plots...')):
         case_path = Path(data.samples[i])
-        target.data = target.data.to('cpu').squeeze().detach()
-        predicted.data = predicted.data.to('cpu').squeeze().detach()
+        target = target.to('cpu')
+        predicted = predicted.to('cpu').squeeze()
         result_process_fn(data, target, predicted, case_path)

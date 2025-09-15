@@ -43,3 +43,14 @@ class FoamData:
         squeezed_data = self.data.squeeze()
         squeezed_domain = {k: v.squeeze() for k, v in self.domain.items()}
         return FoamData(squeezed_data, self.labels, squeezed_domain)
+
+    def to(self, *args, **kwargs):
+        """
+        Calls to() on the underlying tensors
+        :param args:
+        :param kwargs:
+        :return: a copy of this FoamData
+        """
+        new_data = self.data.to(*args, **kwargs)
+        new_domain = {d: s.to(*args, **kwargs) for d, s in self.domain.items()}
+        return FoamData(new_data, self.labels, new_domain)

@@ -11,7 +11,7 @@ class MLP(nn.Sequential):
     def __init__(self, in_features, layers: list, activation, dropout=None, last_activation=True):
         super().__init__()
 
-        if dropout is not None and len(layers) + 1 != len(dropout):
+        if dropout is not None and len(layers) != len(dropout):
             raise AssertionError(
                 f'Mismatching number of layers ({len(layers) + 1}) and dropout ({len(dropout)}).')
 
@@ -138,27 +138,52 @@ class GlobalSetAbstraction(torch.nn.Module):
         return x, pos, batch
 
 
-class EncoderPp(nn.Module):
-    def __init__(self):
+class GlobalEncoderPp(nn.Module):
+    def __init__(self, fraction, radius, conv_mlp):
         super().__init__()
-        self.local_feature = nn.Sequential(
-            nn.Linear(2, 64),
-            nn.Tanh(),
-            nn.Linear(64, 64),
-            nn.Tanh()
-        )
+        convs = []
+        for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp[:-1])):
+            convs.append((SetAbstraction(f, r, gnn.MLP(l, act=nn.Tanh(), norm=None)),
+                          'x, pos, batch -> x, pos, batch'))
 
-        self.conv1 = SetAbstraction(0.5, 0.5, gnn.MLP([65 + 2, 64], act=nn.Tanh(), norm=None))
-        self.conv2 = SetAbstraction(0.25, 1.0, gnn.MLP([64 + 2, 128], act=nn.Tanh(), norm=None))
-        self.conv3 = GlobalSetAbstraction(gnn.MLP([128 + 2, 1024], act=nn.Tanh(), norm=None))
+        convs.append((GlobalSetAbstraction(gnn.MLP(conv_mlp[-1], act=nn.Tanh(), norm=None)),
+                      'x, pos, batch -> x, pos, batch'))
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        local_features = self.local_feature(x)
+        self.set_abstractions = gnn.Sequential('x, pos, batch', convs)
+
+    def get_batch(self, x: Tensor):
+        batch = torch.arange(0, len(x)).unsqueeze(-1).repeat(1, x.shape[-2])
+        return torch.cat([*batch]).to(device=x.device, dtype=torch.int64)
+
+    def forward(self, x: Tensor, pos: Tensor):
+        batch = self.get_batch(x)
+        y, _, batch = self.set_abstractions(torch.concatenate([*x]), torch.concatenate([*pos]), batch)
+        return torch.stack(unbatch(y, batch))
+
+
+class EncoderPp(nn.Module):
+    def __init__(self, in_features, local_layers, fraction, radius, conv_mlp):
+        super().__init__()
+        self.local_feature = MLP(in_features, local_layers, Tanh)
+
+        self.global_encoder = GlobalEncoderPp(fraction, radius, conv_mlp)
+
+    def forward(self, pos: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(pos)
         global_in = torch.concatenate([local_features, zones_ids], dim=2)
-        batch = torch.concatenate([torch.tensor([i] * x.shape[-2]) for i in range(len(x))]).to(device=x.device,
-                                                                                               dtype=torch.int64)
-        out = self.conv1(torch.concatenate([*global_in]), torch.concatenate([*x]), batch)
-        out = self.conv2(*out)
-        y, _, batch = self.conv3(*out)
-        global_feature = torch.stack(unbatch(y, batch))
-        return local_features, global_feature
+        return local_features, self.global_encoder(global_in, pos)
+
+
+class GeometryEncoderPp(nn.Module):
+    def __init__(self, fraction, radius, conv_mlp):
+        super().__init__()
+        self.set_abstraction = GlobalEncoderPp(fraction, radius, conv_mlp)
+
+    def forward(self, pos: Tensor, zones_ids: Tensor) -> Tensor:
+        """
+        :param pos: Coordinates (B, N, D)
+        :param zones_ids: Porous zone index (B, M, 1)
+        :return: Embedding (B, 1, K)
+        """
+        y = self.set_abstraction(pos, zones_ids)
+        return torch.max(y, dim=1, keepdim=True)[0]

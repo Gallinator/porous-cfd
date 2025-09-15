@@ -9,7 +9,7 @@ from torch.nn.functional import l1_loss
 from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
-from models.pi_gano_2d import PiGano2d
+from models.pi_gano import PiGano
 from visualization.common import plot_data_dist, plot_residuals, plot_errors
 
 
@@ -69,7 +69,7 @@ def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
 
-    model = PiGano2d.load_from_checkpoint(args.checkpoint)
+    model = PiGano.load_from_checkpoint(args.checkpoint)
 
     rng = default_rng(8421)
     data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir,

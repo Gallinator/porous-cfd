@@ -38,3 +38,8 @@ class FoamData:
             raise KeyError(f'{item} not found in labels or subdomains.'
                            f' Available labels are {list(self.labels.keys())}. '
                            f'Available subdomains are {list(self.domain.keys())}.')
+
+    def squeeze(self):
+        squeezed_data = self.data.squeeze()
+        squeezed_domain = {k: v.squeeze() for k, v in self.domain.items()}
+        return FoamData(squeezed_data, self.labels, squeezed_domain)

@@ -9,7 +9,7 @@ from models.pi_gano import PiGano
 from visualization.visualization_3d import plot_fields, plot_streamlines, plot_houses
 
 
-def sample_process_fn(data: FoamDataset, predicted: FoamData, tgt: FoamData, case_path: Path):
+def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path):
     case_plot_path = create_case_plot_dir(plots_path, case_path.name)
 
     points_scaler = data.normalizers['C'].to()
@@ -18,43 +18,43 @@ def sample_process_fn(data: FoamDataset, predicted: FoamData, tgt: FoamData, cas
     d_scaler = data.normalizers['d'].to()
     f_scaler = data.normalizers['f'].to()
 
-    raw_points = points_scaler.inverse_transform(tgt['C']).numpy(force=True)
+    raw_points = points_scaler.inverse_transform(target['C']).numpy()
 
-    d = torch.max(d_scaler.inverse_transform(tgt['d']))
-    f = torch.max(f_scaler.inverse_transform(tgt['f']))
-    inlet_ux = torch.max(u_scaler[0].inverse_transform(tgt['Ux-inlet']))
+    d = torch.max(d_scaler.inverse_transform(target['d'])).item()
+    f = torch.max(f_scaler.inverse_transform(target['f'])).item()
+    inlet_ux = torch.max(u_scaler[0].inverse_transform(target['Ux-inlet']))
 
     plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                 raw_points,
-                u_scaler.inverse_transform(predicted['U']).numpy(force=True),
-                p_scaler.inverse_transform(predicted['p']).numpy(force=True),
-                tgt['cellToRegion'].numpy(force=True),
+                u_scaler.inverse_transform(predicted['U']).numpy(),
+                p_scaler.inverse_transform(predicted['p']).numpy(),
+                target['cellToRegion'].numpy(),
                 save_path=case_plot_path)
     plot_streamlines('Predicted streamlines',
                      case_path,
                      raw_points,
-                     u_scaler.inverse_transform(predicted['U']).numpy(force=True),
+                     u_scaler.inverse_transform(predicted['U']).numpy(),
                      save_path=case_plot_path)
 
     plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                 raw_points,
-                u_scaler.inverse_transform(tgt['U']).numpy(force=True),
-                p_scaler.inverse_transform(tgt['p']).numpy(force=True),
-                tgt['cellToRegion'].numpy(force=True),
+                u_scaler.inverse_transform(target['U']).numpy(),
+                p_scaler.inverse_transform(target['p']).numpy(),
+                target['cellToRegion'].numpy(),
                 save_path=case_plot_path)
     plot_streamlines('True streamlines',
                      case_path,
                      raw_points,
-                     u_scaler.inverse_transform(tgt['U'].numpy(force=True)),
+                     u_scaler.inverse_transform(target['U'].numpy()),
                      save_path=case_plot_path)
 
-    u_error = (u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(tgt['U'])).numpy(force=True)
-    p_error = p_scaler.inverse_transform(predicted['p']) - p_scaler.inverse_transform(tgt['p']).numpy(force=True)
+    u_error = (u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(target['U'])).numpy()
+    p_error = p_scaler.inverse_transform(predicted['p']) - p_scaler.inverse_transform(target['p']).numpy()
     plot_fields(f'Absolute error D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                 raw_points,
                 np.abs(u_error),
                 np.abs(p_error),
-                tgt['cellToRegion'].numpy(force=True),
+                target['cellToRegion'].numpy(),
                 save_path=case_plot_path)
     plot_streamlines('Error streamlines',
                      case_path,
@@ -62,15 +62,15 @@ def sample_process_fn(data: FoamDataset, predicted: FoamData, tgt: FoamData, cas
                      np.abs(u_error),
                      save_path=case_plot_path)
 
-    solid_points = points_scaler.inverse_transform(tgt['solid']['C']).numpy(force=True)
+    solid_points = points_scaler.inverse_transform(target['solid']['C']).numpy()
     solid_u_error = u_scaler.inverse_transform(predicted['solid']['U']) - u_scaler.inverse_transform(
-        tgt['solid']['U']).numpy(force=True)
+        target['solid']['U'])
     solid_p_error = p_scaler.inverse_transform(predicted['solid']['p']) - p_scaler.inverse_transform(
-        tgt['solid']['p']).numpy(force=True)
+        target['solid']['p'])
     plot_houses('House',
                 solid_points,
-                np.abs(solid_u_error),
-                np.abs(solid_p_error),
+                np.abs(solid_u_error.numpy()),
+                np.abs(solid_p_error.numpy()),
                 case_path / 'constant/triSurface/solid.obj',
                 save_path=case_plot_path)
 

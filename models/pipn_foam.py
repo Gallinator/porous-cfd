@@ -28,12 +28,9 @@ class PipnFoam(PorousPinnBase):
 
     def to(self, *args, **kwargs):
         super().to(*args, *kwargs)
-        self.u_scaler.to(*args, *kwargs)
-        self.p_scaler.to(*args, *kwargs)
-        self.points_scaler.to(*args, *kwargs)
-        self.u_scaler.to(torch.float32)
-        self.points_scaler.to(torch.float32)
-        self.p_scaler.to(torch.float32)
+        self.u_scaler.to(*args, *kwargs).to(torch.float)
+        self.p_scaler.to(*args, *kwargs).to(torch.float)
+        self.points_scaler.to(*args, *kwargs).to(torch.float)
         return self
 
     def postprocess_out(self, u, p) -> tuple[Tensor, Tensor]:

@@ -3,7 +3,7 @@ from torch import nn, Tensor
 from torch.nn import Tanh
 from torch.optim.lr_scheduler import ExponentialLR
 from dataset.foam_dataset import StandardScaler, FoamData, Normalizer
-from models.losses import ContinuityLossStandardized, MomentumLossVariable, MomentumLossVar, ContinuityLossVar
+from models.losses import ContinuityLossStandardized, MomentumLossVariable
 from models.model_base import PorousPinnBase
 from models.modules import GeometryEncoder, Branch, MLP, NeuralOperatorSequential
 

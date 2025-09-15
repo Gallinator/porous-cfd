@@ -98,14 +98,14 @@ class GeometryEncoder(nn.Module):
 
 
 class NeuralOperator(nn.Module):
-    def __init__(self, in_channels, out_channels, dropout=False):
+    def __init__(self, in_channels, out_channels, dropout):
         super().__init__()
         self.linear = nn.Sequential(
             nn.Linear(in_channels, out_channels),
             nn.Tanh()
         )
-        if dropout:
-            self.linear.append(nn.Dropout(0.15))
+        if dropout > 0:
+            self.linear.append(nn.Dropout(dropout))
 
     def forward(self, x: Tensor, par_embedding: Tensor):
         return self.linear(x) * par_embedding

@@ -5,7 +5,7 @@ from torch_cluster import fps, radius
 from torch_geometric.nn import PointNetConv, global_max_pool
 from torch_geometric.utils import unbatch
 import torch_geometric.nn as gnn
-import torchvision.ops as vnn
+
 
 class MLP(nn.Sequential):
     def __init__(self, in_features, layers: list, activation, dropout=None, last_activation=True):
@@ -27,10 +27,10 @@ class MLP(nn.Sequential):
 
 
 class PipnEncoder(nn.Module):
-    def __init__(self, in_features, local_features, global_features, local_layers, global_layers, activation=Tanh):
+    def __init__(self, in_features, local_layers, global_layers, activation=Tanh):
         super().__init__()
-        self.local_feature = MLP(in_features, local_features, local_layers, activation, None)
-        self.global_feature = MLP(local_features + 1, global_features, global_layers, activation, None)
+        self.local_feature = MLP(in_features, local_layers, activation)
+        self.global_feature = MLP(local_layers[-1] + 1, global_layers, activation)
 
     def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
         local_features = self.local_feature(x)
@@ -40,9 +40,9 @@ class PipnEncoder(nn.Module):
 
 
 class PipnDecoder(nn.Module):
-    def __init__(self, n_pde, local_features, global_features, layers, dropout=None, activation=Tanh):
+    def __init__(self, local_features, global_features, layers, dropout=None, activation=Tanh):
         super().__init__()
-        self.decoder = MLP(local_features + global_features, n_pde, layers, activation, dropout, last_activation=False)
+        self.decoder = MLP(local_features + global_features, layers, activation, dropout, last_activation=False)
 
     def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
         x = torch.concatenate([local_features, global_feature], 2)
@@ -52,7 +52,7 @@ class PipnDecoder(nn.Module):
 class Branch(nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()
-        self.linear = vnn.MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
+        self.linear = MLP(in_channels, hidden_channels, activation=Tanh)
 
     def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_u: Tensor):
         """
@@ -78,7 +78,7 @@ class Branch(nn.Module):
 class GeometryEncoder(nn.Module):
     def __init__(self, in_channels, hidden_channels):
         super().__init__()
-        self.linear = vnn.MLP(in_channels, hidden_channels, activation_layer=nn.Tanh)
+        self.linear = MLP(in_channels, hidden_channels, activation=Tanh)
 
     def forward(self, points: Tensor, zones_ids: Tensor) -> Tensor:
         """

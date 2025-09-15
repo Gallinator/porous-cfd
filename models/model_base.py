@@ -51,28 +51,30 @@ class PorousPinnBase(L.LightningModule):
         # Assume U, p outputs
         self.dims = out_features - 1
 
-        physics_losses_labels = ['Train loss continuity',
-                                 'Train loss momentum x',
-                                 'Train loss momentum y',
-                                 'Train loss momentum z'][:out_features]
-        observation_losses_labels = ['Obs loss p',
-                                     'Obs loss ux',
-                                     'Obs loss uy',
-                                     'Obs loss uz'][:out_features] if enable_data_loss else []
-        error_losses = ['p error',
-                        'ux error',
-                        'uy error',
-                        'uz error'][:out_features]
+        physics_losses_labels = ['Continuity loss',
+                                 'Momentum x loss',
+                                 'Momentum y loss',
+                                 'Momentum z loss'][:out_features]
+        observation_losses_labels = ['Observations loss p',
+                                     'Observations loss ux',
+                                     'Observations loss uy',
+                                     'Observations loss uz'][:out_features] if enable_data_loss else []
+        boundary_losses_labels = ['Boundary loss p',
+                                  'Boundary loss ux',
+                                  'Boundary loss uy',
+                                  'Boundary loss uz', ][:out_features]
+        error_losses = ['error p',
+                        'error ux',
+                        'error uy',
+                        'error uz'][:out_features]
 
-        self.training_loss_togger = LossLogger(self, 'Train loss',
+        self.training_loss_togger = LossLogger(self, 'Total loss',
                                                *physics_losses_labels,
-                                               'Train loss p',
-                                               'Train loss ux',
-                                               'Train loss uy',
+                                               *boundary_losses_labels,
                                                *observation_losses_labels,
                                                *[f'Train {l}' for l in error_losses])
 
-        self.val_loss_logger = LossLogger(self, *[f'Val {l}' for l in error_losses])
+        self.val_loss_logger = LossLogger(self, *[f'Validation {l}' for l in error_losses])
         self.predicted_labels = self.get_predicted_labels()
         self.extra_labels = self.get_extra_labels()
         self.loss_scaler = loss_scaler

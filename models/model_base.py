@@ -110,9 +110,7 @@ class PorousPinnBase(L.LightningModule):
         return u, p
 
     def transfer_batch_to_device(self, batch: FoamData, device: torch.device, dataloader_idx: int) -> FoamData:
-        dev_data = batch.data.to(device)
-        dev_domain = {d: s.to(device) for d, s in batch.domain.items()}
-        return FoamData(dev_data, batch.labels, dev_domain)
+        return batch.to(device)
 
     def calculate_errors(self, input: FoamData, predicted: FoamData) -> tuple[Tensor, Tensor]:
         processed_predicted_u, processed_predicted_p = self.postprocess_out(predicted['U'], predicted['p'])

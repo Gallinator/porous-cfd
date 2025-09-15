@@ -54,7 +54,7 @@ class Branch(nn.Module):
         super().__init__()
         self.linear = MLP(in_channels, hidden_channels, activation=Tanh)
 
-    def forward(self, ceof_points: Tensor, d: Tensor, f: Tensor, inlet_points: Tensor, inlet_u: Tensor):
+    def forward(self, param_features: Tensor):
         """
         :param ceof_points: Coordinates of darcy boundary points(B, M, D)
         :param d: Darcy coefficients (B, M, D)
@@ -63,15 +63,7 @@ class Branch(nn.Module):
         :param inlet_u: inlet velocity along x (B, N, K)
         :return: Parameter embedding (B, 1, H)
         """
-        coefs_dim = d.shape[-1]
-        points = torch.cat([ceof_points, inlet_points], dim=-2)
-        par_dim = coefs_dim + coefs_dim + inlet_u.shape[-1]
-        x = torch.zeros((points.shape[0], points.shape[1], par_dim), device=points.device)
-        x[..., 0:ceof_points.shape[-2], 0:coefs_dim] = d
-        x[..., 0:ceof_points.shape[-2], coefs_dim:coefs_dim * 2] = f
-        x[..., ceof_points.shape[-2]:, coefs_dim * 2:] = inlet_u
-        x = torch.cat([points, x], dim=-1)
-        y = self.linear(x)
+        y = self.linear(param_features)
         return torch.max(y, dim=1, keepdim=True)[0]
 
 

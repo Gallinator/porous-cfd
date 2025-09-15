@@ -111,6 +111,18 @@ class NeuralOperator(nn.Module):
         return self.linear(x) * par_embedding
 
 
+class NeuralOperatorSequential(nn.Sequential):
+    def __init__(self, n_operators, n_features, dropout):
+        super().__init__()
+        for i in range(n_operators):
+            self.add_module(f'Operator {i}', NeuralOperator(n_features, n_features, dropout[i]))
+
+    def forward(self, input: Tensor, par_embedding: Tensor):
+        for m in self:
+            input = m(input, par_embedding)
+        return input
+
+
 class SetAbstraction(torch.nn.Module):
     def __init__(self, ratio: float, r: float, mlp):
         super().__init__()

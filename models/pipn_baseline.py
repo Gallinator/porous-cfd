@@ -11,8 +11,9 @@ class PipnPorous(PorousPinnBase):
     def __init__(self, nu, d, f, in_dim, out_features):
         super().__init__(out_features, nu, False)
         self.save_hyperparameters()
-        self.encoder = PipnEncoder(in_dim, 64, 1024, [64], [64, 128])
-        self.decoder = PipnDecoder(out_features, 64, 1024, [512, 256, 128])
+        self.encoder = PipnEncoder(in_dim, [64, 64], [64, 128, 1024])
+        self.decoder = PipnDecoder(64, 1024, [512, 256, 128, out_features])
+
         self.d = d
         self.f = f
 

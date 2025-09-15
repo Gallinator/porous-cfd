@@ -20,6 +20,29 @@ def vector_loss(input: Tensor, target: Tensor, loss_fn) -> Tensor:
     return torch.mean(loss, dim=-2, keepdim=True).squeeze()
 
 
+class LossScaler(nn.Module):
+    def forward(self, model: LightningModule, losses: Tensor):
+        return losses
+
+
+class FixedLossScaler(LossScaler):
+    def __init__(self, loss_weights: dict[str, list]):
+        super().__init__()
+        self.weights = loss_weights['continuity']
+        self.weights.extend(loss_weights['momentum'])
+        self.weights.extend(loss_weights['boundary'])
+        self.weights.extend(loss_weights['observations'])
+        self.weights = torch.tensor(self.weights, dtype=torch.float)
+
+    def forward(self, model: LightningModule, losses: Tensor):
+        return losses * self.weights
+
+    def to(self, *args, **kwargs):
+        super().to(*args, **kwargs)
+        self.weights = self.weights.to(*args, **kwargs)
+        return self
+
+
 class LossLogger:
     def __init__(self, module: L.LightningModule, *loss_labels):
         super().__init__()

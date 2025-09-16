@@ -4,7 +4,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from dataset.foam_data import FoamData
 from models.losses import ContinuityLoss, MomentumLossManufactured
 from models.model_base import PorousPinnBase
-from models.modules import PipnEncoder, PipnDecoder
+from models.modules import PipnEncoder, PipnDecoder, EncoderPp
 
 
 class PipnPorous(PorousPinnBase):
@@ -30,3 +30,10 @@ class PipnPorous(PorousPinnBase):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001, eps=1e-6)
         scheduler = ExponentialLR(optimizer, 0.9995)
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
+
+
+class PipnPorousPp(PipnPorous):
+    def __init__(self, nu, d, f, in_dim, out_features):
+        super().__init__(nu, d, f, in_dim, out_features)
+        self.encoder = EncoderPp(in_dim, [64, 64], [0.5, 0.25], [0.6, 1.2],
+                                 [[64 + 1 + 2, 64], [64 + 2, 128], [128 + 2, 1024]])

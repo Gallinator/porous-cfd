@@ -194,10 +194,9 @@ class DataGeneratorBase:
         return center
 
     def generate_meta(self, data_dir: str | Path, *fields, max_dim=3):
-        min_points = {'internal': sys.maxsize}
-        min_max_tracker = MinMaxTracker()
-        stats_tracker = Welford()
-        fields_columns = None
+        fields_min_max_tracker, count_min_max_tracker = MinMaxTracker(), MinMaxTracker()
+        fields_stats_tracker, count_stats_tracker = Welford(), Welford()
+        fields_columns, boundary_names = None, None
         elapse_times = []
 
         for case in track(glob.glob(f'{data_dir}/*/'), description='Generating metadata'):
@@ -206,22 +205,27 @@ class DataGeneratorBase:
 
             if fields_columns is None:
                 fields_columns = internal_fields.columns
-
-            min_points['internal'] = min(min_points['internal'], len(internal_fields))
-            for bound in boundary_fields.index.unique():
-                bound_size = len(boundary_fields.loc[bound])
-                min_points[bound] = min(min_points[bound], bound_size) if bound in min_points.keys() else bound_size
+            if boundary_names is None:
+                boundary_names = sorted(boundary_fields.index.unique())
 
             data = np.concatenate([internal_fields.to_numpy(), boundary_fields.to_numpy()])
 
-            min_max_tracker.update(data)
-            stats_tracker.add_all(data)
+            fields_min_max_tracker.update(data)
+            fields_stats_tracker.add_all(data)
             elapse_times.append(parse_elapsed_time(case) / 1e6)
 
-        min_df = DataFrame(np.expand_dims(min_max_tracker.min, 0), columns=fields_columns)
-        max_df = DataFrame(np.expand_dims(min_max_tracker.max, 0), columns=fields_columns)
-        mean_df = DataFrame(np.expand_dims(stats_tracker.mean, 0), columns=fields_columns)
-        std_df = DataFrame(np.expand_dims(np.sqrt(stats_tracker.var_p), 0), columns=fields_columns)
+            points_counts = [len(internal_fields),
+                             np.count_nonzero(internal_fields['cellToRegion'] > 0)]
+            points_counts.extend(boundary_fields.groupby(boundary_fields.index).count().iloc[:, -1].values)
+
+            points_counts = np.array([points_counts])
+            count_min_max_tracker.update(points_counts)
+            count_stats_tracker.add_all(points_counts)
+
+        min_df = DataFrame(np.expand_dims(fields_min_max_tracker.min, 0), columns=fields_columns)
+        max_df = DataFrame(np.expand_dims(fields_min_max_tracker.max, 0), columns=fields_columns)
+        mean_df = DataFrame(np.expand_dims(fields_stats_tracker.mean, 0), columns=fields_columns)
+        std_df = DataFrame(np.expand_dims(np.sqrt(fields_stats_tracker.var_p), 0), columns=fields_columns)
         fields_meta = {}
 
         for f in fields_columns.get_level_values(0).unique():
@@ -234,9 +238,24 @@ class DataGeneratorBase:
 
         timing_meta = {'Total': sum(elapse_times), 'Average': np.mean(elapse_times)}
 
-        meta_dict = {"Min points": min_points,
-                     'Stats': fields_meta,
-                     'Timing': timing_meta}
+        counts_df = DataFrame([[*count_min_max_tracker.min],
+                               [*count_min_max_tracker.max],
+                               [*count_stats_tracker.mean],
+                               [*np.sqrt(count_stats_tracker.var_p)]],
+                              index=['Min', 'Max', 'Mean', 'Std'], columns=['internal', 'porous', *boundary_names])
+        points_meta = {}
+        for b in counts_df.columns:
+            points_meta[b] = {
+                'Min': counts_df[b].loc['Min'],
+                'Max': counts_df[b].loc['Max'],
+                'Mean': counts_df[b].loc['Mean'],
+                'Std': counts_df[b].loc['Std']
+            }
+
+        meta_dict = {
+            'Points': points_meta,
+            'Stats': fields_meta,
+            'Timing': timing_meta}
 
         with open(f'{data_dir}/meta.json', 'w') as meta:
             meta.write(json.dumps(meta_dict, indent=4))
@@ -250,11 +269,11 @@ class DataGeneratorBase:
         dicts = []
         for split in glob.glob(f'{data_parent}/*'):
             with open(f'{split}/meta.json', 'r') as f:
-                dicts.append(json.load(f)['Min points'])
+                dicts.append(json.load(f)['Points'])
 
         out = dict.fromkeys(dicts[0].keys(), sys.float_info.max)
         for d in dicts:
-            out = {k: min(out[k], d[k]) for k in d.keys()}
+            out = {k: int(min(out[k], d[k]['Min'])) for k in d.keys()}
 
         with open(f'{data_parent}/min_points.json', 'w') as f:
             f.write(json.dumps(out))

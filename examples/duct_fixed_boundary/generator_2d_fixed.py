@@ -60,5 +60,5 @@ class Generator2DFixed(Generator2DBase):
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
-    generator = Generator2DFixed('../assets/duct-2d-fixed', OPENFOAM_COMMAND, args.openfoam_procs, 0.5)
+    generator = Generator2DFixed('assets', OPENFOAM_COMMAND, args.openfoam_procs, 0.5)
     generator.generate(args.data_root_dir)

@@ -7,9 +7,11 @@ from collections.abc import Callable
 from pathlib import Path
 
 import matplotlib
+import numpy as np
+import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
-from torch import Tensor
+from torch import Tensor, cdist
 from torch.utils.data import DataLoader
 from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
@@ -24,6 +26,21 @@ def create_plots_root_dir(args):
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name / 'stats'
         plots_path.mkdir(exist_ok=True, parents=True)
     return plots_path
+
+
+def get_normalized_signed_distance(points: Tensor, target: Tensor):
+    dist = cdist(points, target)
+    dist = torch.min(dist, dim=-1)[0].unsqueeze(-1)
+    return dist / torch.max(dist).item()
+
+
+def get_mean_max_error_distance(errors, quantile, interface_dist):
+    q_mask = errors > np.quantile(errors, quantile, axis=-2, keepdims=True)
+    q_dist = []
+    for m in np.split(q_mask, errors.shape[-1], axis=-1):
+        m = m.flatten()
+        q_dist.append(np.mean(interface_dist[m]))
+    return q_dist
 
 
 def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):

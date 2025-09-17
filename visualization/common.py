@@ -158,3 +158,12 @@ def plot_u_direction_change(data_dir, save_path=None):
     ax_2.set_xlabel('U direction change')
     ax_2.set_ylabel('Frequency')
     plot_or_save(fig, save_path)
+
+
+def box_plot(title: str, values, labels, save_path=None):
+    fig, axs = plt.subplots(nrows=1, ncols=len(values))
+    fig.suptitle(title)
+
+    for a, v, l in zip(axs, values, labels):
+        a.boxplot(v, tick_labels=[l])
+    plot_or_save(fig, save_path)

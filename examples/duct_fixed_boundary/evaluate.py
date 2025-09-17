@@ -10,6 +10,7 @@ from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
 from models.pipn_foam import PipnFoam
 from visualization.common import plot_data_dist, plot_residuals, plot_errors
+from visualization.common import box_plot
 
 
 def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> tuple:

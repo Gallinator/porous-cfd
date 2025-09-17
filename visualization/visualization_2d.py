@@ -77,12 +77,3 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
         plot_scalar_field(f'$U {M_S}$', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
 
     plot_or_save(fig, save_path)
-
-
-def box_plot(title: str, values, labels, save_path=None):
-    fig, axs = plt.subplots(nrows=1, ncols=len(values))
-    fig.suptitle(title)
-
-    for a, v, l in zip(axs, values, labels):
-        a.boxplot(v, tick_labels=[l])
-    plot_or_save(fig, save_path)

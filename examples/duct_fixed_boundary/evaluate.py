@@ -5,7 +5,8 @@ from numpy.random import default_rng
 from scipy.stats._mstats_basic import trimmed_mean
 from torch.nn.functional import l1_loss
 
-from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate
+from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate, get_normalized_signed_distance, \
+    get_mean_max_error_distance
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
 from models.pipn_foam import PipnFoam
@@ -26,14 +27,27 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
 
     zones_ids = target['cellToRegion']
 
+    interface_dist = get_normalized_signed_distance(target['C'], target['interface']['C'])
+
     # Equation residuals
     target_residuals = torch.cat([target['internal']['momentError'], target['internal']['div(phi)']], dim=-1)
 
-    return error, extras['Momentum'], extras['div'], target_residuals, zones_ids
+    return error, extras['Momentum'], extras['div'], target_residuals, zones_ids, interface_dist
 
 
 def postprocess_fn(data: FoamDataset, results: tuple, plots_path: Path):
-    errors, predicted_momentum, predicted_div, target_residuals, zones_ids = results
+    errors, predicted_momentum, predicted_div, target_residuals, zones_ids, interface_dist = results
+
+    interface_dist = np.concatenate(interface_dist)
+    errors = np.array(errors)
+    interface_highest_distance = get_mean_max_error_distance(errors, 0.8, interface_dist)
+    plot_errors('Errors mean normalized distance from interface', interface_highest_distance, save_path=plots_path)
+
+    max_error_per_case = np.max(errors, axis=1)
+    box_plot('Maximum errors per case',
+             [*np.hsplit(max_error_per_case, errors.shape[-1])],
+             [f'$U_x$', f'$U_y$', f'$p$'],
+             plots_path)
 
     errors = np.concatenate(errors)
     zones_ids = np.array(zones_ids).flatten()

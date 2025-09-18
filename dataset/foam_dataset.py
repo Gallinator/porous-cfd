@@ -136,21 +136,13 @@ class FoamDataset(Dataset):
         :return: The samples boundary_fields
         """
         boundary_names = boundary_fields.index.unique()
-        tot = sum([self.min_points[bound] for bound in boundary_names])
+        target_n_samples = self.get_stratified_sampling_n(boundary_names, self.n_boundary)
+
         sampled_df = []
-
-        n_sampled, cur_index = 0, 0
         for i, bound in enumerate(boundary_names):
-            sample_size = int(self.n_boundary * self.min_points[bound] / tot)
             bound_points = len(boundary_fields.loc[bound])
-
-            if i == len(boundary_names) - 1:
-                sample_size += self.n_boundary - (sample_size + n_sampled)
-
-            samples = self.rng.choice(bound_points, replace=False, size=sample_size) + cur_index
-            sampled_df.append(boundary_fields.iloc[samples])
-            n_sampled += sample_size
-            cur_index += bound_points
+            samples = self.rng.choice(bound_points, replace=False, size=target_n_samples[i])
+            sampled_df.append(boundary_fields.loc[bound].iloc[samples])
 
         return pandas.concat(sampled_df)
 
@@ -160,8 +152,26 @@ class FoamDataset(Dataset):
         :param internal_fields:
         :return: The samples internal_fields
         """
-        samples = self.rng.choice(len(internal_fields), replace=False, size=self.n_internal)
-        return internal_fields.iloc[samples]
+
+        boundary_names = ['internal', 'porous']
+        target_n_samples = self.get_stratified_sampling_n(boundary_names, self.n_internal)
+
+        # Create a temp dataframe with internal and porous labels
+        temp_index = np.empty((len(internal_fields), 1), dtype='U8')
+        temp_index[internal_fields['cellToRegion'].values > 0] = 'porous'
+        temp_index[internal_fields['cellToRegion'].values == 0] = 'internal'
+        temp_df = internal_fields.copy()
+        temp_df.index = temp_index.flatten().tolist()
+
+        sampled_df = []
+        for i, bound in enumerate(boundary_names):
+            bound_points = len(temp_df.loc[bound])
+            samples = self.rng.choice(bound_points, replace=False, size=target_n_samples[i])
+            sampled_df.append(temp_df.loc[bound].iloc[samples])
+
+        sampled_df = pandas.concat(sampled_df)
+        sampled_df.index = ['internal'] * len(sampled_df)
+        return sampled_df
 
     def sample_obs(self, boundary_fields, internal_fields) -> np.ndarray:
         """

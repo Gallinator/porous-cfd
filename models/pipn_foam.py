@@ -5,7 +5,7 @@ from dataset.foam_data import FoamData
 from dataset.foam_dataset import StandardScaler
 from models.losses import ContinuityLossStandardized, MomentumLossFixed
 from models.model_base import PorousPinnBase
-from models.modules import PipnEncoder, PipnDecoder
+from models.modules import PipnEncoder, PipnDecoder, EncoderPp
 
 
 class PipnFoam(PorousPinnBase):
@@ -47,3 +47,13 @@ class PipnFoam(PorousPinnBase):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         scheduler = ExponentialLR(optimizer, 0.999)
         return [optimizer], [{"scheduler": scheduler, "interval": "epoch"}]
+
+
+class PipnFoamPp(PipnFoam):
+    def __init__(self, nu, d, f, in_dim, out_features, scalers: dict[str, StandardScaler], loss_scaler=None):
+        super().__init__(nu, d, f, in_dim, out_features, scalers, loss_scaler)
+        self.encoder = EncoderPp(in_dim,
+                                 [64, 64],
+                                 [0.5, 0.25],
+                                 [0.5, 0.1],
+                                 [[64 + 1 + 2, 64], [64 + 2, 128], [128 + 2, 1024]])

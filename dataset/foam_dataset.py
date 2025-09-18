@@ -110,6 +110,25 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
+    def get_stratified_sampling_n(self, boundary_names, total_size):
+        n_min = np.array([self.min_points[bound] for bound in boundary_names]).astype(np.int64)
+        n_mean = np.array([self.meta['Points'][bound]['Mean'] for bound in boundary_names]).astype(np.int64)
+        n_total = np.sum(n_mean)
+        target_n = (n_mean / n_total * total_size).astype(np.int64)
+        exceeding_samples = np.maximum(target_n - n_min, np.zeros_like(target_n))
+        n_free = np.count_nonzero(exceeding_samples <= 0)
+        total_to_redist = np.sum(exceeding_samples) + total_size - np.sum(target_n)
+        sort_ids = np.argsort(n_min)
+        for id in sort_ids:
+            if exceeding_samples[id] > 0:
+                continue
+            added_samples = min(n_min[id], total_to_redist // n_free)
+            target_n[id] += added_samples
+            n_free -= 1
+            total_to_redist -= added_samples
+        target_n[exceeding_samples > 0] = n_min[exceeding_samples > 0]
+        return target_n
+
     def sample_boundary(self, boundary_fields: DataFrame) -> DataFrame:
         """
         Samples the boundary points. Return internal_fields to avoid sampling.

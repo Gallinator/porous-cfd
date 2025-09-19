@@ -15,11 +15,6 @@ M_S = '\left[ \\frac{m}{s} \\right]'
 M2_S2 = '\left[ \\frac{m^2}{s^2} \\right]'
 
 
-def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, plot_streams=True,
-                save_path=None):
-    return NotImplemented
-
-
 def plot_or_save(fig, save_path):
     if fig._suptitle is not None:
         file_name = fig._suptitle.get_text()
@@ -31,15 +26,6 @@ def plot_or_save(fig, save_path):
         plt.close(fig)
     else:
         plt.show()
-
-
-def plot_case(path: str):
-    fields = data_parser.parse_case_fields(path, 'C', 'U', 'p', 'cellToRegion')
-    plot_fields(Path(path).stem,
-                fields['C'].to_numpy(),
-                fields['U'].to_numpy(),
-                fields['p'].to_numpy(),
-                fields['cellToRegion'])
 
 
 def plot_histogram(ax, data, color: str, title: str, bins=100):

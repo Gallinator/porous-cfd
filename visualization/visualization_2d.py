@@ -1,9 +1,12 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import tri
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.interpolate import griddata
 
+from dataset import data_parser
 from visualization.common import M2_S2, M_S, plot_or_save
 
 
@@ -77,3 +80,12 @@ def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: 
         plot_scalar_field(f'$U {M_S}$', points, np.linalg.norm(u, axis=1), porous, fig, ax_u)
 
     plot_or_save(fig, save_path)
+
+
+def plot_case(path: str):
+    fields = data_parser.parse_case_fields(path, 'C', 'U', 'p', 'cellToRegion')
+    plot_fields(Path(path).stem,
+                fields['C'].to_numpy()[..., 0:2],
+                fields['U'].to_numpy()[..., 0:2],
+                fields['p'].to_numpy(),
+                fields['cellToRegion'])

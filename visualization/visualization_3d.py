@@ -1,8 +1,12 @@
 import os
 import random
+from pathlib import Path
+
 import numpy as np
 import pyvista as pv
 from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
+
+from dataset import data_parser
 from visualization.common import M_S, M2_S2
 
 
@@ -130,3 +134,12 @@ def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.ar
     plot_scalar_field(rf'$u_z {M_S}$', points, u[:, 2], porous, plotter)
 
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
+
+
+def plot_case(path: str):
+    fields = data_parser.parse_case_fields(path, 'C', 'U', 'p', 'cellToRegion')
+    plot_fields(Path(path).stem,
+                fields['C'].to_numpy(),
+                fields['U'].to_numpy(),
+                fields['p'].to_numpy(),
+                fields['cellToRegion'])

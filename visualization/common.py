@@ -41,7 +41,8 @@ def plot_dataset_dist(path: str, save_path=None):
         data.append(case_data)
 
     data = pandas.concat(data)
-    plot_data_dist(f'{path} distribution', data['U'], data['p'], data['cellToRegion'], save_path)
+    plot_data_dist(f'{Path(path).name} distribution', data['U'].values, data['p'].values, data['cellToRegion'].values,
+                   save_path)
 
 
 def plot_data_dist(title, u, p, zones_ids=None, save_path=None):

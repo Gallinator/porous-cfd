@@ -146,7 +146,7 @@ def parse_internal_fields(case_dir: str, *fields, max_dim=3) -> DataFrame:
         if dim > 1:
             fields_df = add_multidim_field(fields_df, f, parsed_field, max_dim)
         else:
-            fields_df[f, ''] = parsed_field
+            fields_df[f, ''] = parsed_field.flatten()
 
     for coef in set(fields) & {'d', 'f'}:
         fields_df = add_multidim_field(fields_df, coef, cell_to_region * parse_coef(case_dir, coef), max_dim)

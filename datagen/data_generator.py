@@ -215,7 +215,8 @@ class DataGeneratorBase:
             elapse_times.append(parse_elapsed_time(case) / 1e6)
 
             points_counts = [len(internal_fields),
-                             np.count_nonzero(internal_fields['cellToRegion'] > 0)]
+                             np.count_nonzero(internal_fields['cellToRegion'] > 0),
+                             np.count_nonzero(internal_fields['cellToRegion'] == 0)]
             points_counts.extend(boundary_fields.groupby(boundary_fields.index).count().iloc[:, -1].values)
 
             points_counts = np.array([points_counts])
@@ -242,7 +243,8 @@ class DataGeneratorBase:
                                [*count_min_max_tracker.max],
                                [*count_stats_tracker.mean],
                                [*np.sqrt(count_stats_tracker.var_p)]],
-                              index=['Min', 'Max', 'Mean', 'Std'], columns=['internal', 'porous', *boundary_names])
+                              index=['Min', 'Max', 'Mean', 'Std'],
+                              columns=['internal', 'porous', 'fluid', *boundary_names])
         points_meta = {}
         for b in counts_df.columns:
             points_meta[b] = {

@@ -1,6 +1,6 @@
 {
   "Fields": ["C", "U", "p", "cellToRegion"],
-  "Variable boundary": {},
+  "Variable boundaries": {},
   "Normalize fields": {
     "Scale": [], "Standardize": ["C", "U", "p"]
   },

@@ -153,7 +153,7 @@ class FoamDataset(Dataset):
         :return: The samples internal_fields
         """
 
-        boundary_names = ['internal', 'porous']
+        boundary_names = ['fluid', 'porous']
         target_n_samples = self.get_stratified_sampling_n(boundary_names, self.n_internal)
 
         # Create a temp dataframe with internal and porous labels
@@ -162,6 +162,7 @@ class FoamDataset(Dataset):
         temp_index[internal_fields['cellToRegion'].values == 0] = 'internal'
         temp_df = internal_fields.copy()
         temp_df.index = temp_index.flatten().tolist()
+        boundary_names[0] = 'internal'
 
         sampled_df = []
         for i, bound in enumerate(boundary_names):

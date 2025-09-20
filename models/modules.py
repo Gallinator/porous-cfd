@@ -1,3 +1,5 @@
+from typing import Optional
+
 from torch.nn import Dropout, Linear, Tanh
 import torch
 from torch import nn, Tensor
@@ -107,6 +109,20 @@ class NeuralOperatorSequential(nn.Sequential):
         for m in self:
             input = m(input, par_embedding)
         return input
+
+
+class PointConvNext(PointNetConv):
+    def __init__(self, r, **kwargs):
+        super().__init__(**kwargs)
+        self.r = r
+
+    def message(self, x_j: Optional[Tensor], pos_i: Tensor, pos_j: Tensor) -> Tensor:
+        msg = pos_j - pos_i / self.r
+        if x_j is not None:
+            msg = torch.cat([x_j, msg], dim=1)
+        if self.local_nn is not None:
+            msg = self.local_nn(msg)
+        return msg
 
 
 class SetAbstraction(torch.nn.Module):

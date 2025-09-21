@@ -4,7 +4,7 @@ from torch.nn import Dropout, Linear, Tanh
 import torch
 from torch import nn, Tensor
 from torch_cluster import fps, radius
-from torch_geometric.nn import PointNetConv, global_max_pool
+from torch_geometric.nn import PointNetConv, global_max_pool, knn_interpolate
 from torch_geometric.utils import unbatch
 import torch_geometric.nn as gnn
 
@@ -139,6 +139,20 @@ class SetAbstraction(torch.nn.Module):
         x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
         return x, pos, batch
+
+
+class FeaturePropagation(torch.nn.Module):
+    def __init__(self, k: int, mlp):
+        super().__init__()
+        self.k = k
+        self.mlp = mlp
+
+    def forward(self, x, pos, batch, x_skip, pos_skip, batch_skip):
+        x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.mlp(x)
+        return x, pos_skip, batch_skip
 
 
 class GlobalSetAbstraction(torch.nn.Module):

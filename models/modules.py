@@ -114,10 +114,10 @@ class Branch(nn.Module):
 
 
 class NeuralOperator(nn.Module):
-    def __init__(self, in_channels, out_channels, dropout):
+    def __init__(self, out_channels, dropout):
         super().__init__()
         self.linear = nn.Sequential(
-            nn.Linear(in_channels, out_channels),
+            nn.Linear(out_channels, out_channels),
             nn.Tanh()
         )
         if dropout > 0:

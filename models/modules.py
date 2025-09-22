@@ -42,6 +42,22 @@ class PointNetFeatureExtract(nn.Module):
         return local_features, global_feature
 
 
+class BatchedDecorator(nn.Module):
+    """
+    This module allows to convert from an input of dimension (B,M,N) to an input of (M,N) with a batch tensor used by PyTorch Geometric.
+    """
+
+    def __init__(self, module: nn.Module):
+        super().__init__()
+        self.module = module
+
+    def forward(self, x: Tensor, pos: Tensor) -> Tensor:
+        batch = get_batch(x)
+        x, pos = torch.cat([*x]), torch.cat([*pos])
+        x, _, batch = self.module(x, pos, batch)
+        return torch.stack(unbatch(x, batch))
+
+
 class PointNetFeatureExtractPp(nn.Module):
     def __init__(self, local_layers, global_layers, global_fraction, global_radius, activation=Tanh):
         super().__init__()
@@ -57,8 +73,8 @@ class PointNetFeatureExtractPp(nn.Module):
         return local_features, global_feature
 
 
-class PipnDecoder(nn.Module):
-    def __init__(self, local_features, global_features, layers, dropout=None, activation=Tanh):
+class BranchPp(nn.Module):
+    def __init__(self, fraction, radius, conv_mlp):
         super().__init__()
         self.decoder = MLP(local_features + global_features, layers, activation, dropout, last_activation=False)
 

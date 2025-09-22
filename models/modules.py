@@ -196,28 +196,6 @@ class GlobalSetAbstraction(torch.nn.Module):
         return x, pos, batch
 
 
-class GlobalEncoderPp(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp):
-        super().__init__()
-        convs = []
-        for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp[:-1])):
-            convs.append((SetAbstraction(f, r, gnn.MLP(l, act=nn.Tanh(), norm=None)),
-                          'x, pos, batch -> x, pos, batch'))
-
-        convs.append((GlobalSetAbstraction(gnn.MLP(conv_mlp[-1], act=nn.Tanh(), norm=None)),
-                      'x, pos, batch -> x, pos, batch'))
-
-        self.set_abstractions = gnn.Sequential('x, pos, batch', convs)
-
-    def get_batch(self, x: Tensor):
-        batch = torch.arange(0, len(x)).unsqueeze(-1).repeat(1, x.shape[-2])
-        return torch.cat([*batch]).to(device=x.device, dtype=torch.int64)
-
-    def forward(self, x: Tensor, pos: Tensor):
-        batch = self.get_batch(x)
-        y, _, batch = self.set_abstractions(torch.concatenate([*x]), torch.concatenate([*pos]), batch)
-        return torch.stack(unbatch(y, batch))
-
 
 class GlobalEncoderPpMsg(nn.Module):
     def __init__(self):

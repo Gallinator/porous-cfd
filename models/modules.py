@@ -76,11 +76,18 @@ class PointNetFeatureExtractPp(nn.Module):
 class BranchPp(nn.Module):
     def __init__(self, fraction, radius, conv_mlp):
         super().__init__()
-        self.decoder = MLP(local_features + global_features, layers, activation, dropout, last_activation=False)
+        sa_layers = SetAbstractionSeq(fraction, radius, conv_mlp)
+        self.set_abstraction = BatchedDecorator(sa_layers)
 
-    def forward(self, local_features: Tensor, global_feature: Tensor) -> Tensor:
-        x = torch.concatenate([local_features, global_feature], 2)
-        return self.decoder(x)
+    def forward(self, pos: Tensor, zones_ids: Tensor) -> Tensor:
+        """
+        :param pos: Coordinates (B, N, D)
+        :param zones_ids: Porous zone index (B, M, 1)
+        :return: Embedding (B, 1, K)
+        """
+        in_data = torch.cat([pos, zones_ids], dim=-1)
+        y = self.set_abstraction(in_data, pos)
+        return torch.max(y, dim=1, keepdim=True)[0]
 
 
 class Branch(nn.Module):

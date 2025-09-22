@@ -196,9 +196,8 @@ class GlobalSetAbstraction(torch.nn.Module):
         return x, pos, batch
 
 
-
-class GlobalEncoderPpMsg(nn.Module):
-    def __init__(self):
+class SetAbstractionMrgSeq(nn.Module):
+    def __init__(self, in_features, activation):
         super().__init__()
         self.branch_1 = gnn.Sequential('x, pos, batch', [
             (SetAbstraction(0.5, 0.6, MLP(2 + 1 + 2, [64, 128], Tanh)), 'x, pos, batch -> x, pos, batch'),

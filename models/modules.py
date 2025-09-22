@@ -10,16 +10,15 @@ import torch_geometric.nn as gnn
 
 
 class MLP(nn.Sequential):
-    def __init__(self, in_features, layers: list, activation, dropout=None, last_activation=True):
+    def __init__(self, layers: list, dropout=None, activation=Tanh, last_activation=True):
         super().__init__()
 
-        if dropout is not None and len(layers) != len(dropout):
+        if dropout is not None and len(layers) - 1 != len(dropout):
             raise AssertionError(
-                f'Mismatching number of layers ({len(layers) + 1}) and dropout ({len(dropout)}).')
+                f'Mismatching number of layers ({len(layers)}) and dropout ({len(dropout)}).')
 
-        n_in = in_features
-
-        for i, l in enumerate(layers):
+        n_in = layers[0]
+        for i, l in enumerate(layers[1:]):
             self.add_module(f'Linear {i}', Linear(n_in, l))
             if i < len(layers) - 1 or last_activation:
                 self.add_module(f'Activation {i}', activation())

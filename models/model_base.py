@@ -42,9 +42,8 @@ def enable_internal_autograd(batch: FoamData) -> tuple[Tensor, Tensor]:
 
 
 class PorousPinnBase(L.LightningModule):
-    def __init__(self, out_features, nu, enable_data_loss=True, loss_scaler=None):
+    def __init__(self, out_features, enable_data_loss=True, loss_scaler=None):
         super().__init__()
-        self.nu = nu
         self.verbose_predict = False
         self.enable_data_loss = enable_data_loss
 

@@ -231,17 +231,26 @@ class SetAbstractionMrgSeq(nn.Module):
         return torch.cat([x_3, x_4], dim=-1)
 
 
-class EncoderPp(nn.Module):
-    def __init__(self, in_features, local_layers, fraction, radius, conv_mlp):
+class SetAbstractionSeq(nn.Module):
+    def __init__(self, fraction, radius, conv_mlp, return_skip=True):
         super().__init__()
-        self.local_feature = MLP(in_features, local_layers, Tanh)
+        layers = OrderedDict()
+        for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp)):
+            layers[f'Sa-{i}'] = SetAbstraction(f, r, gnn.MLP(l, act=nn.Tanh(), norm=None, plain_last=False))
+        if len(conv_mlp) > len(radius):
+            layers['Global-Sa'] = GlobalSetAbstraction(
+                gnn.MLP(conv_mlp[-1], act=nn.Tanh(), norm=None, plain_last=False))
 
-        self.global_encoder = GlobalEncoderPp(fraction, radius, conv_mlp)
+        self.layers = nn.Sequential(layers)
+        self.return_skip = return_skip
 
-    def forward(self, pos: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        local_features = self.local_feature(pos)
-        global_in = torch.concatenate([local_features, zones_ids], dim=2)
-        return local_features, self.global_encoder(global_in, pos)
+    def forward(self, x: Tensor, pos: Tensor, batch: Tensor) -> tuple:
+        input = x, pos, batch
+        skips = [input]
+        for sa in self.layers:
+            input = sa(*input)
+            skips.append(input)
+        return (input, skips[:-1]) if self.return_skip else input
 
 
 class GeometryEncoderPp(nn.Module):

@@ -200,19 +200,23 @@ class SetAbstractionMrgSeq(nn.Module):
     def __init__(self, in_features, activation):
         super().__init__()
         self.branch_1 = gnn.Sequential('x, pos, batch', [
-            (SetAbstraction(0.5, 0.6, MLP(2 + 1 + 2, [64, 128], Tanh)), 'x, pos, batch -> x, pos, batch'),
-            (SetAbstraction(0.125, 0.8, MLP(128 + 2, [256], Tanh)), 'x, pos, batch -> x, pos, batch'),
+            (SetAbstraction(0.5, 0.6,
+                            gnn.MLP([in_features + 1 + 2, 64, 128], act=activation, norm=None, plain_last=False)),
+             'x, pos, batch -> x, pos, batch'),
+            (SetAbstraction(0.125, 0.8,
+                            gnn.MLP([128 + in_features, 256], act=activation, norm=None, plain_last=False)),
+             'x, pos, batch -> x, pos, batch'),
         ])
-        self.branch_2 = SetAbstraction(0.5, 0.6, MLP(2 + 1 + 2, [64, 128, 256], Tanh))
-        self.branch_3 = GlobalSetAbstraction(MLP(2 + 1 + 2, [128, 256, 512], Tanh))
-        self.branch_4 = GlobalSetAbstraction(MLP(256 + 2, [512], Tanh))
-
-    def get_batch(self, x: Tensor):
-        batch = torch.arange(0, len(x)).unsqueeze(-1).repeat(1, x.shape[-2])
-        return torch.cat([*batch]).to(device=x.device, dtype=torch.int64)
+        self.branch_2 = SetAbstraction(0.5, 0.6,
+                                       gnn.MLP([2 + 1 + in_features, 64, 128, 256], act=activation, norm=None,
+                                               plain_last=False))
+        self.branch_3 = GlobalSetAbstraction(
+            gnn.MLP([2 + 1 + in_features, 128, 256, 512], act=activation, norm=None, plain_last=False))
+        self.branch_4 = GlobalSetAbstraction(
+            gnn.MLP([256 + in_features, 512], act=activation, norm=None, plain_last=False))
 
     def forward(self, x: Tensor, pos: Tensor):
-        b_0 = self.get_batch(x)
+        b_0 = get_batch(x)
         x_0, pos_0 = x.flatten(start_dim=0, end_dim=1), pos.flatten(start_dim=0, end_dim=1)
         x_1, pos_1, b_1 = self.branch_1(x_0, pos_0, b_0)
         x_2, pos_2, b_2 = self.branch_2(x_0, pos_0, b_0)

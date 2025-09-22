@@ -58,7 +58,6 @@ tensorboard==2.19.0
 tensorboard-data-server==0.7.2
 threadpoolctl==3.6.0
 tqdm==4.67.1
-triton==3.4.0
 typing_extensions==4.12.2
 tzdata==2025.2
 urllib3==2.4.0

@@ -313,3 +313,31 @@ class FeaturePropagationSeq(nn.Module):
         for l, s in zip(self.layers, skips[::-1]):
             out = l(*out, *s)
         return out
+
+
+class FeaturePropagationNeuralOperatorSeq(nn.Module):
+    def __init__(self, fp_layers, k, par_size, dropout=None, activation=nn.Tanh()):
+        super().__init__()
+        dropout = [0.] * len(fp_layers) if dropout is None else dropout
+        layers = OrderedDict()
+        for i, (l, k, d) in enumerate(zip(fp_layers, k, dropout)):
+            is_last = i == len(fp_layers) - 1
+            layers[f'Fp-{i}'] = FeaturePropagationNeuralOperator(k, gnn.MLP(l, act=activation, norm=None,
+                                                                            dropout=d,
+                                                                            plain_last=is_last),
+                                                                 par_size)
+        self.layers = nn.Sequential(layers)
+
+    def forward(self, par_embedding: Tensor, x: Tensor, pos: Tensor, batch: Tensor, *skips) -> tuple:
+        """
+        :param par_embedding: parameter embedding (B,N,M)
+        :param x: feature vectors (B*N,K)
+        :param pos: positions vector (B*N,D)
+        :param batch: batch indices (B*N)
+        :param skips: skip outputs from SetAbstractionSeq
+        :return:
+        """
+        out = x, pos, batch
+        for l, s in zip(self.layers, skips[::-1]):
+            out = l(par_embedding, *out, *s)
+        return out

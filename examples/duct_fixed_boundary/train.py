@@ -63,7 +63,6 @@ def get_model(name, normalizers):
         case _:
             raise NotImplementedError
 
-    return
 
 
 if __name__ == '__main__':

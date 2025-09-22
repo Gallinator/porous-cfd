@@ -45,12 +45,14 @@ class PointNetFeatureExtract(nn.Module):
 class PointNetFeatureExtractPp(nn.Module):
     def __init__(self, local_layers, global_layers, global_fraction, global_radius, activation=Tanh):
         super().__init__()
-        self.local_feature = MLP(in_features, local_layers, activation)
-        self.global_feature = MLP(local_layers[-1] + 1, global_layers, activation)
+        self.local_feature = MLP(local_layers, activation=activation)
+        sa_layers = SetAbstractionSeq(global_fraction, global_radius, global_layers, return_skip=False)
+        self.global_feature = BatchedDecorator(sa_layers)
 
-    def forward(self, x: Tensor, zones_ids: Tensor) -> tuple[Tensor, Tensor]:
-        local_features = self.local_feature(x)
-        global_feature = self.global_feature(torch.concatenate([local_features, zones_ids], dim=2))
+    def forward(self, x: Tensor, pos: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(pos)
+        global_in = torch.concatenate([pos, x], dim=-1)
+        global_feature = self.global_feature(global_in, pos)
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 

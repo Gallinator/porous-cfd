@@ -200,6 +200,30 @@ class FeaturePropagation(torch.nn.Module):
         return x, pos_skip, batch_skip
 
 
+class FeaturePropagationNeuralOperator(nn.Module):
+    def __init__(self, k: int, mlp, par_size):
+        super().__init__()
+        self.k = k
+        self.mlp = mlp
+        self.par_reduce_mlp = nn.Sequential(nn.Linear(par_size, mlp.channel_list[-1]), mlp.act)
+
+    def forward(self, par_embedding, x, pos, batch, x_skip, pos_skip, batch_skip):
+        batch_size = par_embedding.shape[0]
+
+        x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.mlp(x)
+
+        # Unbatch parameters
+        n_repeats = x.shape[0] // batch_size
+        layer_par = par_embedding.repeat(1, n_repeats, 1)
+        layer_par = layer_par.flatten(start_dim=0, end_dim=1)
+        x = x * self.par_reduce_mlp(layer_par)
+
+        return x, pos_skip, batch_skip
+
+
 class GlobalSetAbstraction(torch.nn.Module):
     def __init__(self, mlp):
         super().__init__()

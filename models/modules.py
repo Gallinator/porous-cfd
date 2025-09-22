@@ -91,9 +91,9 @@ class BranchPp(nn.Module):
 
 
 class Branch(nn.Module):
-    def __init__(self, in_channels, hidden_channels):
+    def __init__(self, hidden_channels):
         super().__init__()
-        self.linear = MLP(in_channels, hidden_channels, activation=Tanh)
+        self.linear = MLP(hidden_channels, activation=Tanh)
 
     def forward(self, param_features: Tensor):
         """

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Optional
 
 from torch.nn import Dropout, Linear, Tanh
@@ -253,16 +254,22 @@ class SetAbstractionSeq(nn.Module):
         return (input, skips[:-1]) if self.return_skip else input
 
 
-class GeometryEncoderPp(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp):
+class FeaturePropagationSeq(nn.Module):
+    def __init__(self, fp_layers, k, dropout=None, activation=nn.Tanh()):
         super().__init__()
-        self.set_abstraction = GlobalEncoderPp(fraction, radius, conv_mlp)
 
-    def forward(self, pos: Tensor, zones_ids: Tensor) -> Tensor:
-        """
-        :param pos: Coordinates (B, N, D)
-        :param zones_ids: Porous zone index (B, M, 1)
-        :return: Embedding (B, 1, K)
-        """
-        y = self.set_abstraction(pos, zones_ids)
-        return torch.max(y, dim=1, keepdim=True)[0]
+        dropout = [0.] * len(fp_layers) if dropout is None else dropout
+        layers = OrderedDict()
+        for i, (l, k, d) in enumerate(zip(fp_layers, k, dropout)):
+            is_last = i == len(fp_layers) - 1
+            layers[f'Fp-{i}'] = FeaturePropagation(k, gnn.MLP(l, act=activation, norm=None,
+                                                              dropout=d,
+                                                              plain_last=is_last))
+
+        self.layers = nn.Sequential(layers)
+
+    def forward(self, x: Tensor, pos: Tensor, batch: Tensor, *skips) -> tuple:
+        out = x, pos, batch
+        for l, s in zip(self.layers, skips[::-1]):
+            out = l(*out, *s)
+        return out

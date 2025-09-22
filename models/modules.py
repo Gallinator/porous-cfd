@@ -27,8 +27,23 @@ class MLP(nn.Sequential):
             n_in = l
 
 
-class PipnEncoder(nn.Module):
-    def __init__(self, in_features, local_layers, global_layers, activation=Tanh):
+class PointNetFeatureExtract(nn.Module):
+    def __init__(self, local_layers, global_layers, activation=Tanh):
+        super().__init__()
+        self.local_feature = MLP(local_layers, activation=activation)
+        self.global_feature = MLP(global_layers, activation=activation)
+
+    def forward(self, x: Tensor, pos: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(pos)
+
+        global_in = torch.concatenate([local_features, x], dim=-1)
+        global_feature = self.global_feature(global_in)
+        global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
+        return local_features, global_feature
+
+
+class PointNetFeatureExtractPp(nn.Module):
+    def __init__(self, local_layers, global_layers, global_fraction, global_radius, activation=Tanh):
         super().__init__()
         self.local_feature = MLP(in_features, local_layers, activation)
         self.global_feature = MLP(local_layers[-1] + 1, global_layers, activation)

@@ -79,19 +79,19 @@ class PointNetFeatureExtractPp(nn.Module):
         return local_features, global_feature
 
 
-class BranchPp(nn.Module):
+class GeometryEncoderPp(nn.Module):
     def __init__(self, fraction, radius, conv_mlp):
         super().__init__()
-        sa_layers = SetAbstractionSeq(fraction, radius, conv_mlp)
+        sa_layers = SetAbstractionSeq(fraction, radius, conv_mlp, return_skip=False)
         self.set_abstraction = BatchedDecorator(sa_layers)
 
-    def forward(self, pos: Tensor, zones_ids: Tensor) -> Tensor:
+    def forward(self, x: Tensor, pos: Tensor) -> Tensor:
         """
         :param pos: Coordinates (B, N, D)
         :param zones_ids: Porous zone index (B, M, 1)
         :return: Embedding (B, 1, K)
         """
-        in_data = torch.cat([pos, zones_ids], dim=-1)
+        in_data = torch.cat([x, pos], dim=-1)
         y = self.set_abstraction(in_data, pos)
         return torch.max(y, dim=1, keepdim=True)[0]
 

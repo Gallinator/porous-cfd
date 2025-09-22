@@ -9,6 +9,11 @@ from torch_geometric.utils import unbatch
 import torch_geometric.nn as gnn
 
 
+def get_batch(x: Tensor):
+    batch = torch.arange(0, len(x)).unsqueeze(-1).repeat(1, x.shape[-2])
+    return torch.cat([*batch]).to(device=x.device, dtype=torch.int64)
+
+
 class MLP(nn.Sequential):
     def __init__(self, layers: list, dropout=None, activation=Tanh, last_activation=True):
         super().__init__()

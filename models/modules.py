@@ -113,22 +113,6 @@ class Branch(nn.Module):
         return torch.max(y, dim=1, keepdim=True)[0]
 
 
-class GeometryEncoder(nn.Module):
-    def __init__(self, in_channels, hidden_channels):
-        super().__init__()
-        self.linear = MLP(in_channels, hidden_channels, activation=Tanh)
-
-    def forward(self, points: Tensor, zones_ids: Tensor) -> Tensor:
-        """
-        :param points: Coordinates (B, N, 2)
-        :param zones_ids: Porous zone index (B, M, 1)
-        :return: Embedding (B, 1, 64)
-        """
-        x = torch.cat([points, zones_ids], dim=-1)
-        y = self.linear(x)
-        return torch.max(y, dim=1, keepdim=True)[0]
-
-
 class NeuralOperator(nn.Module):
     def __init__(self, in_channels, out_channels, dropout):
         super().__init__()

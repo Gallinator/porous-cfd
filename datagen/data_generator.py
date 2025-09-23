@@ -300,7 +300,7 @@ class DataGeneratorBase:
 
             self.generate_split(set_dest_dir, mesh_set_path, rng=rng)
 
-        for split in glob.glob(str(dest_dir / '*/')):
+        for split in glob.glob(f'{dest_dir}/*/'):
             split_path = Path(split)
             self.generate_data(split_path)
             self.generate_meta(split_path, *self.fields, max_dim=len(self.dims))

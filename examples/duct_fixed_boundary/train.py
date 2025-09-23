@@ -20,7 +20,7 @@ def get_model(name, normalizers):
                             fe_local_layers=[2, 64, 64],
                             fe_global_layers=[64 + 1, 96, 128, 1024],
                             seg_layers=[1024 + 64, 512, 256, 128, 3],
-                            seg_dropout=[0.0, 0.05, 0.05, 0],
+                            seg_dropout=[0.05, 0.05, 0, 0],
                             scalers=normalizers,
                             loss_scaler=loss_scaler)
         case 'pipn-pp':
@@ -29,7 +29,7 @@ def get_model(name, normalizers):
                               f=f,
                               fe_local_layers=[2, 64, 64],
                               seg_layers=[1024 + 64, 512, 256, 128, 3],
-                              seg_dropout=[0.0, 0.05, 0.05, 0],
+                              seg_dropout=[0.05, 0.05, 0, 0],
                               fe_radius=[0.2, 0.5, 1],
                               fe_fraction=[0.7, 0.5, 0.25],
                               fe_global_layers=[[2 + 1 + 2, 64], [64 + 2, 128], [128 + 2, 128], [128 + 2, 1024]],
@@ -41,7 +41,7 @@ def get_model(name, normalizers):
                                  f=f,
                                  fe_local_layers=[2, 64, 64],
                                  seg_layers=[1024 + 64, 512, 256, 128, 3],
-                                 seg_dropout=[0.0, 0.05, 0.05, 0],
+                                 seg_dropout=[0.05, 0.05, 0, 0],
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler)
         case 'pipn-pp-full':
@@ -62,7 +62,6 @@ def get_model(name, normalizers):
                                   loss_scaler=loss_scaler)
         case _:
             raise NotImplementedError
-
 
 
 if __name__ == '__main__':

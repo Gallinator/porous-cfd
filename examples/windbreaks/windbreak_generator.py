@@ -133,7 +133,7 @@ class WindbreakGeneratorBase(DataGeneratorBase):
 
     def generate_data(self, split_dir: Path):
         for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
-            process = subprocess.Popen(OPENFOAM_COMMAND, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            process = subprocess.Popen(openfoam_cmd, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                        stdout=subprocess.DEVNULL, text=True)
             process.communicate(f"{case}/Run")
             process.wait()
@@ -143,6 +143,6 @@ class WindbreakGeneratorBase(DataGeneratorBase):
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
-    OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
-    generator = WindbreakGeneratorBase('assets', OPENFOAM_COMMAND, args.openfoam_procs, 0.5)
+    openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
+    generator = WindbreakGeneratorBase('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)
     generator.generate(args.data_root_dir)

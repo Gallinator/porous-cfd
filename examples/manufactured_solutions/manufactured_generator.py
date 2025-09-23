@@ -59,6 +59,6 @@ class GeneratorManufactured(Generator2DBase):
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
-    OPENFOAM_COMMAND = f'{args.openfoam_dir}/etc/openfoam'
-    generator = GeneratorManufactured('assets', OPENFOAM_COMMAND, args.openfoam_procs, 0.5)
+    openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
+    generator = GeneratorManufactured('assets', openfoam_cmd, args.openfoam_procs, meta_only=args.meta_only)
     generator.generate(args.data_root_dir)

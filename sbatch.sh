@@ -3,26 +3,74 @@
 # RESOURCES
 #SBATCH --ntasks-per-node=8
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=00:45:00
+#SBATCH --time=03:00:00
 # OUTPUT FILES
-#SBATCH --output=job_logs/out_%x_%j.log        # Standard output and error log, with job name and id
+#SBATCH --output=job_logs/out_%x_%j.log
+
+start_time=$(date +%s)
 
 ### Definitions
-export BASEDIR="porous-cfd"
-#export SHRDIR="/scratch_share/mmsp/`whoami`"
 export LOCDIR="/scratch_local"
-#export TMPDIR=$SHRDIR/$BASEDIR/tmp_$SLURM_JOB_NAME_$SLURM_JOB_ID
+export BASEDIR=$PWD
 
-### File System Setup
-cd $HOME/$BASEDIR                  # use a folder in home directory
-#cd $SHRDIR/$BASEDIR                # use a folder in scratch_share
-#mkdir -p $TMPDIR                   # create a folder for temporary data
-#cp $HOME/<input_data> $TMPDIR      # copy input data to temp folder
+gen_args=( --openfoam-dir /usr/lib/openfoam/openfoam2412 --openfoam-procs 8 )
+train_args=()
+inf_args=()
+val_args=(--save-plots)
+data_root=""
+
+while getopts "x:r:e:i:b:o:m:n:p:s:t:v:w" opt; do
+  case $opt in
+    x)
+      BASEDIR="$BASEDIR/examples/$OPTARG";;
+    r)
+      gen_args+=( --data-root-dir "$OPTARG" )
+      data_root="$OPTARG"
+      ;;
+    t)
+      train_dir="$data_root/$OPTARG"
+      train_args+=( --train-dir "$train_dir" )
+      val_args+=(--meta-dir  "$train_dir")
+      ;;
+    v)
+      train_args+=( --val-dir "$data_root/$OPTARG" );;
+    w)
+      val_args+=( --data-dir "$data_root/$OPTARG" );;
+    e)
+      train_args+=( --epochs "$OPTARG" );;
+    i)
+      train_args+=( --n-internal "$OPTARG" )
+      val_args+=( --n-internal "$OPTARG" );;
+    b)
+      train_args+=( --n-boundary "$OPTARG" )
+      val_args+=( --n-boundary "$OPTARG" );;
+    o)
+      train_args+=( --n-observations "$OPTARG" )
+      val_args+=( --n-observations "$OPTARG" );;
+    m)
+      train_args+=( --model "$OPTARG" );;
+    n)
+      train_args+=( --name "$OPTARG" )
+      val_args+=( --checkpoint "lightning_logs/$OPTARG/model.ckpt" );;
+    p)
+      train_args+=( --precision "$OPTARG" )
+      val_args+=( --precision "$OPTARG" );;
+    s)
+      train_args+=( --batch-size "$OPTARG" );;   *)
+      ;;
+  esac
+done
+
+# File system setup
+if [ "$BASEDIR" = "$PWD" ]; then
+  echo "Please provide an experiment to run with the -x argument."
+  exit 1
+fi
 
 ### Header
-pwd; hostname; date    #prints first line of output file
+pwd; hostname; date
 
 ### Software dependencies
 source /opt/share/sw/amd/gcc-8.5.0/miniforge3-24.3.0-0/etc/profile.d/conda.sh
@@ -30,12 +78,18 @@ conda init bash
 conda activate porous-cfd
 
 ### Executable script
-python data_generator.py --openfoam-dir $HOME/compile/OpenFOAM-v2412 --openfoam-procs 8
-python training.py
+cd $BASEDIR
+export PYTHONPATH="../..:."
+export PYTHONUNBUFFERED=1
 
-### File system cleanup
-#cp $TMPDIR/<output_data> $HOME/$BASEDIR/job_logs/    # copy output data to output folder
-#rm -r $TMPDIR                                         #clean temporary data
+python data_generator.py "${gen_args[@]}"
+python train.py "${train_args[@]}"
+python inference.py "${inf_args[@]}"
+python evaluate.py "${val_args[@]}"
 
 ### Footer
-date    #prints last line of output file
+date
+
+end_time=$(date +%s)
+elapsed=$((($end_time-$start_time)/60))
+echo "Total execution time: $elapsed minutes"

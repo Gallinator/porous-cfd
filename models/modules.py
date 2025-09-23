@@ -26,7 +26,7 @@ class MLP(nn.Sequential):
         n_in = layers[0]
         for i, l in enumerate(layers[1:]):
             self.add_module(f'Linear {i}', Linear(n_in, l))
-            if i < len(layers) - 1 or last_activation:
+            if i < len(layers) - 2 or last_activation:
                 self.add_module(f'Activation {i}', activation())
             if dropout is not None and dropout[i] > 0:
                 self.add_module(f'Dropout {i}', Dropout(dropout[i]))

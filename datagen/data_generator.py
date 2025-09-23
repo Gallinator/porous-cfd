@@ -42,13 +42,14 @@ class MinMaxTracker:
 
 
 class DataGeneratorBase:
-    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5):
+    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
         self.openfoam_bin = openfoam_bin
         self.n_procs = n_procs
         self.src_dir = Path(src_dir)
         self.meshes_dir = self.src_dir / 'meshes'
         self.case_template_dir = self.src_dir / 'openfoam-case-template'
         self.drop_p = keep_p
+        self.meta_only = meta_only
 
         self.data_config_path = self.src_dir / 'data_config.json'
         with open(self.data_config_path) as f:
@@ -281,28 +282,30 @@ class DataGeneratorBase:
             f.write(json.dumps(out))
 
     def generate(self, dest_dir):
-        dest_dir = Path(dest_dir)
-
-        dest_dir.mkdir(exist_ok=True, parents=True)
-
-        self.create_case_template_dirs()
-        self.clean_dir(dest_dir)
-        self.clean_dir(self.generated_meshes_dir)
-
         rng = Random(8421)
 
-        for mesh_set_path in self.meshes_sets_paths:
-            generate_set_dir = self.generated_meshes_dir / mesh_set_path.name
-            self.generate_transformed_meshes(mesh_set_path, generate_set_dir, rng=rng)
+        dest_dir = Path(dest_dir)
+        dest_dir.mkdir(exist_ok=True, parents=True)
 
-            set_dest_dir = dest_dir / mesh_set_path.name
-            self.generate_openfoam_cases(generate_set_dir, set_dest_dir, mesh_set_path, rng=rng)
+        if not self.meta_only:
+            self.create_case_template_dirs()
+            self.clean_dir(dest_dir)
+            self.clean_dir(self.generated_meshes_dir)
 
-            self.generate_split(set_dest_dir, mesh_set_path, rng=rng)
+            for mesh_set_path in self.meshes_sets_paths:
+                generate_set_dir = self.generated_meshes_dir / mesh_set_path.name
+                self.generate_transformed_meshes(mesh_set_path, generate_set_dir, rng=rng)
+
+                set_dest_dir = dest_dir / mesh_set_path.name
+                self.generate_openfoam_cases(generate_set_dir, set_dest_dir, mesh_set_path, rng=rng)
+
+                self.generate_split(set_dest_dir, mesh_set_path, rng=rng)
 
         for split in glob.glob(f'{dest_dir}/*/'):
             split_path = Path(split)
-            self.generate_data(split_path)
+            if not self.meta_only:
+                self.generate_data(split_path)
+
             self.generate_meta(split_path, *self.fields, max_dim=len(self.dims))
             self.clean_processor_data(split_path)
 

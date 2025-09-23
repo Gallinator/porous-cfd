@@ -269,7 +269,7 @@ class DataGeneratorBase:
 
     def generate_min_points(self, data_parent: str | Path):
         dicts = []
-        for split in glob.glob(f'{data_parent}/*'):
+        for split in glob.glob(f'{data_parent}/*/'):
             with open(f'{split}/meta.json', 'r') as f:
                 dicts.append(json.load(f)['Points'])
 

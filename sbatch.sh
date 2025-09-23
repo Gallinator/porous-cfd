@@ -50,7 +50,8 @@ while getopts "x:r:e:i:b:o:m:n:p:s:t:v:w" opt; do
       train_args+=( --n-observations "$OPTARG" )
       val_args+=( --n-observations "$OPTARG" );;
     m)
-      train_args+=( --model "$OPTARG" );;
+      train_args+=( --model "$OPTARG" )
+      val_args+=( --model "$OPTARG" );;
     n)
       train_args+=( --name "$OPTARG" )
       val_args+=( --checkpoint "lightning_logs/$OPTARG/model.ckpt" );;

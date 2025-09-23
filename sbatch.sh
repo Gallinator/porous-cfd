@@ -18,7 +18,7 @@ export BASEDIR=$PWD
 gen_args=( --openfoam-dir /usr/lib/openfoam/openfoam2412 --openfoam-procs 8 )
 train_args=()
 inf_args=()
-val_args=(--save-plots)
+eval_args=(--save-plots)
 data_root=""
 
 while getopts "x:r:e:i:b:o:m:n:p:s:t:v:w" opt; do
@@ -32,32 +32,32 @@ while getopts "x:r:e:i:b:o:m:n:p:s:t:v:w" opt; do
     t)
       train_dir="$data_root/$OPTARG"
       train_args+=( --train-dir "$train_dir" )
-      val_args+=(--meta-dir  "$train_dir")
+      eval_args+=(--meta-dir  "$train_dir")
       ;;
     v)
       train_args+=( --val-dir "$data_root/$OPTARG" );;
     w)
-      val_args+=( --data-dir "$data_root/$OPTARG" );;
+      eval_args+=( --data-dir "$data_root/$OPTARG" );;
     e)
       train_args+=( --epochs "$OPTARG" );;
     i)
       train_args+=( --n-internal "$OPTARG" )
-      val_args+=( --n-internal "$OPTARG" );;
+      eval_args+=( --n-internal "$OPTARG" );;
     b)
       train_args+=( --n-boundary "$OPTARG" )
-      val_args+=( --n-boundary "$OPTARG" );;
+      eval_args+=( --n-boundary "$OPTARG" );;
     o)
       train_args+=( --n-observations "$OPTARG" )
-      val_args+=( --n-observations "$OPTARG" );;
+      eval_args+=( --n-observations "$OPTARG" );;
     m)
       train_args+=( --model "$OPTARG" )
-      val_args+=( --model "$OPTARG" );;
+      eval_args+=( --model "$OPTARG" );;
     n)
       train_args+=( --name "$OPTARG" )
-      val_args+=( --checkpoint "lightning_logs/$OPTARG/model.ckpt" );;
+      eval_args+=( --checkpoint "lightning_logs/$OPTARG/model.ckpt" );;
     p)
       train_args+=( --precision "$OPTARG" )
-      val_args+=( --precision "$OPTARG" );;
+      eval_args+=( --precision "$OPTARG" );;
     s)
       train_args+=( --batch-size "$OPTARG" );;   *)
       ;;
@@ -86,7 +86,7 @@ export PYTHONUNBUFFERED=1
 python data_generator.py "${gen_args[@]}"
 python train.py "${train_args[@]}"
 python inference.py "${inf_args[@]}"
-python evaluate.py "${val_args[@]}"
+python evaluate.py "${eval_args[@]}"
 
 ### Footer
 date

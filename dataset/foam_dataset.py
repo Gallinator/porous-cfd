@@ -64,11 +64,13 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None, extra_fields=[]):
+    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None, extra_fields=[],
+                 regions_weights: dict[str, float] = None):
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
         self.rng = rng
+        self.regions_weights = regions_weights
 
         with open(Path(data_dir) / 'data_config.json') as f:
             data_cfg = json.load(f)
@@ -110,23 +112,48 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def get_stratified_sampling_n(self, boundary_names, total_size):
+    def get_weights(self, boundary_names):
+        weights = np.ones((len(boundary_names)))
+        if self.regions_weights:
+            for i, b in enumerate(boundary_names):
+                if b in self.regions_weights:
+                    weights[i] = self.regions_weights[b]
+        return weights
+
+    def get_stratified_sampling_n(self, boundary_names, total_sample_size):
         n_min = np.array([self.min_points[bound] for bound in boundary_names]).astype(np.int64)
         n_mean = np.array([self.meta['Points'][bound]['Mean'] for bound in boundary_names]).astype(np.int64)
         n_total = np.sum(n_mean)
-        target_n = (n_mean / n_total * total_size).astype(np.int64)
+
+        weights = self.get_weights(boundary_names)
+        fractions = n_mean / n_total * weights
+        # Renormalize to [0,1]
+        fractions = fractions / np.sum(fractions)
+        target_n = (fractions * total_sample_size).astype(np.int64)
+
+        # Rebalance
         exceeding_samples = np.maximum(target_n - n_min, np.zeros_like(target_n))
         n_free = np.count_nonzero(exceeding_samples <= 0)
-        total_to_redist = np.sum(exceeding_samples) + total_size - np.sum(target_n)
+        # Take into account int truncation
+        total_to_redist = np.sum(exceeding_samples) + total_sample_size - np.sum(target_n)
         sort_ids = np.argsort(n_min)
         for id in sort_ids:
+            # Check if exceeded
             if exceeding_samples[id] > 0:
                 continue
             added_samples = min(n_min[id], total_to_redist // n_free)
             target_n[id] += added_samples
             n_free -= 1
             total_to_redist -= added_samples
+        # Replace exceeded samples
         target_n[exceeding_samples > 0] = n_min[exceeding_samples > 0]
+
+        exceeding_samples = np.maximum(target_n - n_min, np.zeros_like(target_n))
+        if np.sum(exceeding_samples) != 0:
+            n_exceeding = zip(boundary_names.values[exceeding_samples > 0], exceeding_samples[exceeding_samples > 0])
+            raise RuntimeError(f'Unable to satisfy sampling constraints. '
+                               f'The following samples exceed the minimum:\n{list(n_exceeding)}')
+
         return target_n
 
     def sample_boundary(self, boundary_fields: DataFrame) -> DataFrame:

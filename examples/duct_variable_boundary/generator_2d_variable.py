@@ -4,13 +4,10 @@ import json
 import math
 import shutil
 from pathlib import Path
-
 import bpy
 import mathutils
 from bpy import ops
 from foamlib import FoamFile
-
-from datagen.data_generator import build_arg_parser
 from datagen.generator_2d import Generator2DBase
 
 
@@ -90,10 +87,3 @@ class Generator2DVariable(Generator2DBase):
 
                     self.set_decompose_par(f'{case_path}/snappyHexMesh')
                     self.set_decompose_par(f'{case_path}/simpleFoam')
-
-
-if __name__ == '__main__':
-    args = build_arg_parser().parse_args()
-    openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
-    generator = Generator2DVariable('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)
-    generator.generate(args.data_root_dir)

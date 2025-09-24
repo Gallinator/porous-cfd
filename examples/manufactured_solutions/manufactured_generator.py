@@ -3,11 +3,9 @@ import json
 import math
 import shutil
 from pathlib import Path
-
 import bpy
 import mathutils
 from bpy import ops
-from datagen.data_generator import build_arg_parser
 from datagen.generator_2d import Generator2DBase
 
 
@@ -55,10 +53,3 @@ class GeneratorManufactured(Generator2DBase):
                 # Delete original
                 ops.object.select_all(action='SELECT')
                 ops.object.delete()
-
-
-if __name__ == '__main__':
-    args = build_arg_parser().parse_args()
-    openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
-    generator = GeneratorManufactured('assets', openfoam_cmd, args.openfoam_procs, meta_only=args.meta_only)
-    generator.generate(args.data_root_dir)

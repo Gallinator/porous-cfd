@@ -1,4 +1,3 @@
-import argparse
 import glob
 import itertools
 import json
@@ -11,7 +10,7 @@ import bpy
 from foamlib import FoamFile
 from rich.progress import track
 from bpy import ops
-from datagen.data_generator import DataGeneratorBase, build_arg_parser
+from datagen.data_generator import DataGeneratorBase
 
 
 class WindbreakGeneratorBase(DataGeneratorBase):
@@ -139,10 +138,3 @@ class WindbreakGeneratorBase(DataGeneratorBase):
             process.wait()
             if process.returncode != 0:
                 self.raise_with_log_text(f'{case}', 'Failed to run ')
-
-
-if __name__ == '__main__':
-    args = build_arg_parser().parse_args()
-    openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
-    generator = WindbreakGeneratorBase('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)
-    generator.generate(args.data_root_dir)

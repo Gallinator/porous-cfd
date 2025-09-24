@@ -67,7 +67,6 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
     arg_parser.add_argument('--precision', type=str, default='bf16-mixed')
-    arg_parser.add_argument('--model', type=str)
     return arg_parser
 
 

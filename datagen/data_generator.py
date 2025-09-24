@@ -28,6 +28,8 @@ def build_arg_parser() -> ArgumentParser:
                             help='the number of processors to use for OpenFoam simulations',
                             default=2)
     arg_parser.add_argument('--data-root-dir', type=str, default='data')
+    arg_parser.add_argument('--meta-only', action="store_true",
+                            help='regenerate the meta files', default=False)
     return arg_parser
 
 

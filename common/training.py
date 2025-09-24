@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 from argparse import ArgumentParser
 
@@ -53,3 +54,6 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     trainer.save_checkpoint(f'{trainer.log_dir}/model.ckpt')
+
+    with open(f'{trainer.log_dir}/model_meta.json', 'w') as f:
+        f.write(json.dumps({'Model type': args.model}, indent=4))

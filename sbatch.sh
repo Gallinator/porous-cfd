@@ -91,7 +91,7 @@ if [ "$generate_data" == true ]; then
   python generate_data.py "${gen_args[@]}"
 fi
 python train.py "${train_args[@]}"
-python inference.py "${inf_args[@]}"
+python inference.py "${eval_args[@]}"
 python evaluate.py "${eval_args[@]}"
 
 ### Footer

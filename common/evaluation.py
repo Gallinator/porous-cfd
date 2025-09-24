@@ -87,6 +87,11 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
     predictions = trainer.predict(model, dataloaders=data_loader)
     inference_time = time.perf_counter() - start_time
     avg_inference_time = inference_time / len(data)
+
+    if args.save_plots:
+        default_backend = matplotlib.get_backend()
+        matplotlib.use('Agg')
+
     if enable_timing:
         cfd_timing = parse_meta(args.meta_dir)['Timing']
         plot_timing([inference_time, cfd_timing['Total'] / 1e3],
@@ -105,3 +110,6 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
                 results[i].extend(r)
 
     postprocess_fn(data, results, plots_path)
+
+    if args.save_plots:
+        matplotlib.use(default_backend)

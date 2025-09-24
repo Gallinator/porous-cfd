@@ -63,7 +63,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=3000)
     arg_parser.add_argument('--n-boundary', type=int,
-                            help='number of internal points to sample', default=700)
+                            help='number of boundary points to sample', default=200)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=1200)
     arg_parser.add_argument('--precision', type=str, default='bf16-mixed')

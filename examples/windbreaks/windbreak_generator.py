@@ -114,7 +114,7 @@ class WindbreakGeneratorBase(DataGeneratorBase):
                 d = config['trees'][mesh_name]['d']
                 f = config['trees'][mesh_name]['f']
                 case_path = f"{dest_dir}/{pathlib.Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_ux}"
-                shutil.copytree(self.openfoam_bin, case_path)
+                shutil.copytree(self.case_template_dir, case_path)
                 shutil.copyfile(m, f"{case_path}/constant/triSurface/mesh.obj")
 
                 rand_house = houses[rng.randint(0, len(houses) - 1)]

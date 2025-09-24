@@ -86,9 +86,9 @@ fi
 pwd; hostname; date
 
 ### Software dependencies
-#source /opt/share/sw/amd/gcc-8.5.0/miniforge3-24.3.0-0/etc/profile.d/conda.sh
-#conda init bash
-#conda activate porous-cfd
+module load amd/gcc-8.5.0/openmpi-4.1.6
+module load amd/gcc-8.5.0/miniforge3
+module load intel/nvidia/cuda-12.3.2
 
 ### Executable script
 cd $BASEDIR

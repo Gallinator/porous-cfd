@@ -39,6 +39,19 @@ def get_model(name, normalizers):
                             normalizers,
                             variable_boundaries,
                             loss_scaler)
+        case 'pi-gano-pp-full':
+            return PiGanoPpFull(nu=1489.4e-6,
+                                out_features=3,
+                                branch_layers=[8, 128, 256, 256, 256],
+                                enc_layers=[[2 + 1 + 2, 64, 64, 128], [128 + 2, 128, 128, 256], [256 + 2, 512]],
+                                enc_radius=[0.2, 0.5, 1],
+                                enc_fraction=[0.7, 0.5, 0.25],
+                                dec_layers=[[512 + 256, 256, 256], [128 + 256, 128, 128], [128 + 3, 128, 128, 128, 4]],
+                                dec_k=[6, 6, 6],
+                                fp_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
+                                scalers=normalizers,
+                                loss_scaler=loss_scaler,
+                                variable_boundaries=variable_boundaries)
         case _:
             raise NotImplementedError
 

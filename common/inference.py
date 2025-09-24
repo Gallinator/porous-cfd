@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Callable
 
+import matplotlib
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
 from rich.progress import track
@@ -57,8 +58,15 @@ def predict(args, model, data: FoamDataset, result_process_fn: Callable[[FoamDat
                       precision=args.precision)
     predictions = trainer.predict(model, dataloaders=data_loader)
 
+    if args.save_plots:
+        default_backend = matplotlib.get_backend()
+        matplotlib.use('Agg')
+
     for i, (target, predicted) in enumerate(track(list(zip(data, predictions)), description='Saving plots...')):
         case_path = Path(data.samples[i])
         target = target.to('cpu')
         predicted = predicted.to('cpu').squeeze()
         result_process_fn(data, target, predicted, case_path)
+
+    if args.save_plots:
+        matplotlib.use(default_backend)

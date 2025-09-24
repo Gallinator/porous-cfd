@@ -20,11 +20,14 @@ train_args=()
 eval_args=(--save-plots)
 data_root=""
 generate_data=true
+container_path=""
 
-while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
+while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
   case $opt in
     a)
       gen_args+=( --meta-only );;
+    c)
+      container_path="$OPTARG/";;
     x)
       BASEDIR="$BASEDIR/examples/$OPTARG";;
     r)
@@ -74,13 +77,18 @@ if [ "$BASEDIR" = "$PWD" ]; then
   exit 1
 fi
 
+if [ "$container_path" = "" ]; then
+  echo "Please provide a Singularity container with the -c argument."
+  exit 1
+fi
+
 ### Header
 pwd; hostname; date
 
 ### Software dependencies
-source /opt/share/sw/amd/gcc-8.5.0/miniforge3-24.3.0-0/etc/profile.d/conda.sh
-conda init bash
-conda activate porous-cfd
+#source /opt/share/sw/amd/gcc-8.5.0/miniforge3-24.3.0-0/etc/profile.d/conda.sh
+#conda init bash
+#conda activate porous-cfd
 
 ### Executable script
 cd $BASEDIR
@@ -88,11 +96,11 @@ export PYTHONPATH="../..:."
 export PYTHONUNBUFFERED=1
 
 if [ "$generate_data" == true ]; then
-  python generate_data.py "${gen_args[@]}"
+  singularity exec "$container_path" python generate_data.py "${gen_args[@]}"
 fi
-python train.py "${train_args[@]}"
-python inference.py "${eval_args[@]}"
-python evaluate.py "${eval_args[@]}"
+singularity exec --nv "$container_path" python train.py "${train_args[@]}"
+singularity exec --nv "$container_path" python inference.py "${eval_args[@]}"
+singularity exec --nv "$container_path" python evaluate.py "${eval_args[@]}"
 
 ### Footer
 date

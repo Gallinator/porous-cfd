@@ -40,8 +40,8 @@ def get_model(name, normalizers):
                                  d=d,
                                  f=f,
                                  fe_local_layers=[2, 64, 64],
-                                 seg_layers=[1024 + 64, 512, 256, 128, 3],
-                                 seg_dropout=[0.05, 0.05, 0, 0],
+                                 seg_layers=[1024 + 64, 384, 128, 3],
+                                 seg_dropout=[0.05, 0, 0],
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler)
         case 'pipn-pp-full':

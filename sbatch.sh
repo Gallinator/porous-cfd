@@ -20,7 +20,7 @@ train_args=()
 inf_args=()
 eval_args=(--save-plots)
 data_root=""
-generate_data=false
+generate_data=true
 
 while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wg" opt; do
   case $opt in
@@ -40,7 +40,7 @@ while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wg" opt; do
     w)
       eval_args+=( --data-dir "$data_root$OPTARG" );;
     g)
-      generate_data=true;;
+      generate_data=false;;
     e)
       train_args+=( --epochs "$OPTARG" );;
     i)

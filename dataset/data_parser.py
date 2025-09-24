@@ -174,6 +174,12 @@ def parse_meta(data_dir: str) -> dict:
         return json.load(f)
 
 
+def parse_model_type(checkpoint) -> str:
+    root_dir = Path(checkpoint).parent
+    with open(f'{root_dir}/model_meta.json', 'r') as f:
+        return json.load(f)['Model type']
+
+
 def parse_elapsed_time(case_dir: str) -> int:
     with open(Path(case_dir, 'timing.txt'), 'r') as f:
         return int(f.readline())

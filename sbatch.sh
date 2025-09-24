@@ -22,8 +22,10 @@ eval_args=(--save-plots)
 data_root=""
 generate_data=true
 
-while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wg" opt; do
+while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
   case $opt in
+    a)
+      gen_args+=( --meta-only );;
     x)
       BASEDIR="$BASEDIR/examples/$OPTARG";;
     r)

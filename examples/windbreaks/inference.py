@@ -1,12 +1,27 @@
 from pathlib import Path
 import numpy as np
 import torch
-
 from common.inference import create_case_plot_dir, build_arg_parser, create_plots_root, predict
+from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
-from models.pi_gano import PiGano
+from models.pi_gano.pi_gano import PiGano
+from models.pi_gano.pi_gano_pp import PiGanoPp
+from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 from visualization.visualization_3d import plot_fields, plot_streamlines, plot_houses
+
+
+def get_model(checkpoint):
+    model_type = parse_model_type(checkpoint)
+    match model_type:
+        case 'pi-gano':
+            return PiGano.load_from_checkpoint(checkpoint)
+        case 'pi-gano-pp':
+            return PiGanoPp.load_from_checkpoint(checkpoint)
+        case 'pi-gano-pp-full':
+            return PiGanoPpFull.load_from_checkpoint(checkpoint)
+        case _:
+            raise NotImplementedError
 
 
 def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path):
@@ -79,6 +94,6 @@ if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     rng = np.random.default_rng(8421)
     plots_path = create_plots_root(args)
-    model = PiGano.load_from_checkpoint(args.checkpoint)
+    model = get_model(args.checkpoint)
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir)
     predict(args, model, val_data, sample_process_fn)

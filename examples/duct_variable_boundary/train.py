@@ -5,6 +5,7 @@ from dataset.foam_dataset import FoamDataset
 from models.losses import FixedLossScaler
 from models.pi_gano.pi_gano import PiGano
 from models.pi_gano.pi_gano_pp import PiGanoPp
+from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
 
 def get_model(name, normalizers):
@@ -29,7 +30,7 @@ def get_model(name, normalizers):
             return PiGanoPp(1489.4e-6,
                             3,
                             [8, 128, 352, 352, 352],
-                            [[2 + 1 + 2, 64], [64 + 2, 176], [176 + 2, 176], [176+ 2, 176]],
+                            [[2 + 1 + 2, 64], [64 + 2, 176], [176 + 2, 176], [176 + 2, 176]],
                             [0.2, 0.5, 1],
                             [0.7, 0.5, 0.25],
                             [2, 64, 176, 176, 176],

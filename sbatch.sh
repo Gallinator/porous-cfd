@@ -54,8 +54,7 @@ while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
       train_args+=( --n-observations "$OPTARG" )
       eval_args+=( --n-observations "$OPTARG" );;
     m)
-      train_args+=( --model "$OPTARG" )
-      eval_args+=( --model "$OPTARG" );;
+      train_args+=( --model "$OPTARG" );;
     n)
       train_args+=( --name "$OPTARG" )
       eval_args+=( --checkpoint "lightning_logs/$OPTARG/model.ckpt" );;
@@ -63,7 +62,8 @@ while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
       train_args+=( --precision "$OPTARG" )
       eval_args+=( --precision "$OPTARG" );;
     s)
-      train_args+=( --batch-size "$OPTARG" );;   *)
+      train_args+=( --batch-size "$OPTARG" );;
+    *)
       ;;
   esac
 done

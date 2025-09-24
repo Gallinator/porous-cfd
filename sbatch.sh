@@ -20,24 +20,27 @@ train_args=()
 inf_args=()
 eval_args=(--save-plots)
 data_root=""
+generate_data=false
 
-while getopts "x:r:e:i:b:o:m:n:p:s:t:v:w" opt; do
+while getopts "x:r:e:i:b:o:m:n:p:s:t:v:wg" opt; do
   case $opt in
     x)
       BASEDIR="$BASEDIR/examples/$OPTARG";;
     r)
       gen_args+=( --data-root-dir "$OPTARG" )
-      data_root="$OPTARG"
+      data_root="$OPTARG/"
       ;;
     t)
-      train_dir="$data_root/$OPTARG"
+      train_dir="$data_root$OPTARG"
       train_args+=( --train-dir "$train_dir" )
       eval_args+=(--meta-dir  "$train_dir")
       ;;
     v)
-      train_args+=( --val-dir "$data_root/$OPTARG" );;
+      train_args+=( --val-dir "$data_root$OPTARG" );;
     w)
-      eval_args+=( --data-dir "$data_root/$OPTARG" );;
+      eval_args+=( --data-dir "$data_root$OPTARG" );;
+    g)
+      generate_data=true;;
     e)
       train_args+=( --epochs "$OPTARG" );;
     i)
@@ -83,7 +86,9 @@ cd $BASEDIR
 export PYTHONPATH="../..:."
 export PYTHONUNBUFFERED=1
 
-python data_generator.py "${gen_args[@]}"
+if [ "$generate_data" == true ]; then
+  python generate_data.py "${gen_args[@]}"
+fi
 python train.py "${train_args[@]}"
 python inference.py "${inf_args[@]}"
 python evaluate.py "${eval_args[@]}"

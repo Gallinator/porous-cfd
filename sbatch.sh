@@ -17,7 +17,6 @@ export BASEDIR=$PWD
 
 gen_args=( --openfoam-dir /usr/lib/openfoam/openfoam2412 --openfoam-procs 8 )
 train_args=()
-inf_args=()
 eval_args=(--save-plots)
 data_root=""
 generate_data=true

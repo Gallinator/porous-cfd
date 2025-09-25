@@ -21,7 +21,7 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.camera.zoom(0.75)
 
 
-def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes):
+def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes: tuple):
     mesh_slice = mesh.slice(normal=normal, origin=origin)
     u_slice = np.copy(mesh_slice['Uinterp'])
     u_slice[..., -1 if normal == 'z' else -2] = 0
@@ -33,7 +33,7 @@ def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes):
                      scalars='Uslice',
                      scalar_bar_args=colorbar)
 
-    for m in additional_meshes:
+    for m, _ in additional_meshes:
         sliced_mesh = m.slice(normal=normal, origin=origin)
         plotter.add_mesh(sliced_mesh, color='black', line_width=5)
 
@@ -46,7 +46,7 @@ def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes):
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, *additional_meshes):
+def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dict):
     stream_start_points = np.array(inlet_mesh.points)
     min_x = np.min(inlet_mesh.points, axis=0)[0]
     stream_start_points = stream_start_points[stream_start_points[..., 0] == min_x]
@@ -61,15 +61,15 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, *additional_meshes):
                      cmap='coolwarm')
 
     # Add solid meshes
-    for m in additional_meshes:
-        plotter.add_mesh(m)
+    for m, c in additional_meshes:
+        plotter.add_mesh(m, color=c)
 
     plotter.camera.position = np.array((-0.8, -1, 0.5)) * np.max(np.linalg.norm(interp_mesh.points, axis=-1)) * 2.5
     plotter.camera.zoom(0.5)
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(title, case_dir, points: np.array, u: np.array, *additional_meshes, save_path=None):
+def plot_streamlines(title, case_dir, points: np.array, u: np.array, additional_meshes: dict[str, str], save_path=None):
     empty_foam = f'{case_dir}/empty.foam'
     open(empty_foam, 'w').close()
 
@@ -78,7 +78,8 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, *additional
     foam_reader.cell_to_point_creation = True
 
     mesh = foam_reader.read()
-    add_objects = [pv.get_reader(f'{case_dir}/constant/triSurface/{m}.obj').read() for m in additional_meshes]
+    add_objects = [pv.get_reader(f'{case_dir}/constant/triSurface/{m}.obj').read() for m in additional_meshes.keys()]
+    add_objects = list(zip(add_objects, additional_meshes.values()))
 
     data_points = PolyData(points)
     data_points['Uinterp'] = u
@@ -88,14 +89,14 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, *additional
     plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[3840, 1440])
 
     plotter.subplot(0, 0)
-    plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, *add_objects)
+    plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, add_objects)
 
     plotter.subplot(0, 1)
-    center = (0, 0, add_objects[0].center[2] if len(add_objects) > 0 else 1)
+    center = (0, 0, add_objects[0][0].center[2] if len(add_objects) > 0 else 1)
     plot_2d_slice(interp_mesh, 'z', center, plotter, *add_objects)
 
     plotter.subplot(0, 2)
-    center = (0, 0, add_objects[0].center[1] if len(add_objects) > 0 else 1)
+    center = (0, 0, add_objects[0][0].center[1] if len(add_objects) > 0 else 1)
     plot_2d_slice(interp_mesh, 'y', center, plotter, *add_objects)
 
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)

@@ -252,7 +252,7 @@ class SetAbstractionMrgSeq(nn.Module):
                                        gnn.MLP([2 + 1 + in_features, 64, 128, 256], act=activation, norm=None,
                                                plain_last=False))
         self.branch_3 = GlobalSetAbstraction(
-            gnn.MLP([2 + 1 + in_features, 128, 256, 512], act=activation, norm=None, plain_last=False))
+            gnn.MLP([in_features + 1 + in_features, 128, 256, 512], act=activation, norm=None, plain_last=False))
         self.branch_4 = GlobalSetAbstraction(
             gnn.MLP([256 + in_features, 512], act=activation, norm=None, plain_last=False))
 

@@ -39,6 +39,8 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
     f = torch.max(f_scaler.inverse_transform(target['f'])).item()
     inlet_ux = torch.max(u_scaler[0].inverse_transform(target['Ux-inlet']))
 
+    additional_meshes_colors = {'solid': 'oldlace', 'mesh': 'mediumseagreen'}
+
     plot_fields(f'Predicted D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                 raw_points,
                 u_scaler.inverse_transform(predicted['U']).numpy(),
@@ -49,6 +51,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(predicted['U']).numpy(),
+                     additional_meshes_colors,
                      save_path=case_plot_path)
 
     plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
@@ -61,6 +64,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(target['U'].numpy()),
+                     additional_meshes_colors,
                      save_path=case_plot_path)
 
     u_error = (u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(target['U'])).numpy()
@@ -75,6 +79,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      np.abs(u_error),
+                     additional_meshes_colors,
                      save_path=case_plot_path)
 
     solid_points = points_scaler.inverse_transform(target['solid']['C']).numpy()

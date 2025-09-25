@@ -175,7 +175,7 @@ class SetAbstraction(torch.nn.Module):
         super().__init__()
         self.ratio = ratio
         self.r = r
-        self.conv = PointNetConv(mlp)
+        self.conv = PointConvNext(r, local_nn=mlp)
 
     def forward(self, x, pos, batch):
         idx = fps(pos, batch, ratio=self.ratio)

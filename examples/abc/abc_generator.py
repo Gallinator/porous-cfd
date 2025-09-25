@@ -86,13 +86,10 @@ class AbcGenerator(DataGeneratorBase):
 
     def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)
-        meshes = glob.glob(f'{meshes_dir}/*.obj')
 
         ops.object.select_all(action='SELECT')
         ops.object.delete()
-        for i in range(10):
-            mesh = rng.choice(meshes)
-
+        for mesh in glob.glob(f'{meshes_dir}/*.obj'):
             meshes_subfolder = dest_dir / f'{Path(mesh).stem}'
             meshes_subfolder.mkdir(exist_ok=True, parents=True)
 

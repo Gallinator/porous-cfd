@@ -21,7 +21,7 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.camera.zoom(0.75)
 
 
-def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):
+def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes):
     mesh_slice = mesh.slice(normal=normal, origin=origin)
     u_slice = np.copy(mesh_slice['Uinterp'])
     u_slice[..., -1 if normal == 'z' else -2] = 0
@@ -33,11 +33,10 @@ def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):
                      scalars='Uslice',
                      scalar_bar_args=colorbar)
 
-    sliced_tree = tree.slice(normal=normal, origin=origin)
-    plotter.add_mesh(sliced_tree, color='black', line_width=5)
+    for m in additional_meshes:
+        sliced_mesh = m.slice(normal=normal, origin=origin)
+        plotter.add_mesh(sliced_mesh, color='black', line_width=5)
 
-    sliced_solid = solid.slice(normal=normal, origin=origin)
-    plotter.add_mesh(sliced_solid, color='black', line_width=5)
     plotter.enable_parallel_projection()
     match plane:
         case 'xy':
@@ -47,9 +46,10 @@ def plot_2d_slice(mesh, tree, solid, normal, origin, plotter):
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_3d_streamlines(interp_mesh, inlet_mesh, tree, solid, plotter):
+def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, *additional_meshes):
     stream_start_points = np.array(inlet_mesh.points)
-    stream_start_points = stream_start_points[stream_start_points[..., 0] == -20]
+    min_x = np.min(inlet_mesh.points, axis=0)[0]
+    stream_start_points = stream_start_points[stream_start_points[..., 0] == min_x]
     stream_start_points = PointSet(random.choices(stream_start_points, k=250))
     colorbar = {'title': f'$U {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
     streamlines = interp_mesh.streamlines_from_source(stream_start_points, vectors='Uinterp')
@@ -61,14 +61,15 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, tree, solid, plotter):
                      cmap='coolwarm')
 
     # Add solid meshes
-    plotter.add_mesh(tree, color='mediumseagreen')
-    plotter.add_mesh(solid, color='oldlace')
-    plotter.camera.position = (-80, -100, 50)
+    for m in additional_meshes:
+        plotter.add_mesh(m)
+
+    plotter.camera.position = np.array((-0.8, -1, 0.5)) * np.max(np.linalg.norm(interp_mesh.points, axis=-1)) * 2.5
     plotter.camera.zoom(0.5)
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=None):
+def plot_streamlines(title, case_dir, points: np.array, u: np.array, *additional_meshes, save_path=None):
     empty_foam = f'{case_dir}/empty.foam'
     open(empty_foam, 'w').close()
 
@@ -77,8 +78,7 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=N
     foam_reader.cell_to_point_creation = True
 
     mesh = foam_reader.read()
-    tree = pv.get_reader(f'{case_dir}/constant/triSurface/mesh.obj').read()
-    solid = pv.get_reader(f'{case_dir}/constant/triSurface/solid.obj').read()
+    add_objects = [pv.get_reader(f'{case_dir}/constant/triSurface/{m}.obj').read() for m in additional_meshes]
 
     data_points = PolyData(points)
     data_points['Uinterp'] = u
@@ -88,13 +88,15 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, save_path=N
     plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[3840, 1440])
 
     plotter.subplot(0, 0)
-    plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], tree, solid, plotter)
+    plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, *add_objects)
 
     plotter.subplot(0, 1)
-    plot_2d_slice(interp_mesh, tree, solid, 'z', (0, 0, solid.center[2]), plotter)
+    center = (0, 0, add_objects[0].center[2] if len(add_objects) > 0 else 1)
+    plot_2d_slice(interp_mesh, 'z', center, plotter, *add_objects)
 
     plotter.subplot(0, 2)
-    plot_2d_slice(interp_mesh, tree, solid, 'y', (0, solid.center[1], 0), plotter)
+    center = (0, 0, add_objects[0].center[1] if len(add_objects) > 0 else 1)
+    plot_2d_slice(interp_mesh, 'y', center, plotter, *add_objects)
 
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
     os.remove(empty_foam)

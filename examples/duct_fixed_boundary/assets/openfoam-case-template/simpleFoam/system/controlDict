@@ -49,7 +49,7 @@ boundaryFields (U p div(phi) mag(grad(Unorm)) grad(p) grad(U)xx grad(U)xy grad(U
 functions
 {
 
-    #include "momentError"
+    #include "momentumError"
 
     contErr
     {

@@ -64,7 +64,7 @@ if __name__ == '__main__':
     n_obs = args.n_observations
 
     rng = default_rng(8421)
-    train_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng)
+    train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
     model = get_model(args.model, train_data.normalizers)

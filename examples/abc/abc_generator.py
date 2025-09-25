@@ -1,19 +1,16 @@
 import glob
 import math
-import pathlib
 from pathlib import Path
 import shutil
-import subprocess
 import bpy
 import mathutils
 import numpy as np
 from foamlib import FoamFile
-from rich.progress import track
 from bpy import ops
-from datagen.data_generator import DataGeneratorBase
+from datagen.generator_3d import Generator3DBase
 
 
-class AbcGenerator(DataGeneratorBase):
+class AbcGenerator(Generator3DBase):
 
     def add_porous_meshes_to_case(self, case_path, meshes):
         surface_extract = FoamFile(f'{case_path}/system/surfaceFeatureExtractDict')
@@ -57,9 +54,6 @@ class AbcGenerator(DataGeneratorBase):
         center = verts[max_vertex[-1], :] - np.array((0, 0, 0.001))
         ops.object.delete()
         return center
-
-    def create_case_template_dirs(self):
-        (self.case_template_dir / 'constant/triSurface').mkdir(parents=True, exist_ok=True)
 
     def align_to_x(self, obj):
         sorted_dims = np.argsort(obj.dimensions)
@@ -127,13 +121,3 @@ class AbcGenerator(DataGeneratorBase):
             shutil.copyfile(f"{mesh_set}mesh.obj", f"{case_path}/constant/triSurface/mesh.obj")
 
             self.set_decompose_par(f'{case_path}')
-
-    def generate_data(self, split_dir: Path):
-
-        for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
-            process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       stdout=subprocess.DEVNULL, text=True)
-            process.communicate(f"{case}/Run")
-            process.wait()
-            if process.returncode != 0:
-                self.raise_with_log_text(f'{case}', 'Failed to run ')

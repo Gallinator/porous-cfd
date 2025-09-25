@@ -16,7 +16,7 @@ from datagen.data_generator import DataGeneratorBase
 class WindbreakGeneratorBase(DataGeneratorBase):
 
     def create_case_template_dirs(self):
-        (self.case_template_dir / '/constant/triSurface').mkdir(parents=True, exist_ok=True)
+        (self.case_template_dir / 'constant/triSurface').mkdir(parents=True, exist_ok=True)
 
     def merge_trees(self, trees):
         ops.object.select_all(action='DESELECT')

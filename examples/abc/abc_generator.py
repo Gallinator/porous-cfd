@@ -120,8 +120,6 @@ class AbcGenerator(DataGeneratorBase):
             ops.object.select_all(action='SELECT')
             ops.object.delete()
 
-        # shutil.copytree(f'{meshes_dir}/houses', f'{dest_dir}/houses')
-
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -129,11 +127,7 @@ class AbcGenerator(DataGeneratorBase):
             case_path = f"{dest_dir}/{Path(mesh_set).name}"
             shutil.copytree(self.case_template_dir, case_path)
 
-            # mesh_names = [pathlib.Path(s).stem for s in glob.glob(f"{meshes_dir}/{mesh_set}/mesh*.obj")]
-            # for i, m in enumerate(mesh_names):
             shutil.copyfile(f"{mesh_set}mesh.obj", f"{case_path}/constant/triSurface/mesh.obj")
-
-            # self.add_porous_meshes_to_case(case_path, mesh_names)
 
             self.set_decompose_par(f'{case_path}')
 

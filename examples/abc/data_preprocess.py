@@ -2,11 +2,10 @@ import glob
 import os.path
 import shutil
 import subprocess
+import tarfile
 from functools import partial
 from pathlib import Path
 from urllib.request import urlopen
-import zipfile as z
-
 from rich.progress import Progress, TextColumn, BarColumn, DownloadColumn, TransferSpeedColumn, TimeRemainingColumn, \
     track
 
@@ -37,8 +36,8 @@ def download(url, dest_file):
 
 def extract(data_file, dest_dir):
     Path(dest_dir).mkdir(exist_ok=True, parents=True)
-    with z.ZipFile(data_file, 'r') as f:
-        for c in track(f.infolist(), description=f'Extracting {f.filename}'):
+    with tarfile.open(data_file, 'r') as f:
+        for c in track(f.getmembers(), description=f'Extracting {f.name}'):
             f.extract(c, dest_dir)
 
 

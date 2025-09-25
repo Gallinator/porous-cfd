@@ -9,6 +9,7 @@ import numpy as np
 from rich.progress import track
 
 from datagen.data_generator import DataGeneratorBase
+from datagen.momentum_error import write_momentum_error
 
 
 class Generator2DBase(DataGeneratorBase):
@@ -69,6 +70,7 @@ class Generator2DBase(DataGeneratorBase):
             if process.returncode != 0:
                 self.raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
 
+            write_momentum_error(f"{case}/simpleFoam")
             self.clean_dir(f"{case}/snappyHexMesh")
             os.rmdir(f"{case}/snappyHexMesh")
             shutil.move(f"{case}/simpleFoam", 'tmp')

@@ -5,19 +5,13 @@ import pathlib
 from pathlib import Path
 import re
 import shutil
-import subprocess
 import bpy
 from foamlib import FoamFile
-from rich.progress import track
 from bpy import ops
-from datagen.data_generator import DataGeneratorBase
+from datagen.generator_3d import Generator3DBase
 
 
-class WindbreakGeneratorBase(DataGeneratorBase):
-
-    def create_case_template_dirs(self):
-        (self.case_template_dir / 'constant/triSurface').mkdir(parents=True, exist_ok=True)
-
+class WindbreakGeneratorBase(Generator3DBase):
     def merge_trees(self, trees):
         ops.object.select_all(action='DESELECT')
         windbreak = trees[0]
@@ -129,12 +123,3 @@ class WindbreakGeneratorBase(DataGeneratorBase):
                 self.write_coefs(fv_options, f, 'f')
 
                 self.set_decompose_par(f'{case_path}')
-
-    def generate_data(self, split_dir: Path):
-        for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
-            process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       stdout=subprocess.DEVNULL, text=True)
-            process.communicate(f"{case}/Run")
-            process.wait()
-            if process.returncode != 0:
-                self.raise_with_log_text(f'{case}', 'Failed to run ')

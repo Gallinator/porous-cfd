@@ -87,7 +87,6 @@ pwd; hostname; date
 
 ### Software dependencies
 module load amd/gcc-8.5.0/openmpi-4.1.6
-module load amd/gcc-8.5.0/miniforge3
 module load intel/nvidia/cuda-12.3.2
 
 ### Executable script

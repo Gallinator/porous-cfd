@@ -11,7 +11,7 @@ from bpy import ops
 from datagen.generator_3d import Generator3DBase
 
 
-class WindbreakGeneratorBase(Generator3DBase):
+class WindbreakGenerator(Generator3DBase):
     def merge_trees(self, trees):
         ops.object.select_all(action='DESELECT')
         windbreak = trees[0]

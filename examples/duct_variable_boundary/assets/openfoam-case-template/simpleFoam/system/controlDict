@@ -44,15 +44,11 @@ timePrecision   6;
 
 runTimeModifiable true;
 
+boundaryFields (U p div(phi) mag(grad(Unorm)) grad(p) grad(U)xx grad(U)xy grad(U)xz grad(U)yx grad(U)yy grad(U)yz grad(U)zx grad(U)zy grad(U)zz grad(grad(U)xx) grad(grad(U)xy) grad(grad(U)xz) grad(grad(U)yx) grad(grad(U)yy) grad(grad(U)yz) grad(grad(U)zx) grad(grad(U)zy) grad(grad(U)zz));
+
 functions
 {
-    momErr
-    {
-        type            momentumError;
-        libs            (fieldFunctionObjects);
-        executeControl  writeTime;
-        writeControl    writeTime;
-    }
+    #include "momentumError"
 
     contErr
     {
@@ -98,30 +94,6 @@ functions
         executeControl  writeTime;
         writeControl    writeTime;
     }
-    gradp
-    {
-        // Mandatory entries (unmodifiable)
-        type            grad;
-        libs            (fieldFunctionObjects);
-
-        // Mandatory (inherited) entries (runtime modifiable)
-        field           p;
-
-        // Optional (inherited) entries
-        writeFields     true;
-        writeControl    writeTime;
-    }
-    magGradp
-    {
-        type            mag;
-        libs            (fieldFunctionObjects);
-
-        field           grad(p);
-
-        field           grad(p);
-        executeControl  writeTime;
-        writeControl    writeTime;
-    }
     walls
     {
         // Mandatory entries (unmodifiable)
@@ -130,7 +102,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
+        fields          $boundaryFields;
         operation       none;
         regionType      patch;
         name            walls;
@@ -147,7 +119,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
+        fields          $boundaryFields;
         operation       none;
         regionType      patch;
         name            inlet;
@@ -164,7 +136,7 @@ functions
         surfaceFormat   foam;
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
+        fields          $boundaryFields;
         operation       none;
         regionType      patch;
         name            outlet;
@@ -180,7 +152,7 @@ functions
         libs            (fieldFunctionObjects);
 
         // Mandatory entries (runtime modifiable)
-        fields          (U p div(phi) momentError mag(grad(Unorm)) mag(grad(p)));
+        fields          $boundaryFields;
         operation       none;
         regionType      faceZone;
         name            meshmesh_slaveCutFaceZone;

@@ -1,0 +1,157 @@
+    gradp
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           p;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    gradU
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           U;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    componentsGradU
+    {
+        // Mandatory entries (unmodifiable)
+        type            components;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entry (runtime modifiable)
+        field           grad(U);
+
+        // Optional (inherited) entries
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+    grad2Uxx
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)xx;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uxy
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)xy;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uxz
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)xz;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uyy
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)yy;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uyx
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)yx;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uyz
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)yz;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uzy
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)zy;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uzx
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)zx;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    grad2Uzz
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           grad(U)zz;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+

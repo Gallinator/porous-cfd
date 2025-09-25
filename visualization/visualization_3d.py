@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 
 import numpy as np
+import vtk
 import pyvista as pv
 from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
 

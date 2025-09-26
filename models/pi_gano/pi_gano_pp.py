@@ -5,7 +5,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import Normalizer, StandardScaler
-from models.modules import Branch, GeometryEncoderPp, BatchedDecorator, MLP, NeuralOperatorSequential
+from models.modules import Branch, GeometryEncoderPp, MLP, NeuralOperatorSequential
 from models.pi_gano.base import PiGanoBase
 
 

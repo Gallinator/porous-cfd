@@ -72,10 +72,9 @@ class PointNetFeatureExtractPp(nn.Module):
                                       activation=activation)
         self.global_feature = BatchedDecorator(sa_layers)
 
-    def forward(self, x: Tensor, pos: Tensor) -> tuple[Tensor, Tensor]:
-        local_features = self.local_feature(pos)
-        global_in = torch.concatenate([pos, x], dim=-1)
-        global_feature = self.global_feature(global_in, pos)
+    def forward(self, geom_pos: Tensor, global_pos: Tensor) -> tuple[Tensor, Tensor]:
+        local_features = self.local_feature(global_pos)
+        global_feature = self.global_feature(geom_pos, geom_pos)
         global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 

@@ -22,15 +22,16 @@ class PiGanoPp(PiGanoBase):
                  operator_dropout,
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
-                 loss_scaler=None):
+                 loss_scaler=None,
+                 activation=Tanh):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
-        self.branch = Branch(branch_layers)
-        self.geometry_encoder = GeometryEncoderPp(geometry_fraction, geometry_radius, geometry_layers)
-        self.points_encoder = MLP(local_layers, None, Tanh)
+        self.branch = Branch(branch_layers, activation)
+        self.geometry_encoder = GeometryEncoderPp(geometry_fraction, geometry_radius, geometry_layers, activation)
+        self.points_encoder = MLP(local_layers, None, activation)
 
         operator_features = geometry_layers[-1][-1] + local_layers[-1]
-        self.neural_ops = NeuralOperatorSequential(n_operators, operator_features, operator_dropout)
+        self.neural_ops = NeuralOperatorSequential(n_operators, operator_features, operator_dropout, activation)
         self.reduction = nn.Linear(operator_features, out_features)
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:

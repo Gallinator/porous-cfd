@@ -68,7 +68,8 @@ class PointNetFeatureExtractPp(nn.Module):
     def __init__(self, local_layers, global_layers, global_fraction, global_radius, activation=Tanh):
         super().__init__()
         self.local_feature = MLP(local_layers, activation=activation)
-        sa_layers = SetAbstractionSeq(global_fraction, global_radius, global_layers, return_skip=False)
+        sa_layers = SetAbstractionSeq(global_fraction, global_radius, global_layers, return_skip=False,
+                                      activation=activation)
         self.global_feature = BatchedDecorator(sa_layers)
 
     def forward(self, x: Tensor, pos: Tensor) -> tuple[Tensor, Tensor]:

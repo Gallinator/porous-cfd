@@ -81,9 +81,9 @@ class PointNetFeatureExtractPp(nn.Module):
 
 
 class GeometryEncoderPp(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp):
+    def __init__(self, fraction, radius, conv_mlp, activation=Tanh):
         super().__init__()
-        sa_layers = SetAbstractionSeq(fraction, radius, conv_mlp, return_skip=False)
+        sa_layers = SetAbstractionSeq(fraction, radius, conv_mlp, return_skip=False, activation=activation())
         self.set_abstraction = BatchedDecorator(sa_layers)
 
     def forward(self, x: Tensor, pos: Tensor) -> Tensor:

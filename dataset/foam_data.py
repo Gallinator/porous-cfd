@@ -39,6 +39,9 @@ class FoamData:
                            f' Available labels are {list(self.labels.keys())}. '
                            f'Available subdomains are {list(self.domain.keys())}.')
 
+    def __contains__(self, item):
+        return item in self.domain or item in self.labels
+
     def squeeze(self):
         squeezed_data = self.data.squeeze()
         squeezed_domain = {k: v.squeeze() for k, v in self.domain.items()}

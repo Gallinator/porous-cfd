@@ -36,12 +36,17 @@ def get_normalized_signed_distance(points: Tensor, target: Tensor):
 
 
 def get_mean_max_error_distance(errors, quantile, interface_dist):
-    q_mask = errors > np.quantile(errors, quantile, axis=-2, keepdims=True)
+    q_mask = errors > torch.quantile(errors, quantile, dim=-2, keepdim=True)
     q_dist = []
-    for m in np.split(q_mask, errors.shape[-1], axis=-1):
-        m = m.flatten()
-        q_dist.append(np.mean(interface_dist[m]))
-    return q_dist
+    # Loop over each batch
+    for mask, dist in zip(q_mask, interface_dist):
+        # Extract mean distance for each field
+        dim_masks = torch.split(mask, 1, dim=-1)
+        field_dists = [dist[m.flatten()] for m in dim_masks]
+        means = [torch.mean(d) for d in field_dists]
+        q_dist.append(torch.tensor(means))
+    # Average over all batches
+    return torch.mean(torch.stack(q_dist), dim=0)
 
 
 def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):

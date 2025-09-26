@@ -97,9 +97,9 @@ class GeometryEncoderPp(nn.Module):
 
 
 class Branch(nn.Module):
-    def __init__(self, hidden_channels):
+    def __init__(self, hidden_channels, activation=Tanh):
         super().__init__()
-        self.linear = MLP(hidden_channels, activation=Tanh)
+        self.linear = MLP(hidden_channels, activation=activation)
 
     def forward(self, param_features: Tensor):
         """
@@ -115,9 +115,9 @@ class Branch(nn.Module):
 
 
 class GeometryEncoder(nn.Module):
-    def __init__(self, hidden_channels):
+    def __init__(self, hidden_channels, activation=Tanh):
         super().__init__()
-        self.linear = MLP(hidden_channels, activation=Tanh)
+        self.linear = MLP(hidden_channels, activation=activation)
 
     def forward(self, x: Tensor, pos: Tensor) -> Tensor:
         """
@@ -131,11 +131,11 @@ class GeometryEncoder(nn.Module):
 
 
 class NeuralOperator(nn.Module):
-    def __init__(self, out_channels, dropout):
+    def __init__(self, out_channels, dropout, activation=Tanh):
         super().__init__()
         self.linear = nn.Sequential(
             nn.Linear(out_channels, out_channels),
-            nn.Tanh()
+            activation()
         )
         if dropout > 0:
             self.linear.append(nn.Dropout(dropout))
@@ -145,10 +145,10 @@ class NeuralOperator(nn.Module):
 
 
 class NeuralOperatorSequential(nn.Sequential):
-    def __init__(self, n_operators, n_features, dropout):
+    def __init__(self, n_operators, n_features, dropout, activation=Tanh):
         super().__init__()
         for i in range(n_operators):
-            self.add_module(f'Operator {i}', NeuralOperator(n_features, dropout[i]))
+            self.add_module(f'Operator {i}', NeuralOperator(n_features, dropout[i], activation))
 
     def forward(self, input: Tensor, par_embedding: Tensor):
         for m in self:
@@ -238,11 +238,12 @@ class GlobalSetAbstraction(torch.nn.Module):
 
 
 class SetAbstractionMrgSeq(nn.Module):
-    def __init__(self, in_features, activation):
+    def __init__(self, in_features, activation=Tanh):
         super().__init__()
         self.branch_1 = gnn.Sequential('x, pos, batch', [
             (SetAbstraction(0.5, 0.6,
-                            gnn.MLP([in_features + 1 + in_features, 64, 128], act=activation, norm=None, plain_last=False)),
+                            gnn.MLP([in_features + 1 + in_features, 64, 128], act=activation(), norm=None,
+                                    plain_last=False)),
              'x, pos, batch -> x, pos, batch'),
             (SetAbstraction(0.125, 0.8,
                             gnn.MLP([128 + in_features, 256], act=activation, norm=None, plain_last=False)),
@@ -273,14 +274,14 @@ class SetAbstractionMrgSeq(nn.Module):
 
 
 class SetAbstractionSeq(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp, return_skip=True):
+    def __init__(self, fraction, radius, conv_mlp, return_skip=True, activation=nn.Tanh):
         super().__init__()
         layers = OrderedDict()
         for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp)):
-            layers[f'Sa-{i}'] = SetAbstraction(f, r, gnn.MLP(l, act=nn.Tanh(), norm=None, plain_last=False))
+            layers[f'Sa-{i}'] = SetAbstraction(f, r, gnn.MLP(l, act=activation(), norm=None, plain_last=False))
         if len(conv_mlp) > len(radius):
             layers['Global-Sa'] = GlobalSetAbstraction(
-                gnn.MLP(conv_mlp[-1], act=nn.Tanh(), norm=None, plain_last=False))
+                gnn.MLP(conv_mlp[-1], act=activation(), norm=None, plain_last=False))
 
         self.layers = nn.Sequential(layers)
         self.return_skip = return_skip
@@ -295,14 +296,14 @@ class SetAbstractionSeq(nn.Module):
 
 
 class FeaturePropagationSeq(nn.Module):
-    def __init__(self, fp_layers, k, dropout=None, activation=nn.Tanh()):
+    def __init__(self, fp_layers, k, dropout=None, activation=nn.Tanh):
         super().__init__()
 
         dropout = [0.] * len(fp_layers) if dropout is None else dropout
         layers = OrderedDict()
         for i, (l, k, d) in enumerate(zip(fp_layers, k, dropout)):
             is_last = i == len(fp_layers) - 1
-            layers[f'Fp-{i}'] = FeaturePropagation(k, gnn.MLP(l, act=activation, norm=None,
+            layers[f'Fp-{i}'] = FeaturePropagation(k, gnn.MLP(l, act=activation(), norm=None,
                                                               dropout=d,
                                                               plain_last=is_last))
 
@@ -316,15 +317,16 @@ class FeaturePropagationSeq(nn.Module):
 
 
 class FeaturePropagationNeuralOperatorSeq(nn.Module):
-    def __init__(self, fp_layers, k, par_size, dropout=None, activation=nn.Tanh()):
+    def __init__(self, fp_layers, k, par_size, dropout=None, activation=nn.Tanh):
         super().__init__()
         dropout = [0.] * len(fp_layers) if dropout is None else dropout
         layers = OrderedDict()
         for i, (l, k, d) in enumerate(zip(fp_layers, k, dropout)):
             is_last = i == len(fp_layers) - 1
-            layers[f'Fp-{i}'] = FeaturePropagationNeuralOperator(k, gnn.MLP(l, act=activation, norm=None,
-                                                                            dropout=d,
-                                                                            plain_last=is_last),
+            layers[f'Fp-{i}'] = FeaturePropagationNeuralOperator(k,
+                                                                 gnn.MLP(l, act=activation(), norm=None,
+                                                                         dropout=d,
+                                                                         plain_last=is_last),
                                                                  par_size)
         self.layers = nn.Sequential(layers)
 

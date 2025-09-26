@@ -273,7 +273,7 @@ class SetAbstractionMrgSeq(nn.Module):
 
 
 class SetAbstractionSeq(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp, return_skip=True, activation=nn.Tanh):
+    def __init__(self, fraction, radius, conv_mlp, return_skip=True, activation=Tanh):
         super().__init__()
         layers = OrderedDict()
         for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp)):

@@ -152,8 +152,8 @@ def plot_common_data(data: dict, plots_path):
 
 
 def evaluate(args, model, data: FoamDataset, enable_timing,
-             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], tuple],
-             postprocess_fn: Callable[[FoamDataset, tuple, Path], None]):
+             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]],
+             postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None]):
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args)
 
@@ -179,17 +179,26 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
                     [avg_inference_time, cfd_timing['Average'] / 1e3],
                     plots_path)
 
-    results = []
+    results = None
     for predicted, target in zip(predictions, data_loader):
         pde, extras = predicted
         pde.data = pde.data.to('cpu').detach()
         extras.data = extras.data.to('cpu').detach()
-        for i, r in enumerate(sample_process_fn(data, pde, target, extras)):
-            if len(results) == i:
-                results.append([*r])
-            else:
-                results[i].extend(r)
 
+        sample_data = get_common_data(data, pde, target, extras)
+        sample_data.update(sample_process_fn(data, pde, target, extras))
+        if results is None:
+            results = dict.fromkeys(sample_data.keys(), [])
+
+        for k, v in sample_data.items():
+            old_v = results[k]
+            results[k] = old_v + [v]
+
+    for k, v in results.items():
+        if isinstance(v[0], Tensor):
+            results[k] = torch.cat(v)
+
+    plot_common_data(results, plots_path)
     postprocess_fn(data, results, plots_path)
 
     if args.save_plots:

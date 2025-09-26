@@ -128,7 +128,8 @@ class PipnFoamPpFull(PipnFoamBase):
     def forward(self, all_points_grad: Tensor, in_data: FoamData) -> FoamData:
         batch = get_batch(all_points_grad)
         pos = torch.cat([*all_points_grad])
-        x = torch.cat([pos, torch.cat([*in_data['cellToRegion']])], dim=-1)
+        zones_ids = torch.cat([*in_data['cellToRegion']])
+        x = torch.cat([pos, zones_ids], dim=-1)
         out, skips = self.encoder(x, pos, batch)
         y, _, batch = self.decoder(*out, *skips)
         y = torch.stack(unbatch(y, batch))

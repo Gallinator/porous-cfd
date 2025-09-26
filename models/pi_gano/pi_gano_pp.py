@@ -35,10 +35,9 @@ class PiGanoPp(PiGanoBase):
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
         # Prepare inputs
-        zones_ids = x['cellToRegion']
         param_features = self.get_parameters(x)
 
-        geom_embedding = self.geometry_encoder(zones_ids, autograd_points.detach())
+        geom_embedding = self.geometry_encoder(x['internal']['C'].detach(), x['internal']['C'].detach())
         geom_embedding = geom_embedding.repeat((1, autograd_points.shape[-2], 1))
 
         local_embedding = self.points_encoder.forward(autograd_points)

@@ -103,8 +103,7 @@ class PipnFoamPpMrg(PipnFoamBase):
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
         local_features = self.local_fe(autograd_points)
-        global_in = torch.cat([autograd_points, x['cellToRegion']], dim=-1)
-        global_feature = self.global_fe(global_in, autograd_points)
+        global_feature = self.global_fe(x['boundary']['C'], x['boundary']['C'])
 
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         seg_input = torch.cat([local_features, exp_global], dim=-1)

@@ -91,8 +91,7 @@ class GeometryEncoderPp(nn.Module):
         :param zones_ids: Porous zone index (B, M, 1)
         :return: Embedding (B, 1, K)
         """
-        in_data = torch.cat([x, pos], dim=-1)
-        y = self.set_abstraction(in_data, pos)
+        y = self.set_abstraction(x, pos)
         return torch.max(y, dim=1, keepdim=True)[0]
 
 

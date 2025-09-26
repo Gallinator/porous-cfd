@@ -5,18 +5,19 @@ import time
 from argparse import ArgumentParser
 from collections.abc import Callable
 from pathlib import Path
-
+from typing import Any
 import matplotlib
-import numpy as np
 import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
+from scipy.stats._mstats_basic import trimmed_mean
 from torch import Tensor, cdist
+from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn
-from visualization.common import plot_timing
+from visualization.common import plot_timing, box_plot, plot_data_dist, plot_residuals, plot_errors
 
 
 def create_plots_root_dir(args):
@@ -68,6 +69,81 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of observation points to sample', default=500)
     arg_parser.add_argument('--precision', type=str, default='bf16-mixed')
     return arg_parser
+
+
+def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
+    predicted_u, predicted_p = predicted['U'], predicted['p']
+    target_u, target_p = target['U'], target['p']
+    if 'U' in data.normalizers:
+        data.normalizers['U'].to()
+        predicted_u = data.normalizers['U'].to().inverse_transform(predicted_u)
+        target_u = data.normalizers['U'].to().inverse_transform(target_u)
+    if 'p' in data.normalizers:
+        data.normalizers['p'].to()
+        predicted_p = data.normalizers['p'].to().inverse_transform(predicted_p)
+        target_p = data.normalizers['p'].to().inverse_transform(target_p)
+
+    u_error = l1_loss(predicted_u, target_u, reduction='none')
+    p_error = l1_loss(predicted_p, target_p, reduction='none')
+
+    predicted_div, predicted_momentum = extras['div'], extras['Momentum']
+    target_div, target_momentum = torch.zeros_like(predicted_div), torch.zeros_like(predicted_momentum)
+
+    if 'momentError' in target and 'div(phi)' in target:
+        target_div = target['internal']['div(phi)']
+        target_momentum = target['internal']['momentError']
+
+    return {'U error': u_error,
+            'p error': p_error,
+            'Predicted momentum': predicted_momentum,
+            'Predicted divergence': predicted_div,
+            'Target momentum': target_momentum,
+            'Target divergence': target_div,
+            'Region id': target['cellToRegion']}
+
+
+def plot_common_data(data: dict, plots_path):
+    errors = torch.cat([data['U error'], data['p error']], dim=-1)
+    max_error_per_case = torch.max(errors, dim=1)[0]
+    box_labels = ['$U_x$', '$U_y$', '$U_z$'][:errors.shape[-1]] + ['$p$']
+    box_plot('Maximum errors per case',
+             [*torch.hsplit(max_error_per_case, errors.shape[-1])],
+             box_labels,
+             plots_path)
+
+    u_errors, p_errors = torch.flatten(data['U error'], 0, 1), torch.flatten(data['p error'], 0, 1)
+    plot_data_dist('Absolute error distribution', u_errors, p_errors, save_path=plots_path)
+
+    errors = torch.cat([u_errors, p_errors], -1)
+    mae = torch.mean(errors, dim=0).tolist()
+    plot_errors('Average relative error', mae, save_path=plots_path)
+
+    zones_ids = data['Region id'].flatten()
+    fluid_mae = torch.mean(errors[zones_ids < 1, :], dim=0).tolist()
+    plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
+
+    porous_mae = torch.mean(errors[zones_ids > 0, :], dim=0).tolist()
+    plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
+
+    predicted_div = data['Predicted divergence'].flatten(0, 1)
+    predicted_momentum = data['Predicted momentum'].flatten(0, 1)
+
+    plot_data_dist('Absolute residuals',
+                   torch.abs(predicted_momentum),
+                   torch.abs(predicted_div),
+                   save_path=plots_path)
+
+    target_div = data['Target momentum'].flatten(0, 1)
+    target_momentum = data['Target divergence'].flatten(0, 1)
+    target_residuals = torch.cat([target_momentum, target_div], dim=-1)
+    predicted_residuals = torch.cat([predicted_momentum, predicted_div], dim=-1)
+    pred_res_avg = trimmed_mean(torch.abs(predicted_residuals), limits=[0, 0.05], axis=0)
+    cfd_res_avg = trimmed_mean(torch.abs(target_residuals), limits=[0, 0.05], axis=0)
+    plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
+
+    if plots_path is not None:
+        errors_dict = {'Total': mae, 'Fluid': fluid_mae, 'Porous': porous_mae}
+        save_mae_to_csv(errors_dict, box_labels, plots_path)
 
 
 def evaluate(args, model, data: FoamDataset, enable_timing,

@@ -1,5 +1,6 @@
 import torch
 from torch import Tensor
+from torch.nn import Tanh
 from torch.optim.lr_scheduler import ExponentialLR
 from torch_geometric.utils import unbatch
 
@@ -21,12 +22,13 @@ class PiGanoPpFull(PiGanoBase):
                  fp_dropout,
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
-                 loss_scaler=None):
+                 loss_scaler=None,
+                 activation=Tanh):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
-        self.branch = Branch(branch_layers)
-        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, True)
-        self.decoder = FeaturePropagationNeuralOperatorSeq(dec_layers, dec_k, branch_layers[-1], fp_dropout)
+        self.branch = Branch(branch_layers, activation)
+        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, True, activation)
+        self.decoder = FeaturePropagationNeuralOperatorSeq(dec_layers, dec_k, branch_layers[-1], fp_dropout, activation)
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
         # Prepare inputs

@@ -1,6 +1,6 @@
 import torch
 from torch import Tensor
-from torch.nn import Tanh
+from torch.nn import Tanh, Mish
 from torch.optim.lr_scheduler import ExponentialLR
 from torch_geometric.utils import unbatch
 
@@ -68,7 +68,7 @@ class PipnFoamPp(PipnFoamBase):
     def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, fe_radius, fe_fraction, seg_layers, seg_dropout,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
-                 activation=Tanh):
+                 activation=Mish):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
 
         self.feature_extract = PointNetFeatureExtractPp(fe_local_layers, fe_global_layers, fe_fraction, fe_radius,
@@ -94,7 +94,7 @@ class PipnFoamPpMrg(PipnFoamBase):
     def __init__(self, nu, d, f, fe_local_layers, seg_layers, seg_dropout,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
-                 activation=Tanh):
+                 activation=Mish):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
         self.global_fe = SetAbstractionMrgSeq(fe_local_layers[0], activation())
         self.local_fe = MLP(fe_local_layers, activation=activation)
@@ -119,7 +119,7 @@ class PipnFoamPpMrg(PipnFoamBase):
 
 class PipnFoamPpFull(PipnFoamBase):
     def __init__(self, nu, d, f, enc_layers, enc_radius, enc_fraction, dec_layers, dec_k, last_dec_dropout,
-                 scalers: dict[str, StandardScaler], loss_scaler, activation=Tanh):
+                 scalers: dict[str, StandardScaler], loss_scaler, activation=Mish):
         super().__init__(nu, d, f, dec_layers[-1][-1], scalers, loss_scaler)
         self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, activation)
         self.decoder = FeaturePropagationSeq(dec_layers, dec_k, last_dec_dropout, activation)

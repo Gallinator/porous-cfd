@@ -17,7 +17,7 @@ from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
-from dataset.foam_dataset import FoamDataset, collate_fn
+from dataset.foam_dataset import FoamDataset, collate_fn, StandardScaler, Normalizer
 from visualization.common import plot_timing, box_plot, plot_data_dist, plot_residuals, plot_errors
 
 
@@ -28,6 +28,26 @@ def create_plots_root_dir(args):
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name / 'stats'
         plots_path.mkdir(exist_ok=True, parents=True)
     return plots_path
+
+
+def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer):
+    coef = scaler.inverse_transform(coef)[..., 0:1]
+    return torch.max(coef, dim=-2, keepdim=True)[0]
+
+
+def extract_u_magnitude(u: Tensor, scaler: StandardScaler, spacing):
+    u_mag = scaler.inverse_transform(u)
+    u_mag = torch.norm(u_mag, dim=-1, keepdim=True)
+    u_mag = torch.max(u_mag, dim=-2, keepdim=True)[0]
+    return torch.round(u_mag / spacing) * spacing
+
+
+def extract_angle(u: Tensor, scaler: StandardScaler):
+    u = scaler.inverse_transform(u)
+    u_mag = torch.norm(u, dim=-1, keepdim=True)
+    a = torch.arccos(u[..., 0:1] / u_mag)
+    a = torch.max(a, dim=-2, keepdim=True)[0]
+    return torch.rad2deg(a)
 
 
 def get_normalized_signed_distance(points: Tensor, target: Tensor):

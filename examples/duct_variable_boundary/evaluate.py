@@ -2,16 +2,16 @@ from pathlib import Path
 from typing import Any
 import numpy as np
 import torch
-from functorch.dim import Tensor
 from numpy.random import default_rng
-from common.evaluation import build_arg_parser, evaluate, get_normalized_signed_distance, get_mean_max_error_distance
+from common.evaluation import build_arg_parser, evaluate, get_normalized_signed_distance, get_mean_max_error_distance, \
+    extract_coef, extract_u_magnitude, extract_angle
 from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
-from dataset.foam_dataset import FoamDataset, StandardScaler, Normalizer
+from dataset.foam_dataset import FoamDataset
 from models.pi_gano.pi_gano import PiGano
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
-from visualization.common import plot_errors, plot_errors_vs_var, plot_heatmap, plot_errors_vs_multi_vars
+from visualization.common import plot_errors, plot_errors_vs_var, plot_errors_vs_multi_vars
 
 
 def get_model(checkpoint):
@@ -27,27 +27,6 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer):
-    coef = scaler.inverse_transform(coef)[..., 0:1]
-    return torch.max(coef, dim=-2, keepdim=True)[0]
-
-
-def extract_u_magnitude(u: Tensor, scaler: StandardScaler):
-    u_mag = scaler.inverse_transform(u)
-    u_mag = torch.norm(u_mag, dim=-1, keepdim=True)
-    u_mag = torch.max(u_mag, dim=-2, keepdim=True)[0]
-    # Assume values spaced by 0.025
-    return torch.round(u_mag * 1000 / 25) * 25 / 1000
-
-
-def extract_angle(u: Tensor, scaler: StandardScaler):
-    u = scaler.inverse_transform(u)
-    u_mag = torch.norm(u, dim=-1, keepdim=True)
-    a = torch.arccos(u[..., 0:1] / u_mag)
-    a = torch.max(a, dim=-2, keepdim=True)[0]
-    return torch.rad2deg(a)
-
-
 def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
     c_scaler = data.normalizers['C'].to()
     all_points = c_scaler.inverse_transform(target['C'])
@@ -61,7 +40,7 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
     f = extract_coef(target['f'], data.normalizers['f'])
 
     data.normalizers['U'].to()
-    u_magnitude = extract_u_magnitude(target['inlet']['U-inlet'], data.normalizers['U'])
+    u_magnitude = extract_u_magnitude(target['inlet']['U-inlet'], data.normalizers['U'], 0.025)
 
     angle = extract_angle(target['inlet']['U'], data.normalizers['U'])
 

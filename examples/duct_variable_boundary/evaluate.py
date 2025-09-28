@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+import numpy as np
 import torch
 from functorch.dim import Tensor
 from numpy.random import default_rng
@@ -10,7 +11,7 @@ from dataset.foam_dataset import FoamDataset, StandardScaler, Normalizer
 from models.pi_gano.pi_gano import PiGano
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
-from visualization.common import plot_errors
+from visualization.common import plot_errors, plot_errors_vs_var, plot_heatmap, plot_errors_vs_multi_vars
 
 
 def get_model(checkpoint):
@@ -27,16 +28,24 @@ def get_model(checkpoint):
 
 
 def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer):
-    coef = scaler.inverse_transform(coef)
-    return torch.max(coef)[0]
+    coef = scaler.inverse_transform(coef)[..., 0:1]
+    return torch.max(coef, dim=-2, keepdim=True)[0]
 
 
 def extract_u_magnitude(u: Tensor, scaler: StandardScaler):
     u_mag = scaler.inverse_transform(u)
-    u_mag = torch.norm(u_mag, dim=-1)
+    u_mag = torch.norm(u_mag, dim=-1, keepdim=True)
     u_mag = torch.max(u_mag, dim=-2, keepdim=True)[0]
     # Assume values spaced by 0.025
-    return round(u_mag * 1000 / 25) * 25 / 1000
+    return torch.round(u_mag * 1000 / 25) * 25 / 1000
+
+
+def extract_angle(u: Tensor, scaler: StandardScaler):
+    u = scaler.inverse_transform(u)
+    u_mag = torch.norm(u, dim=-1, keepdim=True)
+    a = torch.arccos(u[..., 0:1] / u_mag)
+    a = torch.max(a, dim=-2, keepdim=True)[0]
+    return torch.rad2deg(a)
 
 
 def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
@@ -47,19 +56,32 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
 
     data.normalizers['d'].to()
     d = extract_coef(target['d'], data.normalizers['d'])
+    d = torch.round(d).to(torch.int64)
     data.normalizers['f'].to()
     f = extract_coef(target['f'], data.normalizers['f'])
 
     data.normalizers['U'].to()
-    u_magnitude = extract_u_magnitude(target['inlet']['Uinlet'], data.normalizers['U'])
+    u_magnitude = extract_u_magnitude(target['inlet']['U-inlet'], data.normalizers['U'])
 
-    return {'Interface distance': interface_dist, 'd': d, 'f': f, 'U inlet': u_magnitude}
+    angle = extract_angle(target['inlet']['U'], data.normalizers['U'])
+
+    return {'Interface distance': interface_dist, 'd': d, 'f': f, 'U inlet': u_magnitude, 'Angle': angle}
 
 
 def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path):
-    errors = torch.cat([results['U error'], results['p error']], -1)
+    errors = np.concatenate([results['U error'], results['p error']], -1)
     max_error_from_interface = get_mean_max_error_distance(errors, 0.8, results['Interface distance'])
     plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
+
+    per_case_mae = np.concatenate(np.mean(errors, axis=-2, keepdims=True))
+    angles = torch.tensor(results['Angle']).flatten()
+    mae_by_angle = [np.mean(per_case_mae[angles == a], axis=0, keepdims=True) for a in angles.unique()]
+    mae_by_angle = np.concatenate(mae_by_angle)
+    plot_errors_vs_var('MAE by inlet angle', mae_by_angle, angles.unique(), ['MAE', 'Angle'], plots_path)
+
+    d, f = np.array(results['d']).flatten(), np.array(results['f']).flatten()
+    u_inlet = np.array(results['U inlet']).flatten()
+    plot_errors_vs_multi_vars('MAE heatmap', per_case_mae, d.astype(np.int64), u_inlet, ['D', 'U'], plots_path)
 
 
 if __name__ == '__main__':
@@ -71,4 +93,4 @@ if __name__ == '__main__':
     data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir,
                        extra_fields=['momentError', 'div(phi)'])
 
-    evaluate(args, model, data, True, sample_process, postprocess_fn)
+    evaluate(args, model, data, False, sample_process, postprocess_fn)

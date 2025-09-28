@@ -225,7 +225,10 @@ def plot_heatmap(ax, matrix, x, y, labels):
         if isinstance(l[0], np.int64):
             return f'{l[i]:d}'
         else:
-            return f'{l[i]:.3f}'
+            if l[i] < 1e-3:
+                return f'{l[i]:.2e}'
+            else:
+                return f'{l[i]:.3f}'
 
     ax.set_xticks(range(len(x)), labels=x, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(len(y)), labels=y)

@@ -7,6 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 import matplotlib
+import numpy as np
 import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
@@ -36,17 +37,17 @@ def get_normalized_signed_distance(points: Tensor, target: Tensor):
 
 
 def get_mean_max_error_distance(errors, quantile, interface_dist):
-    q_mask = errors > torch.quantile(errors, quantile, dim=-2, keepdim=True)
+    q_mask = errors > np.quantile(errors, quantile, axis=-2, keepdims=True)
     q_dist = []
     # Loop over each batch
     for mask, dist in zip(q_mask, interface_dist):
         # Extract mean distance for each field
-        dim_masks = torch.split(mask, 1, dim=-1)
+        dim_masks = np.split(mask, errors.shape[-1], axis=-1)
         field_dists = [dist[m.flatten()] for m in dim_masks]
-        means = [torch.mean(d) for d in field_dists]
-        q_dist.append(torch.tensor(means))
+        means = [np.mean(d) for d in field_dists]
+        q_dist.append(np.array(means))
     # Average over all batches
-    return torch.mean(torch.stack(q_dist), dim=0)
+    return np.mean(np.stack(q_dist), axis=0)
 
 
 def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):
@@ -108,42 +109,39 @@ def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, ex
 
 
 def plot_common_data(data: dict, plots_path):
-    errors = torch.cat([data['U error'], data['p error']], dim=-1)
-    max_error_per_case = torch.max(errors, dim=1)[0]
+    errors = np.concatenate([data['U error'], data['p error']], axis=-1)
+    max_error_per_case = np.max(errors, axis=1)
     box_labels = ['$U_x$', '$U_y$', '$U_z$'][:errors.shape[-1]] + ['$p$']
     box_plot('Maximum errors per case',
-             [*torch.hsplit(max_error_per_case, errors.shape[-1])],
+             [*np.hsplit(max_error_per_case, errors.shape[-1])],
              box_labels,
              plots_path)
 
-    u_errors, p_errors = torch.flatten(data['U error'], 0, 1), torch.flatten(data['p error'], 0, 1)
+    u_errors, p_errors = np.concatenate(data['U error']), np.concatenate(data['p error'])
     plot_data_dist('Absolute error distribution', u_errors, p_errors, save_path=plots_path)
 
-    errors = torch.cat([u_errors, p_errors], -1)
-    mae = torch.mean(errors, dim=0).tolist()
+    errors = np.concatenate([u_errors, p_errors], -1)
+    mae = np.mean(errors, axis=0).tolist()
     plot_errors('Average relative error', mae, save_path=plots_path)
 
     zones_ids = data['Region id'].flatten()
-    fluid_mae = torch.mean(errors[zones_ids < 1, :], dim=0).tolist()
+    fluid_mae = np.mean(errors[zones_ids < 1, :], axis=0).tolist()
     plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
 
-    porous_mae = torch.mean(errors[zones_ids > 0, :], dim=0).tolist()
+    porous_mae = np.mean(errors[zones_ids > 0, :], axis=0).tolist()
     plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
 
-    predicted_div = data['Predicted divergence'].flatten(0, 1)
-    predicted_momentum = data['Predicted momentum'].flatten(0, 1)
+    predicted_div = np.concatenate(data['Predicted divergence'])
+    predicted_momentum = np.concatenate(data['Predicted momentum'])
 
-    plot_data_dist('Absolute residuals',
-                   torch.abs(predicted_momentum),
-                   torch.abs(predicted_div),
-                   save_path=plots_path)
+    plot_data_dist('Absolute residuals', np.abs(predicted_momentum), np.abs(predicted_div), save_path=plots_path)
 
-    target_div = data['Target momentum'].flatten(0, 1)
-    target_momentum = data['Target divergence'].flatten(0, 1)
-    target_residuals = torch.cat([target_momentum, target_div], dim=-1)
-    predicted_residuals = torch.cat([predicted_momentum, predicted_div], dim=-1)
-    pred_res_avg = trimmed_mean(torch.abs(predicted_residuals), limits=[0, 0.05], axis=0)
-    cfd_res_avg = trimmed_mean(torch.abs(target_residuals), limits=[0, 0.05], axis=0)
+    target_div = np.concatenate(data['Target momentum'])
+    target_momentum = np.concatenate(data['Target divergence'])
+    target_residuals = np.concatenate([target_momentum, target_div], axis=-1)
+    predicted_residuals = np.concatenate([predicted_momentum, predicted_div], axis=-1)
+    pred_res_avg = trimmed_mean(np.abs(predicted_residuals), limits=[0, 0.05], axis=0)
+    cfd_res_avg = trimmed_mean(np.abs(target_residuals), limits=[0, 0.05], axis=0)
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
 
     if plots_path is not None:
@@ -196,7 +194,7 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
 
     for k, v in results.items():
         if isinstance(v[0], Tensor):
-            results[k] = torch.cat(v)
+            results[k] = np.concatenate([i.numpy() for i in v])
 
     plot_common_data(results, plots_path)
     postprocess_fn(data, results, plots_path)

@@ -7,6 +7,7 @@ import pandas
 from matplotlib import pyplot as plt
 from numpy.linalg import norm
 from rich.progress import track
+from scipy.interpolate import make_smoothing_spline
 
 from dataset import data_parser
 from dataset.data_parser import parse_internal_fields
@@ -154,3 +155,31 @@ def box_plot(title: str, values, labels, save_path=None):
     for a, v, l in zip(axs, values, labels):
         a.boxplot(v, tick_labels=[l])
     plot_or_save(fig, save_path)
+
+
+def get_fields_names(f):
+    return ['$U_x$', '$U_y$', '$U_z$'][:f.shape[-1] - 1] + ['$p$']
+
+
+def plot_errors_vs_var(title, errors, var, labels, save_path=None):
+    n_errors = errors.shape[-1]
+    fig, axs = plt.subplots(ncols=1, nrows=n_errors)
+    fig.suptitle(title)
+
+    fields_names = get_fields_names(errors)
+
+    for i in range(n_errors):
+        axs[i].scatter(var, errors[:, i], label='Raw')
+        axs[i].set_xlabel(labels[0])
+        axs[i].set_ylabel(labels[1])
+
+        if len(var) > 5:
+            interp = make_smoothing_spline(var, errors[..., i])
+            x = np.linspace(min(var), max(var), 100)
+            axs[i].plot(x, interp(x), c='red', label='Interpolated')
+        axs[i].legend()
+        axs[i].set_title(fields_names[i])
+
+    plt.tight_layout()
+    plot_or_save(fig, save_path)
+

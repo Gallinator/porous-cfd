@@ -1,6 +1,6 @@
 import torch
 from torch import Tensor, nn
-from torch.nn import Tanh
+from torch.nn import Mish
 from torch.optim.lr_scheduler import ExponentialLR
 
 from dataset.foam_data import FoamData
@@ -23,7 +23,7 @@ class PiGanoPp(PiGanoBase):
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
                  loss_scaler=None,
-                 activation=Tanh):
+                 activation=Mish):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
         self.branch = Branch(branch_layers, activation)

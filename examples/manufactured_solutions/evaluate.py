@@ -1,15 +1,10 @@
 from pathlib import Path
-import numpy as np
-import torch
 from numpy.random import default_rng
-from scipy.stats._mstats_basic import trimmed_mean
-from torch.nn.functional import l1_loss
-from common.evaluation import save_mae_to_csv, build_arg_parser, evaluate
+from common.evaluation import build_arg_parser, evaluate
 from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
 from models.pipn.pipn_baseline import PipnManufactured, PipnManufacturedPorousPp
-from visualization.common import plot_data_dist, plot_residuals, plot_errors
 from manufactured_dataset import ManufacturedDataset
 
 

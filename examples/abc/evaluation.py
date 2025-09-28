@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import Any
-import torch
+import numpy as np
 from numpy.random import default_rng
-from common.evaluation import build_arg_parser, evaluate, get_normalized_signed_distance, \
-    get_mean_max_error_distance
+from common.evaluation import build_arg_parser, evaluate, get_normalized_signed_distance, get_mean_max_error_distance
 from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
@@ -36,7 +35,7 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
 
 
 def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path):
-    errors = torch.cat([results['U error'], results['p error']], -1)
+    errors = np.concatenate([results['U error'], results['p error']], -1)
     max_error_from_interface = get_mean_max_error_distance(errors, 0.8, results['Interface distance'])
     plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
 

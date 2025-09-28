@@ -1,4 +1,5 @@
 import glob
+from functools import partial
 from pathlib import Path
 from statistics import mean, stdev
 
@@ -183,3 +184,59 @@ def plot_errors_vs_var(title, errors, var, labels, save_path=None):
     plt.tight_layout()
     plot_or_save(fig, save_path)
 
+
+def get_heatmap(mae: np.array, x: np.array, y: np.array) -> tuple[np.array, np.array, np.array]:
+    """
+    Creates a 2D heatmap matrix.
+    :param field_mae: N
+    :param x: N
+    :param y: N
+    :return a tuple with the matrix and the sorted x and y
+    """
+    x_unique = np.unique(x)
+    y_unique = np.unique(y)[::-1]
+
+    heatmap = np.ones((len(y_unique), len(x_unique))) * np.nan
+    for f, x, y in zip(mae, x, y):
+        j = (x_unique == x).nonzero()[0]
+        i = (y_unique == y).nonzero()[0]
+        heatmap[i, j] = f
+
+    return heatmap, x_unique, y_unique
+
+
+def plot_errors_vs_multi_vars(title, errors, x, y, labels, save_path=None):
+    fig = plt.figure(figsize=(16, 9))
+    axs = fig.subplots(nrows=1, ncols=errors.shape[-1], )
+    fig.suptitle(title)
+    fields_names = get_fields_names(errors)
+
+    for ax, e, f_name in zip(axs, np.hsplit(errors, errors.shape[-1]), fields_names):
+        matrix, label_x, label_y = get_heatmap(e, x, y)
+        plot_heatmap(ax, matrix, label_x, label_y, labels)
+        ax.set_title(f_name)
+
+    plt.tight_layout()
+    plot_or_save(fig, save_path)
+
+
+def plot_heatmap(ax, matrix, x, y, labels):
+    def tick_fmt(i, pos, l):
+        if isinstance(l[0], np.int64):
+            return f'{l[i]:d}'
+        else:
+            return f'{l[i]:.3f}'
+
+    ax.set_xticks(range(len(x)), labels=x, rotation=45, ha="right", rotation_mode="anchor")
+    ax.set_yticks(range(len(y)), labels=y)
+    ax.xaxis.set_major_formatter(partial(tick_fmt, l=x))
+    ax.yaxis.set_major_formatter(partial(tick_fmt, l=y))
+    ax.imshow(matrix, cmap='Wistia')
+    ax.set_xlabel(labels[0])
+    ax.set_ylabel(labels[1])
+
+    for i in range(len(y)):
+        for j in range(len(x)):
+            value = matrix[i][j]
+            if value >= 0:
+                ax.text(j, i, f'{value:.2e}', ha="center", va="center", color="black")

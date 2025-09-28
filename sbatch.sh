@@ -91,7 +91,7 @@ module load intel/nvidia/cuda-12.3.2
 
 ### Executable script
 cd $BASEDIR
-export PYTHONPATH="$(dirname $PWD):$PWD"
+export PYTHONPATH="$(dirname $(dirname $PWD)):$PWD"
 export PYTHONUNBUFFERED=1
 
 if [ "$generate_data" == true ]; then

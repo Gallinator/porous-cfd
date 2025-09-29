@@ -170,7 +170,7 @@ def plot_common_data(data: dict, plots_path):
 
 
 def evaluate(args, model, data: FoamDataset, enable_timing,
-             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]],
+             sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
              postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None]):
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args)
@@ -204,7 +204,8 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
         extras.data = extras.data.to('cpu').detach()
 
         sample_data = get_common_data(data, pde, target, extras)
-        sample_data.update(sample_process_fn(data, pde, target, extras))
+        if sample_process_fn:
+            sample_data.update(sample_process_fn(data, pde, target, extras))
         if results is None:
             results = dict.fromkeys(sample_data.keys(), [])
 
@@ -216,7 +217,7 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
         if isinstance(v[0], Tensor):
             results[k] = np.concatenate([i.numpy() for i in v])
 
-    plot_common_data(results, plots_path)
+    # plot_common_data(results, plots_path)
     postprocess_fn(data, results, plots_path)
 
     if args.save_plots:

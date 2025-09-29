@@ -35,7 +35,7 @@ solvers
 
 SIMPLE
 {
-    nNonOrthogonalCorrectors 3;
+    nNonOrthogonalCorrectors 10;
     consistent      yes;
 
     residualControl

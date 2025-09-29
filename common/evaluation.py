@@ -227,7 +227,7 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
         if isinstance(v[0], Tensor):
             results[k] = np.concatenate([i.numpy() for i in v])
 
-    # plot_common_data(results, plots_path)
+    plot_common_data(results, plots_path)
     postprocess_fn(data, results, plots_path)
 
     if args.save_plots:

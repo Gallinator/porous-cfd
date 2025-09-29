@@ -137,6 +137,16 @@ def plot_common_data(data: dict, plots_path):
              box_labels,
              plots_path)
 
+    quantiles = np.quantile(errors, 0.8, axis=-2, keepdims=True)
+    top_errors = []
+    for q, e in zip(quantiles, errors):
+        keep_errors = np.transpose(e > q)
+        case_errors = [f[k] for f, k in zip(np.transpose(e), keep_errors)]
+        mean_case_errors = np.mean(np.array(case_errors), axis=-1)
+        top_errors.append(mean_case_errors)
+    top_errors = np.mean(np.array(top_errors), axis=0).tolist()
+    plot_errors('Top 80% mean errors', top_errors, save_path=plots_path)
+
     u_errors, p_errors = np.concatenate(data['U error']), np.concatenate(data['p error'])
     plot_data_dist('Absolute error distribution', u_errors, p_errors, save_path=plots_path)
 

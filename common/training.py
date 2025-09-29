@@ -51,9 +51,13 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
                         precision=args.precision,
                         default_root_dir=args.logs_dir)
 
+    with open(f'{trainer.log_dir}/model_meta.json', 'w') as f:
+        model_meta = {'Model type': args.model,
+                      'N internal': args.n_internal,
+                      'N boundary': args.n_boundary,
+                      'N observations': args.nobservations}
+        f.write(json.dumps(model_meta, indent=4))
+
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     trainer.save_checkpoint(f'{trainer.log_dir}/model.ckpt')
-
-    with open(f'{trainer.log_dir}/model_meta.json', 'w') as f:
-        f.write(json.dumps({'Model type': args.model}, indent=4))

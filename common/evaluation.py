@@ -181,7 +181,7 @@ def plot_common_data(data: dict, plots_path):
 
 def evaluate(args, model, data: FoamDataset, enable_timing,
              sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
-             postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None]):
+             postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None] | None):
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args)
 
@@ -228,7 +228,8 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
             results[k] = np.concatenate([i.numpy() for i in v])
 
     plot_common_data(results, plots_path)
-    postprocess_fn(data, results, plots_path)
+    if postprocess_fn:
+        postprocess_fn(data, results, plots_path)
 
     if args.save_plots:
         matplotlib.use(default_backend)

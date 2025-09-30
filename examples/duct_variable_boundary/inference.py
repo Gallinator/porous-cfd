@@ -29,10 +29,10 @@ def get_model(checkpoint):
 def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path):
     case_plot_path = create_case_plot_dir(plots_path, case_path.name)
     points_scaler = data.normalizers['C'].to()
-    u_scaler = val_data.normalizers['U'].to()
-    p_scaler = val_data.normalizers['p'].to()
-    d_scaler = val_data.normalizers['d'].to()
-    f_scaler = val_data.normalizers['f'].to()
+    u_scaler = data.normalizers['U'].to()
+    p_scaler = data.normalizers['p'].to()
+    d_scaler = data.normalizers['d'].to()
+    f_scaler = data.normalizers['f'].to()
 
     d = torch.max(d_scaler.inverse_transform(target['d']))
     f = torch.max(f_scaler.inverse_transform(target['f']))

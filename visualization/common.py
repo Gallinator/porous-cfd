@@ -101,23 +101,19 @@ def plot_errors(title, *args, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_residuals(*args, trim, save_path=None):
+def plot_multi_bar(title, values: dict, values_labels, save_path=None):
     fig, ax = plt.subplots()
-    colors = ['salmon', 'lightblue']
-    labels = ['PINN', 'OpenFoam']
-    u_dims = len(args[0]) - 1
-    ax.set_title(f'Absolute average residuals (trimmed {trim})', pad=10)
+    ax.set_title(title, pad=10)
     w = 0.01
-    x = np.array([x * 0.03 for x in range(len(args[0]))])
+    x = np.array([x * 0.03 for x in range(len(values_labels))])
 
-    for i, d in enumerate(args):
-        rects = ax.bar(x + i * w, d, w, color=colors[i], label=labels[i])
+    for i, (k, v) in enumerate(values.items()):
+        rects = ax.bar(x + i * w, v, w, label=k)
         ax.bar_label(rects, fmt='%.2e', padding=10)
 
     ax.legend()
-    ax.set_ylim(0, max([max(d) for d in args]) * 1.1)
-    labels = ['Momentum x', 'Momentum y', 'Momentum z'][:u_dims] + ['Continuity']
-    ax.set_xticks(x + w / 2, labels)
+    ax.set_ylim(0, max([max(d) for d in values.values()]) * 1.1)
+    ax.set_xticks(x + w / 2, values_labels)
     fig.tight_layout()
     plot_or_save(fig, save_path)
 
@@ -158,7 +154,7 @@ def box_plot(title: str, values, labels, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def get_fields_names(f):
+def get_fields_names(f: np.ndarray):
     return ['$U_x$', '$U_y$', '$U_z$'][:f.shape[-1] - 1] + ['$p$']
 
 

@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn, StandardScaler, Normalizer
-from visualization.common import plot_timing, box_plot, plot_data_dist, plot_residuals, plot_errors
+from visualization.common import plot_timing, box_plot, plot_data_dist, plot_multi_bar, plot_errors
 
 
 def create_plots_root_dir(args):
@@ -180,7 +180,10 @@ def plot_common_data(data: dict, plots_path):
     predicted_residuals = np.concatenate([predicted_momentum, predicted_div], axis=-1)
     pred_res_avg = trimmed_mean(np.abs(predicted_residuals), limits=[0, 0.05], axis=0)
     cfd_res_avg = trimmed_mean(np.abs(target_residuals), limits=[0, 0.05], axis=0)
-    plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
+    plot_multi_bar(f'Absolute average residuals (trimmed 0.05)',
+                   {'Predicted': pred_res_avg.tolist(), 'Target': cfd_res_avg.tolist()},
+                   ['Momentum x', 'Momentum y', 'Momentum z'][:n_dims] + ['Continuity'],
+                   save_path=plots_path)
 
     eval_df.loc['Residuals trimmed'] = pred_res_avg
 

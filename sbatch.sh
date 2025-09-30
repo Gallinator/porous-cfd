@@ -13,7 +13,7 @@ start_time=$(date +%s)
 
 ### Definitions
 export LOCDIR="/scratch_local"
-export BASEDIR=$PWD
+export EXAMPLE=""
 
 gen_args=( --openfoam-dir /usr/lib/openfoam/openfoam2412 --openfoam-procs 8 )
 train_args=()
@@ -29,7 +29,7 @@ while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
     c)
       container_path="$OPTARG/";;
     x)
-      BASEDIR="$BASEDIR/examples/$OPTARG";;
+      EXAMPLE="examples/$OPTARG";;
     r)
       gen_args+=( --data-root-dir "$OPTARG" )
       data_root="$OPTARG/"
@@ -72,7 +72,7 @@ while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
 done
 
 # File system setup
-if [ "$BASEDIR" = "$PWD" ]; then
+if [ "$EXAMPLE" = "" ]; then
   echo "Please provide an experiment to run with the -x argument."
   exit 1
 fi
@@ -90,10 +90,13 @@ module load amd/gcc-8.5.0/openmpi-4.1.6
 module load intel/nvidia/cuda-12.3.2
 
 ### Executable script
-export PYTHONPATH="$PWD:$PWD/examples/manufactured_solutions"
+export PYTHONPATH="$PWD:$PWD/$EXAMPLE/"
 export PYTHONUNBUFFERED=1
 
-singularity exec "$container_path" python test.py "${gen_args[@]}"
+if [ "$generate_data" == true ]; then
+  singularity exec "$container_path" python generate_singularity.py "${gen_args[@]}"
+fi
+singularity exec --nv "$container_path" python train_singularity.py "${train_args[@]}"
 
 
 ### Footer

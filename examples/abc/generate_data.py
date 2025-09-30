@@ -1,5 +1,4 @@
 from pathlib import Path
-from random import Random
 from datagen.data_generator import build_arg_parser
 from examples.abc.abc_generator import AbcGenerator
 from examples.abc.data_preprocess import move_to_meshes, extract
@@ -8,7 +7,6 @@ if __name__ == '__main__':
     args = build_arg_parser().parse_args()
     data_root = Path(args.data_root_dir)
     data_root.mkdir(exist_ok=True, parents=True)
-    rng = Random(8421)
     # download('https://archive.nyu.edu/retrieve/89085/abc_0000_obj_v00.7z', data_root / 'Abc.7z')
     extract('assets/abc.tar.gz', 'assets/meshes/standard')
 

@@ -131,12 +131,13 @@ def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, ex
 
 def plot_common_data(data: dict, plots_path):
     errors = np.concatenate([data['U error'], data['p error']], axis=-1)
-    errors_labels = ['$U_x$', '$U_y$', '$U_z$'][:errors.shape[-1] - 1] + ['$p$']
+    n_dims = errors.shape[-1] - 1
+    errors_labels = ['$U_x$', '$U_y$', '$U_z$'][:n_dims] + ['$p$']
     eval_df = DataFrame(columns=errors_labels)
 
     max_error_per_case = np.max(errors, axis=1)
     box_plot('Maximum errors per case',
-             [*np.hsplit(max_error_per_case, errors.shape[-1])],
+             [*np.hsplit(max_error_per_case, n_dims + 1)],
              errors_labels,
              plots_path)
     eval_df.loc['Average max errors'] = np.mean(max_error_per_case, axis=0)

@@ -33,6 +33,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--val-dir', type=str, default='data/val')
     arg_parser.add_argument('--model', type=str)
     arg_parser.add_argument('--name', type=str, default=None)
+    arg_parser.add_argument('--checkpoint', type=str, default=None)
     return arg_parser
 
 
@@ -62,6 +63,6 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
                       'Batch size': args.batch_size}
         f.write(json.dumps(model_meta, indent=4))
 
-    trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader, ckpt_path=args.checkpoint)
 
     trainer.save_checkpoint(f'{trainer.log_dir}/model.ckpt')

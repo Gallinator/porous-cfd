@@ -7,12 +7,12 @@ from models.pipn.pipn_baseline import PipnManufactured, PipnManufacturedPorousPp
 
 def get_model(name):
     if name == 'pipn':
-        return PipnManufactured(nu=0.01, d=d, f=f,
+        return PipnManufactured(nu=0.01, d=50, f=1,
                                 fe_local_layers=[2, 64, 64],
                                 fe_global_layers=[64 + 1, 64, 128, 1024],
                                 seg_layers=[1024 + 64, 512, 256, 128, 3])
     elif name == 'pipn-pp':
-        return PipnManufacturedPorousPp(nu=0.01, d=d, f=f,
+        return PipnManufacturedPorousPp(nu=0.01, d=50, f=1,
                                         fe_local_layers=[2, 64, 64],
                                         fe_global_layers=[[2 + 1 + 2, 64], [64 + 2, 128], [128 + 2, 1024]],
                                         fe_global_radius=[0.5, 0.25],
@@ -23,8 +23,6 @@ def get_model(name):
 
 
 def train_model():
-    d = 50
-    f = 1
     get_model('pipn-pp')
     args = build_arg_parser().parse_args()
 

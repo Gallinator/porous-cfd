@@ -10,6 +10,7 @@ class ManufacturedDataset(FoamDataset):
         super().__init__(data_dir, n_internal, n_boundary, 0, rng, meta_dir, extra_fields=extra_fields)
 
     def add_features(self, internal_fields: DataFrame, boundary_fields):
+        super().add_features(internal_fields, boundary_fields)
         self.add_manufactured_solutions(internal_fields)
         self.add_manufactured_solutions(boundary_fields)
 

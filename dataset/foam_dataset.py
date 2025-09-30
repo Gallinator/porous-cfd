@@ -326,7 +326,8 @@ class FoamDataset(Dataset):
         boundary_fields[boundary_multi_index] = ohe_values
 
     def add_features(self, internal_fields: DataFrame, boundary_fields):
-        return
+        self.add_sdf(internal_fields, boundary_fields)
+        self.add_boundary_id(internal_fields, boundary_fields)
 
     def load_case(self, case_dir) -> FoamData:
         boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=self.n_dims)

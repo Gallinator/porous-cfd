@@ -23,6 +23,8 @@ def get_model(name):
 
 
 def train_model():
+    d = 50
+    f = 1
     get_model('pipn-pp')
     args = build_arg_parser().parse_args()
 

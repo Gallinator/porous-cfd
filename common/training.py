@@ -57,7 +57,9 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
         model_meta = {'Model type': args.model,
                       'N internal': args.n_internal,
                       'N boundary': args.n_boundary,
-                      'N observations': args.nobservations}
+                      'N observations': args.n_observations,
+                      'Precision': args.precision,
+                      'Batch size': args.batch_size}
         f.write(json.dumps(model_meta, indent=4))
 
     trainer.fit(model=model, train_dataloaders=train_loader, val_dataloaders=val_loader)

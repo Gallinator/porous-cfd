@@ -49,7 +49,8 @@ def create_case_plot_dir(plots_root, case_name):
     return case_plot_dir
 
 
-def predict(args, model, data: FoamDataset, result_process_fn: Callable[[FoamDataset, FoamData, FoamData, Path], None]):
+def predict(args, model, data: FoamDataset,
+            result_process_fn: Callable[[FoamDataset, FoamData, FoamData, Path, Path], None]):
     data_loader = DataLoader(data, 1, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,
@@ -62,11 +63,13 @@ def predict(args, model, data: FoamDataset, result_process_fn: Callable[[FoamDat
         default_backend = matplotlib.get_backend()
         matplotlib.use('Agg')
 
+    plots_base_path = create_plots_root(args)
+
     for i, (target, predicted) in enumerate(track(list(zip(data, predictions)), description='Saving plots...')):
         case_path = Path(data.samples[i])
         target = target.to('cpu')
         predicted = predicted.to('cpu').squeeze()
-        result_process_fn(data, target, predicted, case_path)
+        result_process_fn(data, target, predicted, case_path, plots_base_path)
 
     if args.save_plots:
         matplotlib.use(default_backend)

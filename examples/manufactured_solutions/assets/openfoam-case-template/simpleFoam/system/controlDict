@@ -70,7 +70,7 @@ functions
         writeFields     true;
         writeControl    writeTime;
     }
-    inlet
+    interface
     {
         // Mandatory entries (unmodifiable)
         type            surfaceFieldValue;
@@ -80,25 +80,8 @@ functions
         // Mandatory entries (runtime modifiable)
         fields          (C);
         operation       none;
-        regionType      patch;
-        name            inlet;
-
-        // Optional (inherited) entries
-        writeFields     true;
-        writeControl    writeTime;
-    }
-    outlet
-    {
-        // Mandatory entries (unmodifiable)
-        type            surfaceFieldValue;
-        libs            (C);
-        surfaceFormat   foam;
-
-        // Mandatory entries (runtime modifiable)
-        fields          (C);
-        operation       none;
-        regionType      patch;
-        name            outlet;
+        regionType      faceZone;
+        name            meshmesh_slaveCutFaceZone;
 
         // Optional (inherited) entries
         writeFields     true;

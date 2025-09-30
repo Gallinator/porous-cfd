@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
+from pandas import DataFrame
 from scipy.stats._mstats_basic import trimmed_mean
 from torch import Tensor, cdist
 from torch.nn.functional import l1_loss
@@ -130,12 +131,15 @@ def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, ex
 
 def plot_common_data(data: dict, plots_path):
     errors = np.concatenate([data['U error'], data['p error']], axis=-1)
+    errors_labels = ['$U_x$', '$U_y$', '$U_z$'][:errors.shape[-1] - 1] + ['$p$']
+    eval_df = DataFrame(columns=errors_labels)
+
     max_error_per_case = np.max(errors, axis=1)
-    box_labels = ['$U_x$', '$U_y$', '$U_z$'][:errors.shape[-1]] + ['$p$']
     box_plot('Maximum errors per case',
              [*np.hsplit(max_error_per_case, errors.shape[-1])],
-             box_labels,
+             errors_labels,
              plots_path)
+    eval_df.loc['Average max errors'] = np.mean(max_error_per_case, axis=0)
 
     quantiles = np.quantile(errors, 0.8, axis=-2, keepdims=True)
     top_errors = []
@@ -145,7 +149,8 @@ def plot_common_data(data: dict, plots_path):
         mean_case_errors = np.mean(np.array(case_errors), axis=-1)
         top_errors.append(mean_case_errors)
     top_errors = np.mean(np.array(top_errors), axis=0).tolist()
-    plot_errors('Top 80% mean errors', top_errors, save_path=plots_path)
+    plot_errors('Top 20% mean errors', top_errors, save_path=plots_path)
+    eval_df.loc['Top 20'] = top_errors
 
     u_errors, p_errors = np.concatenate(data['U error']), np.concatenate(data['p error'])
     plot_data_dist('Absolute error distribution', u_errors, p_errors, save_path=plots_path)
@@ -153,13 +158,16 @@ def plot_common_data(data: dict, plots_path):
     errors = np.concatenate([u_errors, p_errors], -1)
     mae = np.mean(errors, axis=0).tolist()
     plot_errors('Average relative error', mae, save_path=plots_path)
+    eval_df.loc['MAE'] = mae
 
     zones_ids = data['Region id'].flatten()
     fluid_mae = np.mean(errors[zones_ids < 1, :], axis=0).tolist()
     plot_errors('Fluid region MAE', fluid_mae, save_path=plots_path)
+    eval_df.loc['Fluid MAE'] = fluid_mae
 
     porous_mae = np.mean(errors[zones_ids > 0, :], axis=0).tolist()
     plot_errors('Porous region MAE', porous_mae, save_path=plots_path)
+    eval_df.loc['Porous MAE'] = porous_mae
 
     predicted_div = np.concatenate(data['Predicted divergence'])
     predicted_momentum = np.concatenate(data['Predicted momentum'])
@@ -174,9 +182,12 @@ def plot_common_data(data: dict, plots_path):
     cfd_res_avg = trimmed_mean(np.abs(target_residuals), limits=[0, 0.05], axis=0)
     plot_residuals(pred_res_avg, cfd_res_avg, trim=0.05, save_path=plots_path)
 
-    if plots_path is not None:
-        errors_dict = {'Total': mae, 'Fluid': fluid_mae, 'Porous': porous_mae}
-        save_mae_to_csv(errors_dict, box_labels, plots_path)
+    eval_df.loc['Residuals trimmed'] = pred_res_avg
+
+    if plots_path:
+        eval_df.to_csv(f'{plots_path}/Errors.csv')
+    else:
+        print(eval_df)
 
 
 def evaluate(args, model, data: FoamDataset, enable_timing,

@@ -95,10 +95,14 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 save_path=case_plot_path)
 
 
-if __name__ == '__main__':
+def inference():
     args = build_arg_parser().parse_args()
     rng = np.random.default_rng(8421)
     plots_path = create_plots_root(args)
     model = get_model(args.checkpoint)
     val_data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir)
     predict(args, model, val_data, sample_process_fn)
+
+
+if __name__ == '__main__':
+    inference()

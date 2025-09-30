@@ -63,7 +63,7 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     plot_errors_vs_multi_vars('MAE heatmap', per_case_mae, d.astype(np.int64), u_inlet, ['D', 'U'], plots_path)
 
 
-if __name__ == '__main__':
+def evaluate_model():
     args = build_arg_parser().parse_args()
 
     model = get_model(args.checkpoint)
@@ -73,3 +73,7 @@ if __name__ == '__main__':
                        extra_fields=['momentError', 'div(phi)'])
 
     evaluate(args, model, data, False, sample_process, postprocess_fn)
+
+
+if __name__ == '__main__':
+    evaluate_model()

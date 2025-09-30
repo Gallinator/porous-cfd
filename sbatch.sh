@@ -90,7 +90,7 @@ module load amd/gcc-8.5.0/openmpi-4.1.6
 module load intel/nvidia/cuda-12.3.2
 
 ### Executable script
-export PYTHONPATH="$PWD"
+export PYTHONPATH="$PWD:$PWD/examples/manufactured_solutions"
 export PYTHONUNBUFFERED=1
 
 singularity exec "$container_path" python test.py "${gen_args[@]}"

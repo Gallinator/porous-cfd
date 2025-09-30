@@ -28,7 +28,6 @@ def train_model():
 
     n_internal = args.n_internal
     n_boundary = args.n_boundary
-    n_obs = args.n_observations
 
     rng = default_rng(8421)
     d = 50

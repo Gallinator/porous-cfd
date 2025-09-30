@@ -22,7 +22,7 @@ def get_model(name):
         raise NotImplementedError()
 
 
-if __name__ == '__main__':
+def train_model():
     args = build_arg_parser().parse_args()
 
     n_internal = args.n_internal
@@ -35,6 +35,10 @@ if __name__ == '__main__':
     train_data = ManufacturedDataset(args.train_dir, n_internal, n_boundary, d, f, rng=rng)
     val_data = ManufacturedDataset(args.val_dir, n_internal, n_boundary, d, f, rng=rng, meta_dir=args.train_dir)
 
-    model = get_model(args.model)
+    model = get_model(args.model, d, f)
 
     train(args, model, train_data, val_data)
+
+
+if __name__ == '__main__':
+    train_model()

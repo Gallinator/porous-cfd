@@ -90,16 +90,11 @@ module load amd/gcc-8.5.0/openmpi-4.1.6
 module load intel/nvidia/cuda-12.3.2
 
 ### Executable script
-cd $BASEDIR
-export PYTHONPATH="$(dirname $(dirname $PWD)):$PWD"
+export PYTHONPATH="$PWD"
 export PYTHONUNBUFFERED=1
 
-if [ "$generate_data" == true ]; then
-  singularity exec "$container_path" python generate_data.py "${gen_args[@]}"
-fi
-singularity exec --nv "$container_path" python train.py "${train_args[@]}"
-singularity exec --nv "$container_path" python inference.py "${eval_args[@]}"
-singularity exec --nv "$container_path" python evaluate.py "${eval_args[@]}"
+singularity exec "$container_path" python test.py "${gen_args[@]}"
+
 
 ### Footer
 date

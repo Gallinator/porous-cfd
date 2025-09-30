@@ -13,6 +13,10 @@ from datagen.momentum_error import write_momentum_error
 
 
 class Generator2DBase(DataGeneratorBase):
+    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
+        super().__init__(src_dir, openfoam_bin, n_procs, keep_p, meta_only)
+        self.write_momentum = True
+
     def create_case_template_dirs(self):
         (self.case_template_dir / 'snappyHexMesh/0').mkdir(parents=True, exist_ok=True)
         (self.case_template_dir / 'snappyHexMesh/constant/triSurface').mkdir(parents=True,
@@ -70,7 +74,9 @@ class Generator2DBase(DataGeneratorBase):
             if process.returncode != 0:
                 self.raise_with_log_text(f'{case}/simpleFoam', 'Failed to run ')
 
-            write_momentum_error(f"{case}/simpleFoam")
+            if self.write_momentum:
+                write_momentum_error(f"{case}/simpleFoam")
+
             self.clean_dir(f"{case}/snappyHexMesh")
             os.rmdir(f"{case}/snappyHexMesh")
             shutil.move(f"{case}/simpleFoam", 'tmp')

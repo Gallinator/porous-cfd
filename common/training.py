@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from argparse import ArgumentParser
+from pathlib import Path
 
 import torch
 from lightning.pytorch.callbacks import RichProgressBar, LearningRateMonitor, ModelCheckpoint
@@ -51,6 +52,7 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
                         precision=args.precision,
                         default_root_dir=args.logs_dir)
 
+    Path(trainer.log_dir).mkdir(exist_ok=True, parents=True)
     with open(f'{trainer.log_dir}/model_meta.json', 'w') as f:
         model_meta = {'Model type': args.model,
                       'N internal': args.n_internal,

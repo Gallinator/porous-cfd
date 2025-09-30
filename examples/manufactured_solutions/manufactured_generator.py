@@ -10,6 +10,10 @@ from datagen.generator_2d import Generator2DBase
 
 
 class GeneratorManufactured(Generator2DBase):
+    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
+        super().__init__(src_dir, openfoam_bin, n_procs, keep_p, meta_only)
+        self.write_momentum = False
+
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)
 

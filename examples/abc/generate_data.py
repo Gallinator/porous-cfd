@@ -3,7 +3,8 @@ from datagen.data_generator import build_arg_parser
 from examples.abc.abc_generator import AbcGenerator
 from examples.abc.data_preprocess import move_to_meshes, extract
 
-if __name__ == '__main__':
+
+def generate():
     args = build_arg_parser().parse_args()
     data_root = Path(args.data_root_dir)
     data_root.mkdir(exist_ok=True, parents=True)
@@ -13,3 +14,7 @@ if __name__ == '__main__':
     openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
     generator = AbcGenerator('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)
     generator.generate(args.data_root_dir)
+
+
+if __name__ == '__main__':
+    generate()

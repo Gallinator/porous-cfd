@@ -6,6 +6,8 @@ import pandas
 import torch
 from pandas import DataFrame
 from rich.progress import track
+from scipy.spatial.distance import cdist
+from sklearn.preprocessing import OneHotEncoder
 from torch import tensor
 from torch.utils.data import Dataset
 from dataset.data_parser import parse_meta, parse_boundary_fields, parse_internal_fields
@@ -293,6 +295,35 @@ class FoamDataset(Dataset):
         """
         for f, norm in self.normalizers.items():
             fields[f] = norm.transform(fields[f].to_numpy())
+
+    def add_sdf(self, internal_fields, boundary_fields):
+        all_points = np.concatenate([internal_fields['C'].values, boundary_fields['C'].values])
+        tgt_points = boundary_fields['C'].values
+
+        if 'C' in self.normalizers:
+            c_scaler = self.normalizers['C']
+            all_points = c_scaler.inverse_transform(all_points)
+            tgt_points = c_scaler.inverse_transform(tgt_points)
+
+        sdf = cdist(all_points, tgt_points)
+        sdf = np.min(sdf, axis=-1)
+        sdf = sdf / np.max(sdf)
+
+        internal_sign = (0.5 - internal_fields['cellToRegion'].values.flatten()) * 2
+        internal_fields['sdf'] = sdf[:len(internal_fields)] * internal_sign
+        # Boundary points are positive
+        boundary_fields['sdf'] = sdf[len(internal_fields):]
+
+    def add_boundary_id(self, internal_fields, boundary_fields):
+        unique_bc = boundary_fields.index.unique()
+        boundary_multi_index = list(itertools.product(['boundaryId'], unique_bc))
+
+        # Internal fields have zero Id
+        internal_fields[boundary_multi_index] = np.zeros((len(internal_fields), len(unique_bc)))
+
+        ohe = OneHotEncoder(sparse_output=False)
+        ohe_values = ohe.fit_transform(np.vstack(boundary_fields.index.values))
+        boundary_fields[boundary_multi_index] = ohe_values
 
     def add_features(self, internal_fields: DataFrame, boundary_fields):
         return

@@ -31,8 +31,8 @@ def get_model(checkpoint):
 
 
 def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: Tensor) -> dict[str, Any]:
-    u_scaler = data.normalizers['U'].to(model.device)
-    p_scaler = data.normalizers['p'].to(model.device)
+    u_scaler = data.normalizers['U'].to()
+    p_scaler = data.normalizers['p'].to()
 
     solid_u_error = l1_loss(u_scaler.inverse_transform(predicted['solid']['U']),
                             u_scaler.inverse_transform(target['solid']['U']), reduction='none')

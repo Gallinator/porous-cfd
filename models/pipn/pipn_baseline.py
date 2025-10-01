@@ -51,7 +51,10 @@ class PipnManufacturedPorousPp(PorousPinnBase):
         self.continuity_loss = ContinuityLoss()
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
-        local_features, global_feature = self.feature_extract(x['cellToRegion'], autograd_points)
+        geom_features = torch.cat([x['boundary']['boundaryId'], x['boundary']['C']], dim=-1)
+        local_features, global_feature = self.feature_extract(geom_features,
+                                                              x['boundary']['C'],
+                                                              autograd_points)
 
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         seg_input = torch.cat([local_features, exp_global], dim=-1)

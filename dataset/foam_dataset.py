@@ -73,6 +73,7 @@ class FoamDataset(Dataset):
         self.n_obs = n_obs
         self.rng = rng
         self.regions_weights = regions_weights
+        self.data_dir = data_dir
 
         with open(Path(data_dir) / 'data_config.json') as f:
             data_cfg = json.load(f)

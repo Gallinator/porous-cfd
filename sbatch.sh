@@ -22,7 +22,7 @@ data_root=""
 generate_data=true
 container_path=""
 
-while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:wga" opt; do
+while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:w:ga" opt; do
   case $opt in
     a)
       gen_args+=( --meta-only );;

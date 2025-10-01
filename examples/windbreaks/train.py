@@ -15,13 +15,15 @@ def get_model(name, normalizers):
                                    'boundary': [1] * 4,
                                    'observations': [1] * 4})
     variable_boundaries = {'Subdomains': ['inlet', 'internal'], 'Features': ['Ux-inlet', 'd', 'f']}
+    n_dim = 3
+    n_boundary_id = 5
     match name:
         case 'pi-gano':
             return PiGano(14.61e-6,
-                          4,
+                          n_dim + 1,
                           [10, 256, 256, 512],
-                          [4, 256, 256, 256],
-                          [3, 256, 256, 256],
+                          [n_boundary_id + n_dim + 1, 256, 256, 256],
+                          [n_dim, 256, 256, 256],
                           4,
                           [0, 0.15, 0.15, 0, 0],
                           normalizers,
@@ -30,12 +32,14 @@ def get_model(name, normalizers):
                           Mish)
         case 'pi-gano-pp':
             return PiGanoPp(14.61e-6,
-                            4,
+                            n_dim + 1,
                             [10, 256, 256, 512],
-                            [[3 + 3, 256], [256 + 3, 256], [256 + 3, 256]],
+                            [[n_dim * 2 + n_boundary_id, 256],
+                             [256 + n_dim, 256],
+                             [256 + n_dim, 256]],
                             [0.2, 0.5, 1],
                             [0.7, 0.5, 0.25],
-                            [3, 256, 256, 256],
+                            [n_dim, 256, 256, 256],
                             4,
                             [0, 0.1, 0.1, 0, 0],
                             normalizers,
@@ -46,10 +50,14 @@ def get_model(name, normalizers):
             return PiGanoPpFull(nu=14.61e-6,
                                 out_features=4,
                                 branch_layers=[10, 256, 256, 256],
-                                enc_layers=[[3 + 1 + 3, 64, 64, 128], [128 + 3, 128, 128, 256], [256 + 3, 512, 1024]],
+                                enc_layers=[[n_dim * 2 + 1 + n_boundary_id, 64, 64, 128],
+                                            [128 + n_dim, 128, 128, 256],
+                                            [256 + n_dim, 512, 1024]],
                                 enc_radius=[0.2, 0.5, 1],
                                 enc_fraction=[0.7, 0.5, 0.25],
-                                dec_layers=[[1024 + 256, 256, 256], [128 + 256, 128, 128], [128 + 4, 128, 128, 128, 4]],
+                                dec_layers=[[1024 + 256, 256, 256],
+                                            [128 + 256, 128, 128],
+                                            [128 + n_dim + 1 + n_boundary_id, 128, 128, 128, 4]],
                                 dec_k=[6, 6, 6],
                                 fp_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
                                 scalers=normalizers,

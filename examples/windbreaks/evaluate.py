@@ -30,7 +30,7 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: Tensor) -> dict[str, Any]:
+def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
     u_scaler = data.normalizers['U'].to()
     p_scaler = data.normalizers['p'].to()
 

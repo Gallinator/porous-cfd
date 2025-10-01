@@ -35,7 +35,7 @@ class PiGanoPpFull(PiGanoBase):
         param_features = self.get_parameters(x)
         par_embedding = self.branch.forward(param_features.clone())
 
-        sa_input = torch.cat([x['cellToRegion'], autograd_points], dim=-1)
+        sa_input = torch.cat([x['sdf'], x['boundaryId'], autograd_points], dim=-1)
         sa_input = sa_input.reshape(-1, sa_input.shape[-1])
         sa_pos = autograd_points.reshape(-1, autograd_points.shape[-1])
         batch = get_batch(autograd_points)

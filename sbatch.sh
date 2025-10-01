@@ -101,6 +101,12 @@ fi
 export RUNCMD="train"
 singularity exec --nv "$container_path" python run_singularity.py "${train_args[@]}"
 
+export RUNCMD="inference"
+singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+
+export RUNCMD="evaluate"
+singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+
 
 ### Footer
 date

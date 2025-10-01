@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --time=03:00:00
+#SBATCH --time=20:00:00
 # OUTPUT FILES
 #SBATCH --output=job_logs/out_%x_%j.log
 

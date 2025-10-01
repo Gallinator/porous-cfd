@@ -77,7 +77,8 @@ class PipnFoamPp(PipnFoamBase):
         self.decoder = MLP(seg_layers, seg_dropout, activation, False)
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
-        local_features, global_feature = self.feature_extract(x['boundary']['C'], autograd_points)
+        geom_features = torch.cat([x['boundary']['C'], x['boundary']['boundaryId']], dim=-1)
+        local_features, global_feature = self.feature_extract(geom_features, x['boundary']['C'], autograd_points)
 
         exp_global = global_feature.repeat(1, local_features.shape[-2], 1)
         seg_input = torch.cat([local_features, exp_global], dim=-1)

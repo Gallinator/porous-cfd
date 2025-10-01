@@ -38,7 +38,8 @@ class PiGanoPp(PiGanoBase):
         # Prepare inputs
         param_features = self.get_parameters(x)
 
-        geom_embedding = self.geometry_encoder(x['internal']['C'].detach(), x['internal']['C'].detach())
+        geom_in = torch.cat([x['boundary']['C'].detach(), x['boundary']['boundaryId']], dim=-1)
+        geom_embedding = self.geometry_encoder(geom_in.detach(), x['boundary']['C'].detach())
         geom_embedding = geom_embedding.repeat((1, autograd_points.shape[-2], 1))
 
         local_embedding = self.points_encoder.forward(autograd_points)

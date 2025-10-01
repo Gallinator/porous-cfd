@@ -95,7 +95,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 save_path=case_plot_path)
 
 
-def inference():
+def run():
     args = build_arg_parser().parse_args()
     rng = np.random.default_rng(8421)
     model = get_model(args.checkpoint)
@@ -104,4 +104,4 @@ def inference():
 
 
 if __name__ == '__main__':
-    inference()
+    run()

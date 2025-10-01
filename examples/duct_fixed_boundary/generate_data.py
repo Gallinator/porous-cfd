@@ -2,7 +2,7 @@ from datagen.data_generator import build_arg_parser
 from examples.duct_fixed_boundary.generator_2d_fixed import Generator2DFixed
 
 
-def generate():
+def run():
     args = build_arg_parser().parse_args()
     openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
     generator = Generator2DFixed('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)
@@ -10,4 +10,4 @@ def generate():
 
 
 if __name__ == '__main__':
-    generate()
+    run()

@@ -4,7 +4,7 @@ from examples.abc.abc_generator import AbcGenerator
 from examples.abc.data_preprocess import move_to_meshes, extract
 
 
-def generate():
+def run():
     args = build_arg_parser().parse_args()
     data_root = Path(args.data_root_dir)
     data_root.mkdir(exist_ok=True, parents=True)
@@ -17,4 +17,4 @@ def generate():
 
 
 if __name__ == '__main__':
-    generate()
+    run()

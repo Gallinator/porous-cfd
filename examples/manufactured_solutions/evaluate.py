@@ -1,9 +1,6 @@
-from pathlib import Path
 from numpy.random import default_rng
 from common.evaluation import build_arg_parser, evaluate
 from dataset.data_parser import parse_model_type
-from dataset.foam_data import FoamData
-from dataset.foam_dataset import FoamDataset
 from models.pipn.pipn_baseline import PipnManufactured, PipnManufacturedPorousPp
 from manufactured_dataset import ManufacturedDataset
 
@@ -19,7 +16,7 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def evaluate_model():
+def run():
     args = build_arg_parser().parse_args()
 
     model = get_model(args.checkpoint)
@@ -31,4 +28,4 @@ def evaluate_model():
 
 
 if __name__ == '__main__':
-    evaluate_model()
+    run()

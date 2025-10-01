@@ -40,7 +40,7 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
 
 
-def evaluate_model():
+def run():
     args = build_arg_parser().parse_args()
 
     model = get_model(args.checkpoint)
@@ -53,4 +53,4 @@ def evaluate_model():
 
 
 if __name__ == '__main__':
-    evaluate_model()
+    run()

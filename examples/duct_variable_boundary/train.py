@@ -65,7 +65,7 @@ def get_model(name, normalizers):
             raise NotImplementedError
 
 
-def train_model():
+def run():
     args = build_arg_parser().parse_args()
 
     n_internal = args.n_internal
@@ -82,4 +82,4 @@ def train_model():
 
 
 if __name__ == '__main__':
-    train_model()
+    run()

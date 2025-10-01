@@ -32,10 +32,10 @@ class PiGano(PiGanoBase):
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
         # Prepare inputs
-        zones_ids = x['cellToRegion']
+        geom_in = torch.cat([x['boundaryId'], x['sdf']], dim=-1)
         param_features = self.get_parameters(x)
 
-        geom_embedding = self.geometry_encoder.forward(zones_ids, autograd_points.detach())
+        geom_embedding = self.geometry_encoder.forward(geom_in, autograd_points.detach())
         geom_embedding = geom_embedding.repeat((1, autograd_points.shape[-2], 1))
 
         local_embedding = self.points_encoder.forward(autograd_points)

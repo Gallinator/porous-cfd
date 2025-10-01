@@ -232,7 +232,7 @@ class GlobalSetAbstraction(torch.nn.Module):
     def forward(self, x, pos, batch):
         x = self.nn(torch.cat([x, pos], dim=1))
         x = global_max_pool(x, batch)
-        pos = pos.new_zeros((x.size(0), 2))
+        pos = pos.new_zeros((x.size(0), pos.size(-1)), requires_grad=pos.requires_grad)
         batch = torch.arange(x.size(0), device=batch.device)
         return x, pos, batch
 

@@ -94,9 +94,12 @@ export PYTHONPATH="$PWD:$PWD/$EXAMPLE/"
 export PYTHONUNBUFFERED=1
 
 if [ "$generate_data" == true ]; then
-  singularity exec "$container_path" python generate_singularity.py "${gen_args[@]}"
+  export RUNCMD="generate_data"
+  singularity exec "$container_path" python run_singularity.py "${gen_args[@]}"
 fi
-singularity exec --nv "$container_path" python train_singularity.py "${train_args[@]}"
+
+export RUNCMD="train"
+singularity exec --nv "$container_path" python run_singularity.py "${train_args[@]}"
 
 
 ### Footer

@@ -71,14 +71,6 @@ def get_mean_max_error_distance(errors, quantile, interface_dist):
     return np.mean(np.stack(q_dist), axis=0)
 
 
-def save_mae_to_csv(errors: dict[str:list], fields_labels, plots_path):
-    with open(f'{plots_path}/mae.csv', 'w') as f:
-        data = [['Region', *fields_labels]]
-        for e in errors.items():
-            data.append([e[0], *e[1]])
-        csv.writer(f).writerows(data)
-
-
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--save-plots', action="store_true",

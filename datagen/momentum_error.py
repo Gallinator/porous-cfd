@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np
 import torch
@@ -68,12 +69,23 @@ def write_momentum_error(case_path: str):
             field_values = error_df.loc[b].values
             internal_moment_field.boundary_field[b] = {'type': 'extrapolatedCalculated',
                                                        'values': field_values}
-
             postprocess_path = f"{case_path}/postProcessing"
             last_step_dir = f'{postprocess_path}/{b}/surface/{last_time}'
             patch_dir = list(os.listdir(f"{last_step_dir}"))[0]
-            post_press_field = FoamFile(f'{last_step_dir}/{patch_dir}/vectorField/momentError')
-            post_press_field[None] = field_values
+            momentum_file_path = f'{last_step_dir}/{patch_dir}/vectorField/momentError'
+
+            with FoamFile(momentum_file_path) as f:
+                f[None] = field_values
+
+            # Reformat
+            with open(momentum_file_path, 'r') as f:
+                data = f.read()
+            with open(momentum_file_path, 'w') as f:
+                data = re.sub('FoamFile.+{.+}\n*', '', data, flags=re.DOTALL)
+                data = data.replace(') (', ')\n(')
+                data = data.replace('((', '(\n(')
+                data = data.replace('))', ')\n)')
+                f.write(data)
 
     # Add empty patches if 2D
     empty_patches = [b for b, v in case[0]['U'].boundary_field.items() if v['type'] == 'empty']

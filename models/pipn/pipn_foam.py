@@ -93,12 +93,12 @@ class PipnFoamPp(PipnFoamBase):
 
 
 class PipnFoamPpMrg(PipnFoamBase):
-    def __init__(self, n_dims, nu, d, f, fe_local_layers, seg_layers, seg_dropout,
+    def __init__(self, n_dims, mrg_in_features, nu, d, f, fe_local_layers, seg_layers, seg_dropout,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
                  activation=Mish):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
-        self.global_fe = SetAbstractionMrgSeq(fe_local_layers[0] - 1, n_dims, activation)
+        self.global_fe = SetAbstractionMrgSeq(mrg_in_features, n_dims, activation)
         self.local_fe = MLP(fe_local_layers, activation=activation)
 
         self.decoder = MLP(seg_layers, seg_dropout, activation, False)

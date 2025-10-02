@@ -1,7 +1,7 @@
 from pathlib import Path
 from datagen.data_generator import build_arg_parser
 from examples.abc.abc_generator import AbcGenerator
-from examples.abc.data_preprocess import move_to_meshes, extract
+from examples.abc.data_preprocess import extract
 
 
 def run():

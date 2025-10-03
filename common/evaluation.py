@@ -16,17 +16,16 @@ from scipy.stats._mstats_basic import trimmed_mean
 from torch import Tensor, cdist
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
-from dataset.data_parser import parse_meta
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn, StandardScaler, Normalizer
 from visualization.common import plot_timing, box_plot, plot_data_dist, plot_multi_bar, plot_errors
 
 
-def create_plots_root_dir(args):
+def create_plots_root_dir(save_plots, data_dir, checkpoint):
     plots_path = None
-    if args.save_plots:
+    if save_plots:
         matplotlib.use('Agg')
-        plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name / 'stats'
+        plots_path = Path(checkpoint).parent / 'plots' / Path(data_dir).name / 'stats'
         plots_path.mkdir(exist_ok=True, parents=True)
     return plots_path
 
@@ -187,11 +186,14 @@ def plot_common_data(data: dict, plots_path):
         print(eval_df)
 
 
-def evaluate(args, model, data: FoamDataset, enable_timing,
+def evaluate(args,
+             model,
+             data: FoamDataset,
+             enable_timing,
              sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
              postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None] | None):
     model.verbose_predict = True
-    plots_path = create_plots_root_dir(args)
+    plots_path = create_plots_root_dir(args.save_plots, data.data_dir, args.checkpoint)
 
     data_loader = DataLoader(data, args.batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 

@@ -26,6 +26,12 @@ geometry
         type triSurfaceMesh;
         name mesh;
     }
+    walls.obj
+    {
+        // Clouds noise 0.1
+        type triSurfaceMesh;
+        name walls;
+    }
 }
 
 castellatedMeshControls
@@ -46,6 +52,10 @@ castellatedMeshControls
             file "mesh.eMesh";
             level 2;
         }
+        {
+            file "walls.eMesh";
+            level 2;
+        }
     );
 
     refinementSurfaces
@@ -59,6 +69,12 @@ castellatedMeshControls
             faceType baffle;
             cellZone mesh;
             cellZoneInside insidePoint;
+            addBufferLayers false;
+        }
+        walls
+        {
+            level (0 2);
+            patchInfo { type patch; }
             addBufferLayers false;
         }
     }

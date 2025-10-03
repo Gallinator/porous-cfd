@@ -5,43 +5,11 @@ import shutil
 import bpy
 import mathutils
 import numpy as np
-from foamlib import FoamFile
 from bpy import ops
 from datagen.generator_3d import Generator3DBase
 
 
 class AbcGenerator(Generator3DBase):
-
-    def add_porous_meshes_to_case(self, case_path, meshes):
-        surface_extract = FoamFile(f'{case_path}/system/surfaceFeatureExtractDict')
-        template_extract = surface_extract['mesh.obj'].as_dict()
-        surface_extract.pop('mesh.obj')
-
-        snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
-        template_feat = snappy_dict['castellatedMeshControls']['features']
-        snappy_dict['castellatedMeshControls']['features'] = []
-        template_feat = template_feat[0]
-
-        template_geometry = snappy_dict['geometry']['mesh.obj'].as_dict()
-        snappy_dict['geometry'].pop('mesh.obj')
-
-        template_surf = snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh'].as_dict()
-        snappy_dict['castellatedMeshControls']['refinementSurfaces'].pop('mesh')
-
-        template_region = snappy_dict['castellatedMeshControls']['refinementRegions']['mesh'].as_dict()
-        snappy_dict['castellatedMeshControls']['refinementRegions'].pop('mesh')
-
-        for m in sorted(meshes):
-            surface_extract[f'{m}.obj'] = template_extract
-            template_geometry['name'] = m
-            snappy_dict['geometry'][f'{m}.obj'] = template_geometry
-            template_feat['file'] = f'{m}.eMesh'
-            snappy_dict['castellatedMeshControls']['features'].append(template_feat)
-            snappy_dict['castellatedMeshControls']['refinementSurfaces'][m] = template_surf
-            snappy_dict['castellatedMeshControls']['refinementRegions'][m] = template_region
-            snappy_dict['castellatedMeshControls']['refinementSurfaces'][m]['insidePoint'] = (
-                self.get_location_inside(f'{case_path}/constant/triSurface/{m}.obj'))
-
     def get_location_inside(self, mesh: str):
         ops.object.select_all(action='SELECT')
         ops.object.delete()

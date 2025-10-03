@@ -1,5 +1,4 @@
 import argparse
-import csv
 import os
 import time
 from argparse import ArgumentParser
@@ -212,7 +211,7 @@ def evaluate(args,
         matplotlib.use('Agg')
 
     if enable_timing:
-        cfd_timing = parse_meta(args.meta_dir)['Timing']
+        cfd_timing = data.meta['Timing']
         plot_timing([inference_time, cfd_timing['Total'] / 1e3],
                     [avg_inference_time, cfd_timing['Average'] / 1e3],
                     plots_path)

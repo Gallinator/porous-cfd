@@ -138,8 +138,8 @@ def plot_common_data(data: dict, plots_path):
     for q, e in zip(quantiles, errors):
         keep_errors = np.transpose(e > q)
         case_errors = [f[k] for f, k in zip(np.transpose(e), keep_errors)]
-        mean_case_errors = np.mean(np.array(case_errors), axis=-1)
-        top_errors.append(mean_case_errors)
+        mean_case_errors = [np.mean(ce, axis=-1) for ce in case_errors]
+        top_errors.append(np.array(mean_case_errors))
     top_errors = np.mean(np.array(top_errors), axis=0).tolist()
     plot_errors('Top 20% mean errors', top_errors, save_path=plots_path)
     eval_df.loc['Top 20'] = top_errors

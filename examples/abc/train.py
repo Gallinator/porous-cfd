@@ -63,7 +63,7 @@ def get_model(name, normalizers):
                                   dec_layers=[[1024 + 256, 256, 256],
                                               [128 + 256, 128, 128],
                                               [128 + n_dims + n_boundary_ids + 1, 128, 128, 128, n_dims + 1]],
-                                  dec_k=[3, 3, 3],
+                                  dec_k=[6, 6, 6],
                                   last_dec_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
                                   scalers=normalizers,
                                   loss_scaler=loss_scaler)

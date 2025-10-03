@@ -193,7 +193,7 @@ def evaluate(args, model, data: FoamDataset, enable_timing,
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args)
 
-    data_loader = DataLoader(data, 2, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
+    data_loader = DataLoader(data, args.batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,
                       enable_checkpointing=False,

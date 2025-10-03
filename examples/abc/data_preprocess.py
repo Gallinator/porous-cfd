@@ -13,6 +13,22 @@ import bpy
 import bmesh
 
 
+def download_from_gdrive(file_id, file_out):
+    if os.path.exists(file_out):
+        print(f'{file_out} already downloaded! Remove it manually download again.')
+        return
+    download_process = subprocess.run(
+        ['wget',
+         '--no-check-certificate',
+         f'https://drive.usercontent.google.com/download?id={file_id}=t',
+         '-O',
+         file_out],
+        check=True,
+        cwd=os.getcwd(),
+        stdout=subprocess.PIPE,
+        text=True)
+
+
 def download(url, dest_file):
     if os.path.exists(dest_file):
         print(f'{dest_file} already downloaded!')

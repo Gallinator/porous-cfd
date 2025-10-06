@@ -30,7 +30,7 @@ def plot_or_save(fig, save_path):
         plt.show()
 
 
-def plot_histogram(ax, data, color: str, title: str, bins=100):
+def plot_histogram(ax, data, color: str, title: str, bins='doane'):
     ax.set_title(title, pad=10)
     ax.hist(data, bins=bins, color=color, edgecolor='black')
 

@@ -51,7 +51,8 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
                         logger=logger,
                         log_every_n_steps=get_log_steps(len(train_data), args.batch_size),
                         precision=args.precision,
-                        default_root_dir=args.logs_dir)
+                        default_root_dir=args.logs_dir,
+                        profiler='simple')
 
     Path(trainer.log_dir).mkdir(exist_ok=True, parents=True)
     with open(f'{trainer.log_dir}/model_meta.json', 'w') as f:

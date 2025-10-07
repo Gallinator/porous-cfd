@@ -31,7 +31,8 @@ class FixedLossScaler(LossScaler):
         self.weights = loss_weights['continuity']
         self.weights.extend(loss_weights['momentum'])
         self.weights.extend(loss_weights['boundary'])
-        self.weights.extend(loss_weights['observations'])
+        if 'observations' in loss_weights:
+            self.weights.extend(loss_weights['observations'])
         self.weights = torch.tensor(self.weights, dtype=torch.float)
 
     def forward(self, model: LightningModule, losses: Tensor):

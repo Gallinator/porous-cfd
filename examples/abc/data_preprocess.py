@@ -55,6 +55,9 @@ def download(url, dest_file):
 
 def extract(data_file, dest_dir):
     Path(dest_dir).mkdir(exist_ok=True, parents=True)
+    for m in glob.glob(f'{dest_dir}/*.obj'):
+        os.remove(m)
+
     with tarfile.open(data_file, 'r') as f:
         for c in track(f.getmembers(), description=f'Extracting {f.name}'):
             f.extract(c, dest_dir)

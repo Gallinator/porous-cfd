@@ -124,7 +124,7 @@ class PipnFoamPpFull(PipnFoamBase):
     def __init__(self, nu, d, f, enc_layers, enc_radius, enc_fraction, dec_layers, dec_k, last_dec_dropout,
                  scalers: dict[str, StandardScaler], loss_scaler, activation=Mish):
         super().__init__(nu, d, f, dec_layers[-1][-1], scalers, loss_scaler)
-        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, activation)
+        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, activation=activation)
         self.decoder = FeaturePropagationSeq(dec_layers, dec_k, last_dec_dropout, activation)
 
     def forward(self, all_points_grad: Tensor, in_data: FoamData) -> FoamData:

@@ -51,7 +51,7 @@ def get_model(name, normalizers):
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler,
                                  n_dims=n_dim,
-                                 mrg_in_features=n_boundary_ids)
+                                 mrg_in_features=n_boundary_ids + n_dim)
         case 'pipn-pp-full':
             return PipnFoamPpFull(nu=nu,
                                   d=d,

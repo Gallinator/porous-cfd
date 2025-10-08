@@ -76,7 +76,6 @@ class PointNetFeatureExtractPp(nn.Module):
         local_features = self.local_feature(global_pos)
         global_feature = self.global_feature(geom_features, geom_pos)
 
-        global_feature = torch.max(global_feature, dim=1, keepdim=True)[0]
         return local_features, global_feature
 
 

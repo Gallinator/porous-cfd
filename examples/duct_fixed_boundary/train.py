@@ -33,9 +33,9 @@ def get_model(name, normalizers):
                               f=f,
                               fe_local_layers=[n_dim, 64, 64],
                               seg_layers=[1024 + 64, 256, 128, 3],
-                              seg_dropout=[0.025, 0.01, 0],
-                              fe_radius=[0.5, 1],
-                              fe_fraction=[0.5, 0.25],
+                              seg_dropout=[0.05, 0, 0],
+                              fe_radius=[0.25, 0.5],
+                              fe_fraction=[0.2, 0.25],
                               fe_global_layers=[[n_dim + n_boundary_ids + 2, 64, 64],
                                                 [64 + n_dim, 128, 128],
                                                 [128 + n_dim, 256, 1024]],
@@ -47,7 +47,7 @@ def get_model(name, normalizers):
                                  f=f,
                                  fe_local_layers=[n_dim, 64, 64],
                                  seg_layers=[1024 + 64, 384, 128, 3],
-                                 seg_dropout=[0.1, 0, 0],
+                                 seg_dropout=[0.05, 0, 0],
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler,
                                  n_dims=n_dim,
@@ -59,15 +59,16 @@ def get_model(name, normalizers):
                                   enc_layers=[[n_dim * 2 + 1 + n_boundary_ids, 64, 64, 128],
                                               [128 + n_dim, 128, 128, 256],
                                               [256 + n_dim, 1024]],
-                                  enc_radius=[0.2, 0.4],
+                                  enc_radius=[0.4, 0.8],
                                   enc_fraction=[0.5, 0.25],
                                   dec_layers=[[1024 + 256, 256, 256],
                                               [128 + 256, 128, 128],
                                               [128 + n_boundary_ids + n_dim + 1, 128, 128, 128, 3]],
                                   dec_k=[3, 3, 3],
-                                  last_dec_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
+                                  last_dec_dropout=[0., 0., [0.15, 0.15, 0., 0.]],
                                   scalers=normalizers,
-                                  loss_scaler=loss_scaler)
+                                  loss_scaler=loss_scaler,
+                                  activation=Tanh)
         case _:
             raise NotImplementedError
 

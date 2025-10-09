@@ -137,7 +137,7 @@ class PorousPinnBase(L.LightningModule):
         if self.enable_data_loss:
             obs_u_loss = vector_loss(predicted['obs']['U'], batch['obs']['U'], mse_loss)
             obs_p_loss = mse_loss(predicted['obs']['p'], batch['obs']['p'])
-            obs_losses = [obs_p_loss, *obs_u_loss]
+            obs_losses = [*obs_u_loss, obs_p_loss]
 
         losses = torch.stack([continuity_loss, *momentum_loss, *boundary_u_loss, boundary_p_loss, *obs_losses])
 

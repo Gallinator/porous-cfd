@@ -10,8 +10,8 @@ from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
 
 def get_model(name, normalizers):
-    loss_scaler = FixedLossScaler({'continuity': [100],
-                                   'momentum': [100] * 3,
+    loss_scaler = FixedLossScaler({'continuity': [10],
+                                   'momentum': [10] * 3,
                                    'boundary': [1] * 4,
                                    'observations': [1] * 4})
     variable_boundaries = {'Subdomains': ['inlet', 'internal'], 'Features': ['Ux-inlet', 'd', 'f']}

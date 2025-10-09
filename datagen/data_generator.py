@@ -10,6 +10,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 from random import Random
 import bpy
+import matplotlib
+import pandas
 from bpy import ops
 import numpy as np
 from foamlib import FoamFile
@@ -18,6 +20,7 @@ from rich.progress import track
 from welford import Welford
 
 from dataset.data_parser import parse_internal_fields, parse_boundary_fields, parse_elapsed_time
+from visualization.common import plot_dataset_dist, plot_u_direction_change
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -273,6 +276,8 @@ class DataGeneratorBase:
     def generate_min_points(self, data_parent: str | Path):
         dicts = []
         for split in glob.glob(f'{data_parent}/*/'):
+            if Path(split).name == 'plots':
+                continue
             with open(f'{split}/meta.json', 'r') as f:
                 dicts.append(json.load(f)['Points'])
 
@@ -289,6 +294,9 @@ class DataGeneratorBase:
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(exist_ok=True, parents=True)
 
+        plots_dir = Path(dest_dir) / 'plots'
+        plots_dir.mkdir(exist_ok=True, parents=True)
+
         if not self.meta_only:
             self.create_case_template_dirs()
             self.clean_dir(dest_dir)
@@ -303,8 +311,14 @@ class DataGeneratorBase:
 
                 self.generate_split(set_dest_dir, mesh_set_path, rng=rng)
 
+        default_backend = matplotlib.get_backend()
+        matplotlib.use('Agg')
+
         for split in glob.glob(f'{dest_dir}/*/'):
             split_path = Path(split)
+            if split_path.name == 'plots':
+                continue
+
             if not self.meta_only:
                 self.generate_data(split_path)
 
@@ -312,5 +326,12 @@ class DataGeneratorBase:
             self.clean_processor_data(split_path)
 
             shutil.copyfile(self.data_config_path, split_path / 'data_config.json')
+
+            case_plots_dir = plots_dir / split_path.name
+            case_plots_dir.mkdir(exist_ok=True, parents=True)
+            plot_dataset_dist(split, case_plots_dir)
+            plot_u_direction_change(split, case_plots_dir)
+
+        matplotlib.use(default_backend)
 
         self.generate_min_points(dest_dir)

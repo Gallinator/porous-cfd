@@ -80,7 +80,7 @@ class Generator2DFixedHard(Generator2DBase):
 
         meshes = [src_mesh]
 
-        for i in range(random.randint(1, 4)):
+        for i in range(rng.randint(1, 4)):
             mesh = rng.choice(src_meshes)
             self.import_mesh(f'{meshes_dir}/{mesh}')
             obj = bpy.context.selected_objects[0]

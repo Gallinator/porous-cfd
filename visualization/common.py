@@ -24,7 +24,7 @@ def plot_or_save(fig, save_path):
         file_name = fig.axes[0].get_title()
 
     if save_path is not None:
-        plt.savefig(f'{save_path}/{file_name}.png', transparent=True)
+        plt.savefig(f'{save_path}/{file_name}.png', transparent=True, dpi=300)
         plt.close(fig)
     else:
         plt.show()

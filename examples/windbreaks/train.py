@@ -1,5 +1,4 @@
 from numpy.random import default_rng
-from torch.nn import Mish
 
 from common.training import train, build_arg_parser
 from dataset.foam_dataset import FoamDataset
@@ -28,8 +27,7 @@ def get_model(name, normalizers):
                           [0, 0.15, 0.15, 0, 0],
                           normalizers,
                           variable_boundaries,
-                          loss_scaler,
-                          Mish)
+                          loss_scaler)
         case 'pi-gano-pp':
             return PiGanoPp(14.61e-6,
                             n_dim + 1,
@@ -44,8 +42,7 @@ def get_model(name, normalizers):
                             [0, 0.1, 0.1, 0, 0],
                             normalizers,
                             variable_boundaries,
-                            loss_scaler,
-                            Mish)
+                            loss_scaler)
         case 'pi-gano-pp-full':
             return PiGanoPpFull(nu=14.61e-6,
                                 out_features=4,
@@ -62,8 +59,7 @@ def get_model(name, normalizers):
                                 fp_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
                                 scalers=normalizers,
                                 loss_scaler=loss_scaler,
-                                variable_boundaries=variable_boundaries,
-                                activation=Mish)
+                                variable_boundaries=variable_boundaries)
         case _:
             raise NotImplementedError
 

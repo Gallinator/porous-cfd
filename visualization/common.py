@@ -44,6 +44,10 @@ def plot_dataset_dist(path: str, save_path=None):
     data = pandas.concat(data)
     plot_data_dist(f'{Path(path).name} distribution', data['U'].values, data['p'].values, data['cellToRegion'].values,
                    save_path)
+    box_plot('Fields boxplot',
+             [*np.hsplit(data['U'].values, 3), np.vstack(data['p'].values)],
+             ['$U_x$', '$U_y$', '$U_z$', '$p$'],
+             save_path)
 
 
 def plot_data_dist(title, u, p, zones_ids=None, save_path=None):

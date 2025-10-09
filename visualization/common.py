@@ -37,8 +37,7 @@ def plot_histogram(ax, data, color: str, title: str, bins='doane'):
 
 def plot_dataset_dist(path: str, save_path=None):
     data = []
-    for case in track(list(set(glob.glob(f"{path}/*/")) - set(glob.glob(f'{path}/meta.json'))),
-                      description="Reading data"):
+    for case in track(glob.glob(f"{path}/*/"), description="Reading data"):
         case_data = data_parser.parse_case_fields(case, 'U', 'p', 'cellToRegion')
         data.append(case_data)
 

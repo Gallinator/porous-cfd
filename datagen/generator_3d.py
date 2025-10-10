@@ -24,8 +24,8 @@ class Generator3DBase(DataGeneratorBase):
         min_b, max_b = np.min(verts, axis=0), np.max(verts, axis=0)
 
         x, y, z = np.meshgrid(np.linspace(min_b[0], max_b[0], 20),
-                           np.linspace(min_b[1], max_b[1], 20),
-                           np.linspace(min_b[2], max_b[2], 20))
+                              np.linspace(min_b[1], max_b[1], 20),
+                              np.linspace(min_b[2], max_b[2], 20))
         grid = np.stack([x.flatten(), y.flatten(), z.flatten()]).T
 
         _, closest, normal, _ = zip(*[obj.closest_point_on_mesh(g) for g in grid])
@@ -59,7 +59,8 @@ class Generator3DBase(DataGeneratorBase):
             write_momentum_error(case)
 
             if not self.is_sane(case):
-                warn(f'Case {case} is not sane, please check for errors!')
+                warn(f'Case {case} is malformed, will be deleted!')
+                shutil.rmtree(case)
 
     @abstractmethod
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):

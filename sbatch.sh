@@ -21,11 +21,13 @@ eval_args=(--save-plots)
 data_root=""
 generate_data=true
 container_path=""
+meta_only=false
 
 while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:w:ga" opt; do
   case $opt in
     a)
-      gen_args+=( --meta-only );;
+      gen_args+=( --meta-only )
+      meta_only=true;;
     c)
       container_path="$OPTARG/";;
     x)
@@ -98,14 +100,18 @@ if [ "$generate_data" == true ]; then
   singularity exec "$container_path" python run_singularity.py "${gen_args[@]}"
 fi
 
-export RUNCMD="train"
-singularity exec --nv "$container_path" python run_singularity.py "${train_args[@]}"
+if [ "$meta_only" != true ]; then
 
-export RUNCMD="inference"
-singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+  export RUNCMD="train"
+  singularity exec --nv "$container_path" python run_singularity.py "${train_args[@]}"
 
-export RUNCMD="evaluate"
-singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+  export RUNCMD="inference"
+  singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+
+  export RUNCMD="evaluate"
+  singularity exec --nv "$container_path" python run_singularity.py "${eval_args[@]}"
+
+fi
 
 
 ### Footer

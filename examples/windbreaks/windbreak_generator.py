@@ -9,6 +9,17 @@ import bpy
 from foamlib import FoamFile
 from bpy import ops
 from datagen.generator_3d import Generator3DBase
+import bmesh
+from mathutils.bvhtree import BVHTree
+
+
+def get_bvh_tree(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
+    bvh = BVHTree.FromBMesh(bm)
+    bm.free()
+    return bvh
 
 
 class WindbreakGenerator(Generator3DBase):
@@ -39,10 +50,12 @@ class WindbreakGenerator(Generator3DBase):
             rot_z = self.get_random_in_range(0, 360, rng=rng)
             obj.rotation_euler = (*obj.rotation_euler[0:2], rot_z)
             bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
-            y_size = obj.dimensions[1]
-            prev_y_size = prev_obj.dimensions[1]
+
             if n > 0:
-                obj.location[1] = prev_obj.location[1] + prev_y_size / 2 + y_size / 2 * 0.8
+                prev_bvh = get_bvh_tree(prev_obj)
+                obj.location[1] = prev_obj.location[1] + prev_obj.dimensions[1] / 2
+                while prev_bvh.overlap(get_bvh_tree(obj)) is None:
+                    obj.location[1] = obj.location[1] - 0.1
             trees.append(obj)
             prev_obj = obj
         return trees

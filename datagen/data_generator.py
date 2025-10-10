@@ -11,7 +11,6 @@ from pathlib import Path
 from random import Random
 import bpy
 import matplotlib
-import pandas
 from bpy import ops
 import numpy as np
 from foamlib import FoamFile
@@ -198,6 +197,17 @@ class DataGeneratorBase:
         center = np.sum(verts, axis=0) / len(verts)
         ops.object.delete()
         return center
+
+    def is_sane(self, case_path):
+        with open(f'{case_path}/constant/polyMesh/cellZones', 'r') as f:
+            lines = f.read()
+            match = re.search('>.+\n(\d+)\n\(', lines, flags=re.MULTILINE)
+            n_porous = int(match.groups()[0])
+        with open(f'{case_path}/0/cellToRegion', 'r') as f:
+            lines = f.read()
+            match = re.search('>.+\n(\d+)\n\(', lines, flags=re.MULTILINE)
+            n_total = int(match.groups()[0])
+        return n_porous < n_total / 2
 
     def generate_meta(self, data_dir: str | Path, *fields, max_dim=3):
         fields_min_max_tracker, count_min_max_tracker = MinMaxTracker(), MinMaxTracker()

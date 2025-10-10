@@ -2,6 +2,7 @@ import glob
 import subprocess
 from abc import abstractmethod
 from pathlib import Path
+from warnings import warn
 import mathutils
 import numpy as np
 from rich.progress import track
@@ -51,6 +52,9 @@ class Generator3DBase(DataGeneratorBase):
                 self.raise_with_log_text(f'{case}', 'Failed to run ')
 
             write_momentum_error(case)
+
+            if not self.is_sane(case):
+                warn(f'Case {case} is not sane, please check for errors!')
 
     @abstractmethod
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):

@@ -19,24 +19,29 @@ class Generator3DBase(DataGeneratorBase):
         self.import_mesh(mesh)
         ops.object.select_all(action='SELECT')
         obj = bpy.context.object
+        verts = np.array([v.co for v in obj.data.vertices])
 
-        s_x, s_y, s_z = obj.dimensions / 2
-        x, y, z = np.meshgrid(np.linspace(-s_x, s_x, 20),
-                              np.linspace(-s_y, s_y, 20),
-                              np.linspace(-s_z, s_z, 20))
+        min_b, max_b = np.min(verts, axis=0), np.max(verts, axis=0)
+
+        x, y, z = np.meshgrid(np.linspace(min_b[0], max_b[0], 20),
+                           np.linspace(min_b[1], max_b[1], 20),
+                           np.linspace(min_b[2], max_b[2], 20))
         grid = np.stack([x.flatten(), y.flatten(), z.flatten()]).T
 
         _, closest, normal, _ = zip(*[obj.closest_point_on_mesh(g) for g in grid])
-        dir = np.array(closest) - grid
-        dot = np.sum(np.array(normal) * dir, axis=-1)
 
-        inside_mask = dot.flatten() > 0
+        dir = np.array(closest) - grid
+        norm_dir = dir / np.vstack(np.linalg.norm(dir, axis=-1))
+        dot = np.sum(np.array(normal) * norm_dir, axis=-1)
+
+        inside_mask = dot.flatten() > 0.5
         inside_grid = grid[inside_mask]
+
         dist = np.linalg.norm(dir[inside_mask], axis=-1)
         center = inside_grid[np.argmax(dist)]
         center = obj.matrix_world @ mathutils.Vector(center)
-        ops.object.delete()
 
+        ops.object.delete()
         return np.array(center)
 
     def create_case_template_dirs(self):

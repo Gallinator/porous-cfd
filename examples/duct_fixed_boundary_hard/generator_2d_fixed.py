@@ -10,10 +10,7 @@ import mathutils
 from bpy import ops
 from foamlib import FoamFile
 
-from datagen.data_generator import build_arg_parser
 from datagen.generator_2d import Generator2DBase
-from visualization.common import plot_u_direction_change, plot_dataset_dist
-from visualization.visualization_2d import plot_case
 
 
 class Generator2DFixedHard(Generator2DBase):

@@ -8,8 +8,9 @@ def run():
     args = build_arg_parser().parse_args()
     data_root = Path(args.data_root_dir)
     data_root.mkdir(exist_ok=True, parents=True)
-    download_from_gdrive('1pOGB9vO_Jf3YeRemJSs0yC5nBBKZcRTH&confirm', 'assets/Abc.tar.gz')
-    extract('assets/Abc.tar.gz', 'assets/meshes/standard')
+    if not args.meta_only:
+        download_from_gdrive('1pOGB9vO_Jf3YeRemJSs0yC5nBBKZcRTH&confirm', 'assets/Abc.tar.gz')
+        extract('assets/Abc.tar.gz', 'assets/meshes/standard')
 
     openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'
     generator = AbcGenerator('assets', openfoam_cmd, args.openfoam_procs, 0.5, args.meta_only)

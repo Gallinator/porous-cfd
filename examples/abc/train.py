@@ -31,7 +31,7 @@ def get_model(name, normalizers):
                               f=f,
                               fe_local_layers=[n_dims, 64, 64],
                               seg_layers=[1024 + 64, 256, 128, n_dims + 1],
-                              seg_dropout=[0.05, 0.05, 0],
+                              seg_dropout=[0.025, 0.01, 0],
                               fe_radius=[0.5, 1],
                               fe_fraction=[0.5, 0.25],
                               fe_global_layers=[[n_dims + n_boundary_ids + n_dims, 64, 128],

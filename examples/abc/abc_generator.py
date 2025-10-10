@@ -10,19 +10,6 @@ from datagen.generator_3d import Generator3DBase
 
 
 class AbcGenerator(Generator3DBase):
-    def get_location_inside(self, mesh: str):
-        ops.object.select_all(action='SELECT')
-        ops.object.delete()
-        self.import_mesh(mesh)
-        ops.object.select_all(action='SELECT')
-        obj = bpy.context.object
-        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
-        verts = np.array(verts)
-        max_vertex = np.argmax(verts, axis=0)
-        center = verts[max_vertex[-1], :] - np.array((0, 0, 0.001))
-        ops.object.delete()
-        return center
-
     def align_to_x(self, obj):
         sorted_dims = np.argsort(obj.dimensions)
         # Align to z
@@ -78,7 +65,7 @@ class AbcGenerator(Generator3DBase):
             # Delete original
             ops.object.select_all(action='SELECT')
             ops.object.delete()
-            shutil.copyfile(f'{meshes_dir}/walls/walls.obj',f'{meshes_subfolder}/walls.obj')
+            shutil.copyfile(f'{meshes_dir}/walls/walls.obj', f'{meshes_subfolder}/walls.obj')
 
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -91,3 +78,5 @@ class AbcGenerator(Generator3DBase):
             shutil.copyfile(f"{mesh_set}walls.obj", f"{case_path}/constant/triSurface/walls.obj")
 
             self.set_decompose_par(f'{case_path}')
+
+            self.write_locations_in_mesh(f'{case_path}', self.get_location_inside(f"{mesh_set}mesh.obj"))

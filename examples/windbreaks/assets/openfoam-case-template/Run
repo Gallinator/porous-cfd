@@ -19,7 +19,13 @@ log_output $? "$out"
 out=$(surfaceFeatureExtract 2>&1 >/dev/null)
 log_output $? "$out"
 
-out=$(snappyHexMesh -overwrite 2>&1 >/dev/null)
+out=$(decomposePar 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(mpirun -np $n_proc snappyHexMesh -overwrite -parallel 2>&1 >/dev/null)
+log_output $? "$out"
+
+out=$(reconstructParMesh -latestTime -constant 2>&1 >/dev/null)
 log_output $? "$out"
 
 mv 0/U U
@@ -37,6 +43,8 @@ rm -f 0/meshPhi
 
 out=$(splitMeshRegions -cellZones -overwrite -detectOnly 2>&1 >/dev/null)
 log_output $? "$out"
+
+rm -rf processor*
 
 start=$(date +%s%N)
 

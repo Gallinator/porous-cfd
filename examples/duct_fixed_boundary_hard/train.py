@@ -51,7 +51,7 @@ def get_model(name, normalizers):
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler,
                                  n_dims=n_dim,
-                                 mrg_in_features=n_boundary_ids)
+                                 mrg_in_features=n_boundary_ids + n_dim)
         case 'pipn-pp-full':
             return PipnFoamPpFull(nu=nu,
                                   d=d,
@@ -59,15 +59,16 @@ def get_model(name, normalizers):
                                   enc_layers=[[n_dim * 2 + 1 + n_boundary_ids, 64, 64, 128],
                                               [128 + n_dim, 128, 128, 256],
                                               [256 + n_dim, 1024]],
-                                  enc_radius=[0.2, 0.4],
+                                  enc_radius=[0.4, 0.8],
                                   enc_fraction=[0.5, 0.25],
                                   dec_layers=[[1024 + 256, 256, 256],
                                               [128 + 256, 128, 128],
                                               [128 + n_boundary_ids + n_dim + 1, 128, 128, 128, 3]],
                                   dec_k=[3, 3, 3],
-                                  last_dec_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
+                                  last_dec_dropout=[0., 0., [0.15, 0.15, 0., 0.]],
                                   scalers=normalizers,
-                                  loss_scaler=loss_scaler)
+                                  loss_scaler=loss_scaler,
+                                  activation=Tanh)
         case _:
             raise NotImplementedError
 

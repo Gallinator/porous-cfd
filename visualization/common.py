@@ -57,14 +57,13 @@ def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
 
     plot_histogram(ax_ux, u[..., 0], 'lightsteelblue', '$U_x$')
     plot_histogram(ax_uy, u[..., 1], 'lemonchiffon', '$U_y$')
-    plot_histogram(ax_uz, u[..., 2], 'thistle', '$U_z$')
+    if u.shape[-1] > 2:
+        plot_histogram(ax_uz, u[..., 2], 'thistle', '$U_z$')
     plot_histogram(ax_p, p, 'lightsalmon', '$p$')
-
     if zones_ids is not None:
         plot_histogram(ax_zones, zones_ids, 'palegreen', 'Material zones', 2)
     else:
         plot_histogram(ax_zones, norm(u, axis=1), 'palegreen', '$U$')
-
     plot_or_save(fig, save_path)
 
 

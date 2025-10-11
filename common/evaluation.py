@@ -111,13 +111,20 @@ def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, ex
         target_div = target['internal']['div(phi)']
         target_momentum = target['internal']['momentError']
 
+    all_points, interface_points = target['C'], target['interface']['C']
+    if 'C' in data.normalizers:
+        all_points = data.normalizers['C'].to().inverse_transform(all_points)
+        interface_points = data.normalizers['C'].to().inverse_transform(interface_points)
+    interface_dist = get_normalized_signed_distance(all_points, interface_points)
+
     return {'U error': u_error,
             'p error': p_error,
             'Predicted momentum': predicted_momentum,
             'Predicted divergence': predicted_div,
             'Target momentum': target_momentum,
             'Target divergence': target_div,
-            'Region id': target['cellToRegion']}
+            'Region id': target['cellToRegion'],
+            'Interface distance': interface_dist}
 
 
 def plot_common_data(data: dict, plots_path):
@@ -143,6 +150,10 @@ def plot_common_data(data: dict, plots_path):
     top_errors = np.mean(np.array(top_errors), axis=0).tolist()
     plot_errors('Top 20% mean errors', top_errors, save_path=plots_path)
     eval_df.loc['Top 20'] = top_errors
+
+    max_error_from_interface = get_mean_max_error_distance(errors, 0.8, data['Interface distance'])
+    plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
+    eval_df.loc['Top errors distance from interface'] = max_error_from_interface
 
     u_errors, p_errors = np.concatenate(data['U error']), np.concatenate(data['p error'])
     plot_data_dist('Absolute error distribution', u_errors, p_errors, save_path=plots_path)

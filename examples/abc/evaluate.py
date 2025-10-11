@@ -25,21 +25,6 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
-    c_scaler = data.normalizers['C'].to()
-    all_points = c_scaler.inverse_transform(target['C'])
-    interface_points = c_scaler.inverse_transform(target['interface']['C'])
-
-    interface_dist = get_normalized_signed_distance(all_points, interface_points)
-    return {'Interface distance': interface_dist}
-
-
-def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path):
-    errors = np.concatenate([results['U error'], results['p error']], -1)
-    max_error_from_interface = get_mean_max_error_distance(errors, 0.8, results['Interface distance'])
-    plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
-
-
 def run():
     args = build_arg_parser().parse_args()
 
@@ -49,7 +34,7 @@ def run():
     data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir,
                        extra_fields=['momentError', 'div(phi)'])
 
-    evaluate(args, model, data, True, sample_process, postprocess_fn)
+    evaluate(args, model, data, True, None, None)
 
 
 if __name__ == '__main__':

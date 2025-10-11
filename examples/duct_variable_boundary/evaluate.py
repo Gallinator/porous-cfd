@@ -28,11 +28,6 @@ def get_model(checkpoint):
 
 
 def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
-    c_scaler = data.normalizers['C'].to()
-    all_points = c_scaler.inverse_transform(target['C'])
-    interface_points = c_scaler.inverse_transform(target['interface']['C'])
-    interface_dist = get_normalized_signed_distance(all_points, interface_points)
-
     data.normalizers['d'].to()
     d = extract_coef(target['d'], data.normalizers['d'])
     d = torch.round(d).to(torch.int64)
@@ -44,13 +39,11 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
 
     angle = extract_angle(target['inlet']['U'], data.normalizers['U'])
 
-    return {'Interface distance': interface_dist, 'd': d, 'f': f, 'U inlet': u_magnitude, 'Angle': angle}
+    return {'d': d, 'f': f, 'U inlet': u_magnitude, 'Angle': angle}
 
 
 def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path):
     errors = np.concatenate([results['U error'], results['p error']], -1)
-    max_error_from_interface = get_mean_max_error_distance(errors, 0.8, results['Interface distance'])
-    plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)
 
     per_case_mae = np.concatenate(np.mean(errors, axis=-2, keepdims=True))
     angles = torch.tensor(results['Angle']).flatten()

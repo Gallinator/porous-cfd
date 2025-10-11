@@ -170,14 +170,14 @@ def plot_common_data(data: dict, plots_path):
     target_momentum = np.concatenate(data['Target divergence'])
     target_residuals = np.concatenate([target_momentum, target_div], axis=-1)
     predicted_residuals = np.concatenate([predicted_momentum, predicted_div], axis=-1)
-    pred_res_avg = trimmed_mean(np.abs(predicted_residuals), limits=[0, 0.05], axis=0)
-    cfd_res_avg = trimmed_mean(np.abs(target_residuals), limits=[0, 0.05], axis=0)
-    plot_multi_bar(f'Absolute average residuals (trimmed 0.05)',
+    pred_res_avg = np.mean(np.abs(predicted_residuals), axis=0)
+    cfd_res_avg = np.mean(np.abs(target_residuals), axis=0)
+    plot_multi_bar(f'Absolute average residuals',
                    {'Predicted': pred_res_avg.tolist(), 'Target': cfd_res_avg.tolist()},
                    ['Momentum x', 'Momentum y', 'Momentum z'][:n_dims] + ['Continuity'],
                    save_path=plots_path)
 
-    eval_df.loc['Residuals trimmed'] = pred_res_avg
+    eval_df.loc['Residuals'] = pred_res_avg
 
     if plots_path:
         eval_df.to_csv(f'{plots_path}/Errors.csv')

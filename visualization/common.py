@@ -114,9 +114,10 @@ def plot_multi_bar(title, values: dict, values_labels, save_path=None):
     ax.set_title(title, pad=10)
     w = 0.01
     x = np.array([x * 0.03 for x in range(len(values_labels))])
+    colors = LIGHT_COLORS[:len(values)]
 
     for i, (k, v) in enumerate(values.items()):
-        rects = ax.bar(x + i * w, v, w, label=k)
+        rects = ax.bar(x + i * w, v, w, label=k, color=colors[i])
         ax.bar_label(rects, fmt='%.2e', padding=10)
 
     ax.legend()

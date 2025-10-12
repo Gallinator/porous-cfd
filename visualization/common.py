@@ -16,6 +16,11 @@ from dataset.data_parser import parse_internal_fields
 M_S = '\left[ \\frac{m}{s} \\right]'
 M2_S2 = '\left[ \\frac{m^2}{s^2} \\right]'
 
+LIGHT_COLORS = ['lightblue', 'lightcoral', 'bisque',
+                'lightgreen', 'lightgrey', 'lightsalmon',
+                'moccasin', 'powderblue', 'lavander',
+                'thistle', 'lightpink']
+
 
 def plot_or_save(fig, save_path):
     if fig._suptitle is not None:

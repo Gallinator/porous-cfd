@@ -43,33 +43,38 @@ class FixedLossScaler(LossScaler):
         self.weights = self.weights.to(*args, **kwargs)
         return self
 
-    class RelobraloScaler(LossScaler):
-        def __init__(self, num_losses, alpha=0.95, beta=0.99, tau=1.0, eps=1e-8):
-            super().__init__()
-            self.num_losses = num_losses
-            self.alpha = alpha
-            self.beta = beta
-            self.tau = tau
-            self.eps = eps
-            self.register_buffer("init_losses", torch.zeros(self.num_losses))
-            self.register_buffer("prev_losses", torch.zeros(self.num_losses))
-            self.register_buffer("lambda_ema", torch.ones(self.num_losses))
-            self.init_loss: torch.Tensor = torch.tensor(0.0)
 
-        def forward(self, model: LightningModule, losses: Tensor):
-            """
-            Weights and aggregates the losses using the ReLoBRaLo algorithm. Adapted from `physics-nemo-sym`_.
+class RelobraloScaler(LossScaler):
+    def __init__(self, num_losses, alpha=0.95, beta=0.99, tau=1.0, eps=1e-8):
+        super().__init__()
+        self.num_losses = num_losses
+        self.alpha = alpha
+        self.beta = beta
+        self.tau = tau
+        self.eps = eps
+        self.register_buffer("init_losses", torch.zeros(self.num_losses))
+        self.register_buffer("prev_losses", torch.zeros(self.num_losses))
+        self.register_buffer("lambda_ema", torch.ones(self.num_losses))
+        self.init_loss: torch.Tensor = torch.tensor(0.0)
 
-            .. _physics-nemo-sym: https://github.com/NVIDIA/physicsnemo-sym/blob/main/physicsnemo/sym/loss/aggregator.py
-            """
-            # Aggregate losses by summation at step 0
-            if model.current_epoch == 0:
-                self.init_losses = losses.detach().clone()
-                self.prev_losses = losses.detach().clone()
-                return losses
+    def forward(self, model: LightningModule, losses: Tensor):
+        """
+        Weights and aggregates the losses using the ReLoBRaLo algorithm. Adapted from `physics-nemo-sym`_.
 
-            # Aggregate losses using ReLoBRaLo for step > 0
-            else:
+        .. _physics-nemo-sym: https://github.com/NVIDIA/physicsnemo-sym/blob/main/physicsnemo/sym/loss/aggregator.py
+        """
+        batch_size = model.trainer.train_dataloader.batch_size
+
+        # Aggregate losses by summation at step 0
+        if model.global_step == 0:
+            self.init_losses = losses.detach().clone()
+            self.prev_losses = losses.detach().clone()
+            return losses
+
+        # Aggregate losses using ReLoBRaLo for step > 0
+        else:
+            if model.global_step % batch_size == 0:
+                self.prev_losses = self.prev_losses / batch_size
                 normalizer_prev = (losses / (self.tau * self.prev_losses)).max()
                 normalizer_init = (losses / (self.tau * self.init_losses)).max()
                 rho = torch.bernoulli(torch.tensor(self.beta))
@@ -81,10 +86,18 @@ class FixedLossScaler(LossScaler):
 
                 # Compute the exponential moving average of weights and aggregate losses
                 with torch.no_grad():
-                    self.lambda_ema = self.alpha * (rho * self.lambda_ema.detach().clone() + (1.0 - rho) * lambda_init)
+                    self.lambda_ema = self.alpha * (
+                            rho * self.lambda_ema.detach().clone() + (1.0 - rho) * lambda_init)
                     self.lambda_ema += (1.0 - self.alpha) * lambda_prev
                 self.prev_losses = losses.detach().clone()
-                return self.lambda_ema.detach().clone() * losses
+
+                logger = model.training_loss_togger
+                model.logger.experiment.add_scalars('Loss weights',
+                                                    dict(zip(logger.loss_labels[1:], self.lambda_ema)),
+                                                    model.global_step)
+            else:
+                self.prev_losses += losses.detach().clone()
+            return self.lambda_ema.detach().clone() * losses
 
 
 class LossLogger:

@@ -69,6 +69,10 @@ def get_mean_max_error_distance(errors, quantile, interface_dist):
     return np.mean(np.stack(q_dist), axis=0)
 
 
+def get_pressure_drop(inlet_p, outlet_p):
+    return torch.mean(inlet_p) - torch.mean(outlet_p)
+
+
 def build_arg_parser() -> ArgumentParser:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--save-plots', action="store_true",

@@ -38,7 +38,7 @@ class AbcGenerator(Generator3DBase):
         duct_r = math.sqrt(0.3 ** 2 + 0.3 ** 2)
         mesh_r = math.sqrt(obj.dimensions[1] / 2 ** 2 + obj.dimensions[2] / 2 ** 2)
         if mesh_r > duct_r * 0.65:
-            obj.scale = obj.scale * duct_r / mesh_r
+            obj.scale = obj.scale * duct_r * 0.65 / mesh_r
 
     def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
         dest_dir.mkdir(parents=True, exist_ok=True)

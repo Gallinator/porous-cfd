@@ -3,7 +3,7 @@ from numpy.random import default_rng
 from common.training import train, build_arg_parser
 from dataset.foam_dataset import FoamDataset
 from models.losses import FixedLossScaler
-from models.pi_gano.pi_gano import PiGano
+from models.pi_gano.pi_gano import PiGano, PiGanoFull
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
@@ -24,21 +24,21 @@ def get_model(name, normalizers):
                           geometry_layers=[n_dim + n_boundary_id + 1, 64, 176, 176, 176],
                           local_layers=[n_dim, 64, 176, 176, 176],
                           n_operators=4,
-                          operator_dropout=[0, 0.1, 0.1, 0, 0],
+                          operator_dropout=[0, 0.1, 0.1, 0],
                           scalers=normalizers,
                           variable_boundaries=variable_boundaries,
                           loss_scaler=loss_scaler)
         case 'pi-gano-full':
             return PiGanoFull(nu=1489.4e-6,
-                          out_features=3,
-                          branch_layers=[8, 128, 352, 352, 352],
-                          geometry_layers=[n_dim + n_boundary_id + 1, 64, 176, 176, 176],
-                          local_layers=[n_dim, 64, 176, 176, 176],
-                          n_operators=4,
-                          operator_dropout=[0, 0.1, 0.1, 0, 0],
-                          scalers=normalizers,
-                          variable_boundaries=variable_boundaries,
-                          loss_scaler=loss_scaler)
+                              out_features=3,
+                              branch_layers=[8, 128, 352, 352, 352],
+                              geometry_layers=[n_dim + n_boundary_id + 1, 64, 176, 176, 176],
+                              local_layers=[n_dim, 64, 176, 176, 176],
+                              n_operators=4,
+                              operator_dropout=[0, 0.1, 0.1, 0],
+                              scalers=normalizers,
+                              variable_boundaries=variable_boundaries,
+                              loss_scaler=loss_scaler)
         case 'pi-gano-pp':
             return PiGanoPp(nu=1489.4e-6,
                             out_features=3,
@@ -50,7 +50,7 @@ def get_model(name, normalizers):
                             geometry_fraction=[0.5, 0.25],
                             local_layers=[n_dim, 64, 176, 176, 176],
                             n_operators=4,
-                            operator_dropout=[0, 0.1, 0.1, 0, 0],
+                            operator_dropout=[0, 0.1, 0.1, 0],
                             scalers=normalizers,
                             variable_boundaries=variable_boundaries,
                             loss_scaler=loss_scaler)

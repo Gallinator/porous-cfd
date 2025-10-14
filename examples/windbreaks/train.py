@@ -24,7 +24,7 @@ def get_model(name, normalizers):
                           geometry_layers=[n_boundary_id + n_dim + 1, 256, 256, 256],
                           local_layers=[n_dim, 256, 256, 256],
                           n_operators=4,
-                          operator_dropout=[0, 0.15, 0.15, 0, 0],
+                          operator_dropout=[0, 0.15, 0.15, 0],
                           scalers=normalizers,
                           variable_boundaries=variable_boundaries,
                           loss_scaler=loss_scaler)
@@ -39,7 +39,7 @@ def get_model(name, normalizers):
                             geometry_fraction=[0.5, 0.25],
                             local_layers=[n_dim, 256, 256, 256],
                             n_operators=4,
-                            operator_dropout=[0, 0.15, 0.15, 0, 0],
+                            operator_dropout=[0, 0.15, 0.15, 0],
                             scalers=normalizers,
                             variable_boundaries=variable_boundaries,
                             loss_scaler=loss_scaler)

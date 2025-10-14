@@ -72,7 +72,7 @@ class PiGanoFull(PiGano):
 
         # This is a hacky solution to allow torch module registration
         self.neural_ops = nn.Sequential(
-            *[NeuralOperatorSequential(n_operators, operator_features, operator_dropout, activation) for _
+            *[NeuralOperatorSequential(n_operators, operator_features, operator_dropout, activation, False) for _
               in range(out_features)])
         self.reduction = None
 

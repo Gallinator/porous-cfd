@@ -28,6 +28,17 @@ def get_model(name, normalizers):
                           scalers=normalizers,
                           variable_boundaries=variable_boundaries,
                           loss_scaler=loss_scaler)
+        case 'pi-gano-full':
+            return PiGanoFull(nu=1489.4e-6,
+                          out_features=3,
+                          branch_layers=[8, 128, 352, 352, 352],
+                          geometry_layers=[n_dim + n_boundary_id + 1, 64, 176, 176, 176],
+                          local_layers=[n_dim, 64, 176, 176, 176],
+                          n_operators=4,
+                          operator_dropout=[0, 0.1, 0.1, 0, 0],
+                          scalers=normalizers,
+                          variable_boundaries=variable_boundaries,
+                          loss_scaler=loss_scaler)
         case 'pi-gano-pp':
             return PiGanoPp(nu=1489.4e-6,
                             out_features=3,

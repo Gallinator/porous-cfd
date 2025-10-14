@@ -144,9 +144,10 @@ class NeuralOperator(nn.Module):
 
 
 class NeuralOperatorSequential(nn.Sequential):
-    def __init__(self, n_operators, n_features, dropout, activation=Tanh):
+    def __init__(self, n_operators, n_features, dropout, activation=Tanh, last_activation=True):
         super().__init__()
         for i in range(n_operators):
+            activation = None if i == n_operators - 1 and not last_activation else activation
             self.add_module(f'Operator {i}', NeuralOperator(n_features, dropout[i], activation))
 
     def forward(self, input: Tensor, par_embedding: Tensor):

@@ -1,6 +1,6 @@
 import torch
 from torch import nn, Tensor
-from torch.nn import Tanh
+from torch.nn import Tanh, SiLU
 from torch.optim.lr_scheduler import ExponentialLR
 from dataset.foam_dataset import StandardScaler, FoamData, Normalizer
 from models.modules import Branch, NeuralOperatorSequential, MLP, GeometryEncoder
@@ -19,7 +19,7 @@ class PiGano(PiGanoBase):
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
                  loss_scaler=None,
-                 activation=Tanh):
+                 activation=SiLU):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
         self.branch = Branch(branch_layers, activation)

@@ -1,6 +1,6 @@
 import torch
 from torch import Tensor
-from torch.nn import Mish
+from torch.nn import SiLU
 from torch.optim.lr_scheduler import ExponentialLR
 from torch_geometric.utils import unbatch
 
@@ -23,7 +23,7 @@ class PiGanoPpFull(PiGanoBase):
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
                  loss_scaler=None,
-                 activation=Mish):
+                 activation=SiLU):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
         self.branch = Branch(branch_layers, activation)

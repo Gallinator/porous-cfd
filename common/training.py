@@ -42,6 +42,7 @@ def train(args, model, train_data: Dataset, val_data: Dataset):
     val_loader = DataLoader(val_data, args.batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     torch.set_float32_matmul_precision('high')
+    torch.manual_seed(8421)
 
     checkpoint_callback = ModelCheckpoint(filename='checkpoint-{epoch:d}', every_n_epochs=500, save_top_k=-1)
     logger = TensorBoardLogger(save_dir='', version=args.name)

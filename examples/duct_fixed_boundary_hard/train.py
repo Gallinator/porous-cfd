@@ -1,5 +1,5 @@
 from numpy.random import default_rng
-from torch.nn import Mish, Tanh
+from torch.nn import Tanh, SiLU
 
 from common.training import build_arg_parser, train
 from dataset.foam_dataset import FoamDataset
@@ -26,7 +26,7 @@ def get_model(name, normalizers):
                             seg_dropout=[0.05, 0.05, 0, 0],
                             scalers=normalizers,
                             loss_scaler=loss_scaler,
-                            activation=Tanh)
+                            activation=SiLU)
         case 'pipn-pp':
             return PipnFoamPp(nu=nu,
                               d=d,
@@ -40,18 +40,20 @@ def get_model(name, normalizers):
                                                 [64 + n_dim, 128, 128],
                                                 [128 + n_dim, 256, 1024]],
                               scalers=normalizers,
-                              loss_scaler=loss_scaler)
+                              loss_scaler=loss_scaler,
+                              activation=SiLU)
         case 'pipn-pp-mrg':
             return PipnFoamPpMrg(nu=nu,
                                  d=d,
                                  f=f,
                                  fe_local_layers=[n_dim, 64, 64],
                                  seg_layers=[1024 + 64, 384, 128, 3],
-                                 seg_dropout=[0.1, 0, 0],
+                                 seg_dropout=[0.05, 0, 0],
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler,
                                  n_dims=n_dim,
-                                 mrg_in_features=n_boundary_ids + n_dim)
+                                 mrg_in_features=n_boundary_ids + n_dim,
+                                 activation=SiLU)
         case 'pipn-pp-full':
             return PipnFoamPpFull(nu=nu,
                                   d=d,

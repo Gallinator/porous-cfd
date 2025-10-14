@@ -133,8 +133,9 @@ class NeuralOperator(nn.Module):
         super().__init__()
         self.linear = nn.Sequential(
             nn.Linear(out_channels, out_channels),
-            activation()
         )
+        if activation is not None:
+            self.linear.append(activation())
         if dropout > 0:
             self.linear.append(nn.Dropout(dropout))
 

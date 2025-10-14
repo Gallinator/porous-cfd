@@ -32,7 +32,7 @@ def get_model(name, normalizers):
                               d=d,
                               f=f,
                               fe_local_layers=[n_dim, 64, 64],
-                              seg_layers=[1024 + 64, 256, 128, 3],
+                              seg_layers=[1024 + 64, 378, 128, 3],
                               seg_dropout=[0.05, 0, 0],
                               fe_radius=[0.5, 1],
                               fe_fraction=[0.5, 0.25],

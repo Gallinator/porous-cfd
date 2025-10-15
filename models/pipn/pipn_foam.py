@@ -69,11 +69,12 @@ class PipnFoamPp(PipnFoamBase):
     def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, fe_radius, fe_fraction, seg_layers, seg_dropout,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
-                 activation=Mish):
+                 activation=Mish,
+                 max_neighbors=64):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
 
         self.feature_extract = PointNetFeatureExtractPp(fe_local_layers, fe_global_layers, fe_fraction, fe_radius,
-                                                        activation)
+                                                        activation, max_neighbors)
         self.decoder = MLP(seg_layers, seg_dropout, activation, False)
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
@@ -96,9 +97,10 @@ class PipnFoamPpMrg(PipnFoamBase):
     def __init__(self, n_dims, mrg_in_features, nu, d, f, fe_local_layers, seg_layers, seg_dropout,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
-                 activation=Mish):
+                 activation=Mish,
+                 max_neighbors=64):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
-        self.global_fe = SetAbstractionMrgSeq(mrg_in_features, n_dims, activation)
+        self.global_fe = SetAbstractionMrgSeq(mrg_in_features, n_dims, activation, max_neighbors)
         self.local_fe = MLP(fe_local_layers, activation=activation)
 
         self.decoder = MLP(seg_layers, seg_dropout, activation, False)
@@ -122,9 +124,10 @@ class PipnFoamPpMrg(PipnFoamBase):
 
 class PipnFoamPpFull(PipnFoamBase):
     def __init__(self, nu, d, f, enc_layers, enc_radius, enc_fraction, dec_layers, dec_k, last_dec_dropout,
-                 scalers: dict[str, StandardScaler], loss_scaler, activation=Mish):
+                 scalers: dict[str, StandardScaler], loss_scaler, activation=Mish, max_neighbors=64):
         super().__init__(nu, d, f, dec_layers[-1][-1], scalers, loss_scaler)
-        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers, activation=activation)
+        self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers,
+                                         activation=activation, max_neighbors=max_neighbors)
         self.decoder = FeaturePropagationSeq(dec_layers, dec_k, last_dec_dropout, activation)
 
     def forward(self, all_points_grad: Tensor, in_data: FoamData) -> FoamData:

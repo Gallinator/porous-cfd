@@ -249,3 +249,16 @@ def plot_heatmap(ax, matrix, x, y, labels):
             value = matrix[i][j]
             if value >= 0:
                 ax.text(j, i, f'{value:.2e}', ha="center", va="center", color="black")
+
+
+def plot_per_case(title, values, save_path):
+    fig = plt.figure(layout='constrained')
+    fig.suptitle(title)
+    axs = fig.subplots(nrows=values.shape[-1], ncols=1).flatten()
+    cmap = plt.get_cmap('Set2')
+    labels = get_fields_names(values)
+    for i, (ax, f, fname) in enumerate(zip(axs, np.hsplit(values, len(labels)), labels)):
+        ax.bar(np.arange(len(f)), f.flatten(), color=cmap(i))
+        ax.set_xticks([])
+        ax.set_ylabel(f'{fname} MAE')
+    plot_or_save(fig, save_path)

@@ -171,15 +171,16 @@ class PointConvNext(PointNetConv):
 
 
 class SetAbstraction(torch.nn.Module):
-    def __init__(self, ratio: float, r: float, mlp):
+    def __init__(self, ratio: float, r: float, mlp, max_neighbors=64):
         super().__init__()
         self.ratio = ratio
         self.r = r
         self.conv = PointConvNext(r, local_nn=mlp)
+        self.max_neighbors = max_neighbors
 
     def forward(self, x, pos, batch):
         idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=64)
+        row, col = radius(pos, pos[idx], self.r, batch, batch[idx], max_num_neighbors=self.max_neighbors)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv((x, x[idx]), (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]

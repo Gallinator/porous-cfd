@@ -23,11 +23,13 @@ class PiGanoPp(PiGanoBase):
                  scalers: dict[str, StandardScaler | Normalizer],
                  variable_boundaries: dict[str, list],
                  loss_scaler=None,
-                 activation=SiLU):
+                 activation=SiLU,
+                 max_neighbors=64):
         super().__init__(nu, out_features, scalers, loss_scaler, variable_boundaries)
 
         self.branch = Branch(branch_layers, activation)
-        self.geometry_encoder = GeometryEncoderPp(geometry_fraction, geometry_radius, geometry_layers, activation)
+        self.geometry_encoder = GeometryEncoderPp(geometry_fraction, geometry_radius, geometry_layers, activation,
+                                                  max_neighbors)
         self.points_encoder = MLP(local_layers, None, activation)
 
         operator_features = geometry_layers[-1][-1] + local_layers[-1]

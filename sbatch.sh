@@ -23,7 +23,7 @@ generate_data=true
 container_path=""
 meta_only=false
 
-while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:w:ga" opt; do
+while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:w:gal:" opt; do
   case $opt in
     a)
       gen_args+=( --meta-only )
@@ -68,6 +68,8 @@ while getopts "c:x:r:e:i:b:o:m:n:p:s:t:v:w:ga" opt; do
       eval_args+=( --precision "$OPTARG" );;
     s)
       train_args+=( --batch-size "$OPTARG" );;
+    l)
+      train_args+=( --loss-scaler "$OPTARG" );;
     *)
       ;;
   esac

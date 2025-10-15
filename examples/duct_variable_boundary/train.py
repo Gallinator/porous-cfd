@@ -53,7 +53,8 @@ def get_model(name, normalizers):
                             operator_dropout=[0, 0.1, 0.1, 0],
                             scalers=normalizers,
                             variable_boundaries=variable_boundaries,
-                            loss_scaler=loss_scaler)
+                            loss_scaler=loss_scaler,
+                            max_neighbors=32)
         case 'pi-gano-pp-full':
             return PiGanoPpFull(nu=1489.4e-6,
                                 out_features=3,

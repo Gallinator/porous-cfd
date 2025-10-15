@@ -110,19 +110,20 @@ def plot_errors(title, *args, save_path=None):
 
 
 def plot_multi_bar(title, values: dict, values_labels, save_path=None):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(len(values_labels) * len(values), 5))
     ax.set_title(title, pad=10)
+    n_groups = len(values)
     w = 0.01
-    x = np.array([x * 0.03 for x in range(len(values_labels))])
+    x = np.array([x * w * (n_groups + 1) for x in range(len(values_labels))])
     colors = LIGHT_COLORS[:len(values)]
 
     for i, (k, v) in enumerate(values.items()):
-        rects = ax.bar(x + i * w, v, w, label=k, color=colors[i])
+        rects = ax.bar(x + w * i, v, w, label=k, color=colors[i])
         ax.bar_label(rects, fmt='%.2e', padding=10)
 
     ax.legend()
     ax.set_ylim(0, max([max(d) for d in values.values()]) * 1.1)
-    ax.set_xticks(x + w / 2, values_labels)
+    ax.set_xticks(x + w / 2 * (len(values) - 1), values_labels)
     fig.tight_layout()
     plot_or_save(fig, save_path)
 

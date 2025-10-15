@@ -298,8 +298,8 @@ class DataGeneratorBase:
         with open(f'{data_parent}/min_points.json', 'w') as f:
             f.write(json.dumps(out))
 
-    def generate(self, dest_dir):
-        rng = Random(8421)
+    def generate(self, dest_dir, seed=8421):
+        rng = Random(seed)
 
         dest_dir = Path(dest_dir)
         dest_dir.mkdir(exist_ok=True, parents=True)

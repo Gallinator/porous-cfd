@@ -82,7 +82,7 @@ class FoamDataset(Dataset):
             self.dim_labels = data_cfg['Dims']
             self.normalize_fields = data_cfg['Normalize fields']
 
-        self.samples = [d for d in Path(data_dir).iterdir() if d.is_dir()]
+        self.samples = sorted([d for d in Path(data_dir).iterdir() if d.is_dir()])
         self.n_dims = len(self.dim_labels)
 
         if self.normalize_fields is not None:

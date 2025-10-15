@@ -1,4 +1,5 @@
 from numpy.random import default_rng
+from torch.nn import SiLU
 
 from common.training import build_arg_parser, train
 from manufactured_dataset import ManufacturedDataset
@@ -12,16 +13,18 @@ def get_model(name, d, f):
         return PipnManufactured(nu=0.01, d=d, f=f,
                                 fe_local_layers=[n_dim, 64, 64],
                                 fe_global_layers=[64 + n_boundary_ids + 1, 64, 128, 1024],
-                                seg_layers=[1024 + 64, 512, 256, 128, 3])
+                                seg_layers=[1024 + 64, 512, 256, 128, 3],
+                                activation=SiLU)
     elif name == 'pipn-pp':
         return PipnManufacturedPorousPp(nu=0.01, d=d, f=f,
                                         fe_local_layers=[n_dim, 64, 64],
                                         fe_global_layers=[[n_dim * 2 + n_boundary_ids, 64],
                                                           [64 + n_dim, 128],
                                                           [128 + n_dim, 1024]],
-                                        fe_global_radius=[0.5, 0.25],
-                                        fe_global_fraction=[0.6, 1.2],
-                                        seg_layers=[1024 + 64, 512, 256, 128, 3])
+                                        fe_global_radius=[0.5, 1],
+                                        fe_global_fraction=[0.5, 0.25],
+                                        seg_layers=[1024 + 64, 512, 256, 128, 3],
+                                        activation=SiLU)
     else:
         raise NotImplementedError()
 

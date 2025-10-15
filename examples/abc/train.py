@@ -38,7 +38,8 @@ def get_model(name, normalizers):
                                                 [128 + n_dims, 128, 256],
                                                 [256 + n_dims, 256, 1024]],
                               scalers=normalizers,
-                              loss_scaler=loss_scaler)
+                              loss_scaler=loss_scaler,
+                              max_neighbors=16)
         case 'pipn-pp-mrg':
             return PipnFoamPpMrg(nu=nu,
                                  d=d,
@@ -49,7 +50,8 @@ def get_model(name, normalizers):
                                  scalers=normalizers,
                                  loss_scaler=loss_scaler,
                                  n_dims=n_dims,
-                                 mrg_in_features=n_boundary_ids + n_dims)
+                                 mrg_in_features=n_boundary_ids + n_dims,
+                                 max_neighbors=16)
         case 'pipn-pp-full':
             return PipnFoamPpFull(nu=nu,
                                   d=d,
@@ -65,7 +67,8 @@ def get_model(name, normalizers):
                                   dec_k=[3, 3, 3],
                                   last_dec_dropout=[0., 0., [0., 0.2, 0.2, 0.]],
                                   scalers=normalizers,
-                                  loss_scaler=loss_scaler)
+                                  loss_scaler=loss_scaler,
+                                  max_neighbors=16)
         case _:
             raise NotImplementedError
 

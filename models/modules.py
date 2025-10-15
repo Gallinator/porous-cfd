@@ -242,20 +242,23 @@ class GlobalSetAbstraction(torch.nn.Module):
 
 
 class SetAbstractionMrgSeq(nn.Module):
-    def __init__(self, in_features, n_dims, activation=Tanh):
+    def __init__(self, in_features, n_dims, activation=Tanh, max_neighbors=64):
         super().__init__()
         self.branch_1 = gnn.Sequential('x, pos, batch', [
             (SetAbstraction(0.5, 0.5,
                             gnn.MLP([in_features + n_dims, 64, 128], act=activation(), norm=None,
-                                    plain_last=False)),
+                                    plain_last=False),
+                            max_neighbors=max_neighbors),
              'x, pos, batch -> x, pos, batch'),
             (SetAbstraction(0.125, 1,
-                            gnn.MLP([128 + n_dims, 256], act=activation(), norm=None, plain_last=False)),
+                            gnn.MLP([128 + n_dims, 256], act=activation(), norm=None, plain_last=False),
+                            max_neighbors=max_neighbors),
              'x, pos, batch -> x, pos, batch'),
         ])
         self.branch_2 = SetAbstraction(0.5, 0.5,
                                        gnn.MLP([in_features + n_dims, 64, 128, 256], act=activation(), norm=None,
-                                               plain_last=False))
+                                               plain_last=False),
+                                       max_neighbors=max_neighbors)
         self.branch_3 = GlobalSetAbstraction(
             gnn.MLP([in_features + n_dims, 128, 256, 512], act=activation(), norm=None, plain_last=False))
         self.branch_4 = GlobalSetAbstraction(

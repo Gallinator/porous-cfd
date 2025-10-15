@@ -90,7 +90,7 @@ class PiGanoFull(PiGano):
         par_embedding = self.branch.forward(param_features)
 
         y = [op(operator_input, par_embedding) for op in self.neural_ops]
-        y = [f.sum(dim=-1, keepdims=True) for f in y]
+        y = [torch.sum(f, dim=-1, keepdim=True) for f in y]
         y = torch.cat(y, dim=-1)
 
         return FoamData(y, self.predicted_labels, x.domain)

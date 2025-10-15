@@ -34,6 +34,7 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--model', type=str)
     arg_parser.add_argument('--name', type=str, default=None)
     arg_parser.add_argument('--checkpoint', type=str, default=None)
+    arg_parser.add_argument('--loss-scaler', type=str, default='fixed')
     return arg_parser
 
 

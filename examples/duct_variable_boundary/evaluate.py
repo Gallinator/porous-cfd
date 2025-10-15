@@ -49,7 +49,7 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     angles = torch.tensor(results['Angle']).flatten()
     mae_by_angle = [np.mean(per_case_mae[angles == a], axis=0, keepdims=True) for a in angles.unique()]
     mae_by_angle = np.concatenate(mae_by_angle)
-    plot_errors_vs_var('MAE by inlet angle', mae_by_angle, angles.unique(), ['MAE', 'Angle'], plots_path)
+    plot_errors_vs_var('MAE by inlet angle', mae_by_angle, angles.unique(), ['Angle', 'MAE'], plots_path)
 
     d, f = np.array(results['d']).flatten(), np.array(results['f']).flatten()
     u_inlet = np.array(results['U inlet']).flatten()

@@ -45,7 +45,8 @@ class Generator2DBase(DataGeneratorBase):
 
     def parse_angles(self, config: dict):
         if 'angle' in config.keys():
-            return np.linspace(*config['angle'])
+            start, stop, n = config['angle']
+            return np.linspace(start, stop, n + 1)
         else:
             return [0]
 

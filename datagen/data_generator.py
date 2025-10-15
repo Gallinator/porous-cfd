@@ -142,13 +142,12 @@ class DataGeneratorBase:
             config = json.load(f)
             if 'splits' not in config.keys():
                 return
-            splits = config['splits']
+            splits = dict(sorted(config['splits'].items()))
         cases = sorted(list(os.listdir(f"{data_path}")))
         rng.shuffle(cases)
         n = len(cases)
         start = 0
         for s in splits:
-            print(s)
             end = start + int(splits[s] * n)
             for case in cases[start:end]:
                 shutil.move(f'{data_path}/{case}', f'{Path(data_path).parent}/{s}/{case}')

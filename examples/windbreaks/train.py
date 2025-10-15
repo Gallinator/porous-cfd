@@ -10,7 +10,7 @@ from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
 def get_model(args, normalizers):
     if args.loss_scaler == 'relobralo':
-        loss_scaler = RelobraloScaler(12)
+        loss_scaler = RelobraloScaler(12, alpha=1 - 0.995)
     else:
         loss_scaler = FixedLossScaler({'continuity': [10],
                                        'momentum': [10] * 3,

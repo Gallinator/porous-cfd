@@ -281,11 +281,12 @@ class SetAbstractionMrgSeq(nn.Module):
 
 
 class SetAbstractionSeq(nn.Module):
-    def __init__(self, fraction, radius, conv_mlp, return_skip=True, activation=Tanh):
+    def __init__(self, fraction, radius, conv_mlp, return_skip=True, activation=Tanh, max_neighbors=64):
         super().__init__()
         layers = OrderedDict()
         for i, (f, r, l) in enumerate(zip(fraction, radius, conv_mlp)):
-            layers[f'Sa-{i}'] = SetAbstraction(f, r, gnn.MLP(l, act=activation(), norm=None, plain_last=False))
+            layers[f'Sa-{i}'] = SetAbstraction(f, r, gnn.MLP(l, act=activation(), norm=None, plain_last=False),
+                                               max_neighbors=max_neighbors)
         if len(conv_mlp) > len(radius):
             layers['Global-Sa'] = GlobalSetAbstraction(
                 gnn.MLP(conv_mlp[-1], act=activation(), norm=None, plain_last=False))

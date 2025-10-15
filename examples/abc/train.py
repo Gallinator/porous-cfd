@@ -12,7 +12,7 @@ def get_model(name, normalizers):
                                    'momentum': [1] * n_dims,
                                    'boundary': [1] * (n_dims + 1),
                                    'observations': [100] * (n_dims + 1)})
-    nu, d, f = 1489.4e-6, 140000, 299.5
+    nu, d, f = 1489.4e-6, 30000, 79.731
     n_boundary_ids = 4
     match name:
         case 'pipn':

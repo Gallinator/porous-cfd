@@ -11,13 +11,12 @@ import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
 from pandas import DataFrame
-from scipy.stats._mstats_basic import trimmed_mean
 from torch import Tensor, cdist
 from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn, StandardScaler, Normalizer
-from visualization.common import plot_timing, box_plot, plot_data_dist, plot_multi_bar, plot_errors
+from visualization.common import plot_timing, box_plot, plot_data_dist, plot_multi_bar, plot_errors, plot_per_case
 
 
 def create_plots_root_dir(save_plots, data_dir, checkpoint):
@@ -142,6 +141,7 @@ def plot_common_data(data: dict, plots_path):
              [*np.hsplit(max_error_per_case, n_dims + 1)],
              errors_labels,
              plots_path)
+    plot_per_case('Per case max errors', max_error_per_case, plots_path)
     eval_df.loc['Average max errors'] = np.mean(max_error_per_case, axis=0)
 
     quantiles = np.quantile(errors, 0.8, axis=-2, keepdims=True)
@@ -154,6 +154,8 @@ def plot_common_data(data: dict, plots_path):
     top_errors = np.mean(np.array(top_errors), axis=0).tolist()
     plot_errors('Top 20% mean errors', top_errors, save_path=plots_path)
     eval_df.loc['Top 20'] = top_errors
+
+    plot_per_case('Per case mean errors', np.mean(errors, axis=-2), plots_path)
 
     max_error_from_interface = get_mean_max_error_distance(errors, 0.8, data['Interface distance'])
     plot_errors('Errors mean normalized distance from interface', max_error_from_interface, save_path=plots_path)

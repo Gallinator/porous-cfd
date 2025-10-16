@@ -42,6 +42,7 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     mean_pred_drop = np.mean(results['Target drop'])
     plot_multi_bar('Pressure drop', {'Predicted': [mean_pred_drop], 'True': [mean_tgt_drop]},
                    ['$p$'], plots_path)
+    print(f'Pressure drop error: {abs(mean_pred_drop - mean_tgt_drop)}')
 
 
 def run():

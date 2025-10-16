@@ -70,7 +70,7 @@ class Generator2DVariable(Generator2DBase):
                     d = coeffs['d']
                     f = coeffs['f']
                     random_inlet_u = inlet_u + (rng.random() - 0.5) * 2 * 0.015
-                    inlet_angle = rng.choice(inlet_angles)
+                    inlet_angle = min(inlet_angles) + (max(inlet_angles) - min(inlet_angles)) * rng.random()
                     inlet_angle_rad = math.radians(inlet_angle)
                     u_x, u_y = random_inlet_u * math.cos(inlet_angle_rad), random_inlet_u * math.sin(inlet_angle_rad)
 

@@ -69,13 +69,17 @@ def compare(args, model1, model2, data: FoamDataset):
     args = switch_active_checkpoint(args)
     evaluate(args, model2, data, False, None, postprocess_fn)
 
-    u_1 = np.concatenate(results[name_1]['U error'])
-    p_1 = np.concatenate(results[name_1]['p error'])
-    errors_1 = np.concatenate([u_1, p_1], axis=-1)
+    plots_dir = Path(args.checkpoint).parent.parent / 'comparisons' / f'{name_1} vs {name_2}' / Path(data.data_dir).name
+    plots_dir.mkdir(exist_ok=True, parents=True)
 
-    u_2 = np.concatenate(results[name_2]['U error'])
-    p_2 = np.concatenate(results[name_2]['p error'])
-    errors_2 = np.concatenate([u_2, p_2], axis=-1)
+    errors_1 = np.concatenate([results[name_1]['U error'], results[name_1]['p error']], axis=-1)
+    errors_2 = np.concatenate([results[name_2]['U error'], results[name_2]['p error']], axis=-1)
+
+    plot_max_difference('Max error difference', errors_1, errors_2, np.max, plots_dir,data)
+    plot_max_difference('Average error difference', errors_1, errors_2, np.mean, plots_dir,data)
+
+    errors_1 = np.concatenate(errors_1)
+    errors_2 = np.concatenate(errors_2)
 
     index = ['Ux', 'Uy', 'Uz'][:errors_2.shape[-1] - 1] + ['p']
     results_df = DataFrame(index=index, columns=['Kruskal-Wallis', 'Mann-Whitney U', 'ANOVA'])
@@ -106,8 +110,6 @@ def compare(args, model1, model2, data: FoamDataset):
     eval1 = pandas.read_csv(f'{eval_data_path[0]}/Errors.csv', index_col=0)
     eval2 = pandas.read_csv(f'{eval_data_path[1]}/Errors.csv', index_col=0)
 
-    plots_dir = Path(args.checkpoint).parent.parent / 'comparisons' / f'{name_1} vs {name_2}' / Path(data.data_dir).name
-    plots_dir.mkdir(exist_ok=True, parents=True)
     plot_error_comparison(name_1, name_2, eval1, eval2, plots_dir)
     shapiro_df.to_csv(plots_dir / 'Shapiro.csv')
     results_df.to_csv(plots_dir / 'Test.csv')

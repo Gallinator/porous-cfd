@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 import numpy as np
-import torch
+import pandas
 from numpy.random import default_rng
 from common.evaluation import build_arg_parser, evaluate, get_pressure_drop
 from dataset.data_parser import parse_model_type
@@ -42,7 +42,9 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     mean_pred_drop = np.mean(results['Target drop'])
     plot_multi_bar('Pressure drop', {'Predicted': [mean_pred_drop], 'True': [mean_tgt_drop]},
                    ['$p$'], plots_path)
-    print(f'Pressure drop error: {abs(mean_pred_drop - mean_tgt_drop)}')
+    df = pandas.read_csv(f'{plots_path}/Errors.csv')
+    df.loc['Pressure drop'] = {'$p$': abs(mean_pred_drop - mean_tgt_drop)}
+    df.to_csv(f'{plots_path}/Errors.csv')
 
 
 def run():

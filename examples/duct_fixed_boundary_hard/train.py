@@ -70,7 +70,7 @@ def get_model(name, normalizers):
                                   last_dec_dropout=[0., 0., [0.15, 0.15, 0., 0.]],
                                   scalers=normalizers,
                                   loss_scaler=loss_scaler,
-                                  activation=Tanh)
+                                  activation=SiLU)
         case _:
             raise NotImplementedError
 

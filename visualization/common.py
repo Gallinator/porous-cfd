@@ -258,6 +258,8 @@ def plot_per_case(title, values, save_path):
     cmap = plt.get_cmap('Set2')
     labels = get_fields_names(values)
     for i, (ax, f, fname) in enumerate(zip(axs, np.hsplit(values, len(labels)), labels)):
+        if min(f) < 0:
+            ax.axhline(0, 0, 1, linestyle='--', color='black')
         ax.bar(np.arange(len(f)), f.flatten(), color=cmap(i))
         ax.set_xticks([])
         ax.set_ylabel(f'{fname} MAE')

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable
 
 import matplotlib
+import torch
 from lightning import Trainer
 from lightning.pytorch.callbacks import RichProgressBar
 from rich.progress import track
@@ -51,6 +52,7 @@ def create_case_plot_dir(plots_root, case_name):
 
 def predict(args, model, data: FoamDataset,
             result_process_fn: Callable[[FoamDataset, FoamData, FoamData, Path, Path], None]):
+    torch.manual_seed(8421)
     data_loader = DataLoader(data, 1, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 
     trainer = Trainer(logger=False,

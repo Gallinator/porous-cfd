@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 import numpy as np
 import pandas
+import torch
 from pandas import DataFrame
 from scipy.stats import kruskal, mannwhitneyu, f_oneway, shapiro
 from common import evaluation
@@ -53,6 +54,7 @@ def plot_max_difference(title, errors_1, errors_2, reduction_f, plots_path,data)
 def compare(args, model1, model2, data: FoamDataset):
     results = {}
     eval_data_path = []
+    torch.manual_seed(8421)
 
     def postprocess_fn(dataset, partial_results, plots_path):
         results[active_model] = partial_results

@@ -208,6 +208,8 @@ def evaluate(args,
              enable_timing,
              sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
              postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None] | None):
+
+    torch.manual_seed(8421)
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args.save_plots, data.data_dir, args.checkpoint)
 

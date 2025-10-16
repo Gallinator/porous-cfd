@@ -4,14 +4,14 @@ import numpy as np
 import torch
 from numpy.random import default_rng
 from common.evaluation import build_arg_parser, evaluate, get_normalized_signed_distance, get_mean_max_error_distance, \
-    extract_coef, extract_u_magnitude, extract_angle
+    extract_coef, extract_u_magnitude, extract_angle, get_pressure_drop
 from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
 from models.pi_gano.pi_gano import PiGano
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
-from visualization.common import plot_errors, plot_errors_vs_var, plot_errors_vs_multi_vars
+from visualization.common import plot_errors_vs_var, plot_errors_vs_multi_vars, plot_multi_bar
 
 
 def get_model(checkpoint):
@@ -39,7 +39,14 @@ def sample_process(data: FoamDataset, predicted: FoamData, target: FoamData, ext
 
     angle = extract_angle(target['inlet']['U'], data.normalizers['U'])
 
-    return {'d': d, 'f': f, 'U inlet': u_magnitude, 'Angle': angle}
+    p_scaler = data.normalizers['p'].to()
+    tgt_drop = get_pressure_drop(p_scaler.inverse_transform(target['inlet']['p']),
+                                 p_scaler.inverse_transform(target['outlet']['p']))
+    pred_drop = get_pressure_drop(p_scaler.inverse_transform(predicted['inlet']['p']),
+                                  p_scaler.inverse_transform(predicted['outlet']['p']))
+
+    return {'d': d, 'f': f, 'U inlet': u_magnitude, 'Angle': angle,
+            'Predicted drop': pred_drop.item(), 'Target drop': tgt_drop.item()}
 
 
 def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path):
@@ -54,6 +61,12 @@ def postprocess_fn(data: FoamDataset, results: dict[str, Any], plots_path: Path)
     d, f = np.array(results['d']).flatten(), np.array(results['f']).flatten()
     u_inlet = np.array(results['U inlet']).flatten()
     plot_errors_vs_multi_vars('MAE heatmap', per_case_mae, d.astype(np.int64), u_inlet, ['D', 'U'], plots_path)
+
+    mean_tgt_drop = np.mean(results['Predicted drop'])
+    mean_pred_drop = np.mean(results['Target drop'])
+    plot_multi_bar('Pressure drop', {'Predicted': [mean_pred_drop], 'True': [mean_tgt_drop]},
+                   ['$p$'], plots_path)
+    print(f'Pressure drop error: {abs(mean_pred_drop - mean_tgt_drop)}')
 
 
 def run():

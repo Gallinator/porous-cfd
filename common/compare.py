@@ -7,7 +7,7 @@ from scipy.stats import kruskal, mannwhitneyu, f_oneway, shapiro
 from common import evaluation
 from common.evaluation import evaluate
 from dataset.foam_dataset import FoamDataset
-from visualization.common import plot_multi_bar, get_fields_names
+from visualization.common import plot_multi_bar, get_fields_names, plot_per_case
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -42,6 +42,12 @@ def get_name_from_checkpoint(checkpoint):
     if not name[0].isupper():
         name = name.capitalize()
     return name
+
+
+def plot_max_difference(title, errors_1, errors_2, reduction_f, plots_path,data):
+    max_1, max_2 = reduction_f(errors_1, axis=-2), reduction_f(errors_2, axis=-2)
+    delta = max_1 - max_2
+    plot_per_case(title, delta, plots_path)
 
 
 def compare(args, model1, model2, data: FoamDataset):

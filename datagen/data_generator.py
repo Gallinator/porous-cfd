@@ -327,12 +327,14 @@ class DataGeneratorBase:
         for split in glob.glob(f'{dest_dir}/*/'):
 
             # Dirty fix for ABC outliers
+            print(split)
             for c in os.listdir(split):
                 if c in {'00006587_b3d0eb0739bc4f9ebfdff16c_trimesh_005',
                          '00002721_98d8f78b1bb5495f9a193852_trimesh_007',
                          '00005570_f223bd7b687042f7b569e766_trimesh_005'}:
                     print(f'Deleted {c}')
                     shutil.rmtree(f'{split}/{c}')
+                print(c)
 
             split_path = Path(split)
             if split_path.name == 'plots':

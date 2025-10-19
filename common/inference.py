@@ -22,7 +22,7 @@ def build_arg_parser() -> ArgumentParser:
     last_model = sorted(os.listdir('lightning_logs'))[-1]
     default_model_path = Path('lightning_logs') / last_model / 'model.ckpt'
     arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
-    arg_parser.add_argument('--data-dir', type=str, default='data/val')
+    arg_parser.add_argument('--data-dir', type=str, default='data/test')
     arg_parser.add_argument('--meta-dir', type=str, default='data/train')
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=1000)

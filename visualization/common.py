@@ -178,14 +178,14 @@ def plot_errors_vs_var(title, errors, var, labels, save_path=None):
     cmap = matplotlib.colormaps['Set2']
 
     for i in range(n_errors):
-        axs[i].scatter(var, errors[:, i], label='Raw', c=cmap(2), s=15)
+        axs[i].scatter(var, errors[:, i], label='Raw', color=cmap(2), s=15)
         axs[i].set_xlabel(labels[0])
         axs[i].set_ylabel(labels[1])
 
         if len(var) > 5:
             interp = make_smoothing_spline(var, errors[..., i])
             x = np.linspace(min(var), max(var), 100)
-            axs[i].plot(x, interp(x), c=cmap(1), label='Interpolated')
+            axs[i].plot(x, interp(x), color=cmap(1), label='Interpolated')
         axs[i].legend()
         axs[i].set_title(fields_names[i])
 

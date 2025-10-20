@@ -45,6 +45,7 @@ def extract_angle(u: Tensor, scaler: StandardScaler):
     u_mag = torch.norm(u, dim=-1, keepdim=True)
     a = torch.arccos(u[..., 0:1] / u_mag)
     a = torch.max(a, dim=-2, keepdim=True)[0]
+    a *= torch.max(torch.sign(u[..., -1:]), dim=-2, keepdim=True)[0]
     return torch.rad2deg(a)
 
 

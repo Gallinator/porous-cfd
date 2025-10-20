@@ -3,6 +3,7 @@ from functools import partial
 from pathlib import Path
 from statistics import mean, stdev
 
+import matplotlib
 import numpy as np
 import pandas
 from matplotlib import pyplot as plt
@@ -170,20 +171,21 @@ def get_fields_names(f: np.ndarray):
 
 def plot_errors_vs_var(title, errors, var, labels, save_path=None):
     n_errors = errors.shape[-1]
-    fig, axs = plt.subplots(ncols=1, nrows=n_errors)
+    fig, axs = plt.subplots(ncols=1, nrows=n_errors, figsize=(8, 10))
     fig.suptitle(title)
 
     fields_names = get_fields_names(errors)
+    cmap = matplotlib.colormaps['Set2']
 
     for i in range(n_errors):
-        axs[i].scatter(var, errors[:, i], label='Raw')
+        axs[i].scatter(var, errors[:, i], label='Raw', c=cmap(2), s=15)
         axs[i].set_xlabel(labels[0])
         axs[i].set_ylabel(labels[1])
 
         if len(var) > 5:
             interp = make_smoothing_spline(var, errors[..., i])
             x = np.linspace(min(var), max(var), 100)
-            axs[i].plot(x, interp(x), c='red', label='Interpolated')
+            axs[i].plot(x, interp(x), c=cmap(1), label='Interpolated')
         axs[i].legend()
         axs[i].set_title(fields_names[i])
 

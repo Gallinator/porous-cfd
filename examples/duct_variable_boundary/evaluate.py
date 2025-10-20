@@ -83,7 +83,7 @@ def run():
     data = FoamDataset(args.data_dir, args.n_internal, args.n_boundary, args.n_observations, rng, args.meta_dir,
                        extra_fields=['momentError', 'div(phi)'])
 
-    evaluate(args, model, data, False, sample_process, postprocess_fn)
+    evaluate(args, model, data, True, sample_process, postprocess_fn)
 
 
 if __name__ == '__main__':

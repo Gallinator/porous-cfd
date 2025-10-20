@@ -7,7 +7,7 @@ from common.inference import build_arg_parser, create_plots_root, predict, creat
 from dataset.data_parser import parse_model_type
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset
-from models.pi_gano.pi_gano import PiGano
+from models.pi_gano.pi_gano import PiGano, PiGanoFull
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 from visualization.visualization_2d import plot_fields
@@ -22,6 +22,8 @@ def get_model(checkpoint):
             return PiGanoPp.load_from_checkpoint(checkpoint)
         case 'pi-gano-pp-full':
             return PiGanoPpFull.load_from_checkpoint(checkpoint)
+        case 'pi-gano-full':
+            return PiGanoFull.load_from_checkpoint(checkpoint)
         case _:
             raise NotImplementedError
 

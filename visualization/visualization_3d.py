@@ -10,6 +10,8 @@ from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
 from dataset import data_parser
 from visualization.common import M_S, M2_S2
 
+pv.global_theme.transparent_background = True
+
 
 def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plotter):
     poly_points = PolyData(points)

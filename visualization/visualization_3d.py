@@ -25,29 +25,35 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.camera.zoom(0.75)
 
 
-def plot_2d_slice(mesh, normal, origin, plotter, *additional_meshes: tuple):
-    mesh_slice = mesh.slice(normal=normal, origin=origin)
-    u_slice = np.copy(mesh_slice['Uinterp'])
-    u_slice[..., -1 if normal == 'z' else -2] = 0
-    mesh_slice['Uslice'] = u_slice
-    plane = 'xy' if normal == 'z' else 'xz'
-    colorbar = {'title': f'$U {plane} {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
-    plotter.add_mesh(mesh_slice,
-                     cmap='coolwarm',
-                     scalars='Uslice',
-                     scalar_bar_args=colorbar)
-
+def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_meshes: tuple):
+    slices = mesh.slice_orthogonal(x=origin[0], y=origin[1], z=origin[2])
+    planes = ['yz', 'xz', 'xy']
+    sliced_meshes = []
     for m, _ in additional_meshes:
-        sliced_mesh = m.slice(normal=normal, origin=origin)
-        plotter.add_mesh(sliced_mesh, color='black', line_width=5)
+        sliced_m = m.slice_orthogonal(x=origin[0], y=origin[1], z=origin[2])
+        sliced_meshes.append(sliced_m)
 
-    plotter.enable_parallel_projection()
-    match plane:
-        case 'xy':
-            plotter.view_xy()
-        case 'xz':
-            plotter.view_xz()
-    plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
+    for i, (s, p) in enumerate(zip(slices, planes)):
+        plotter.subplot(cur_pos[0], i + cur_pos[1])
+        title = f'${label}_{{{planes[i]}}} \\quad {M_S}$'
+        colorbar = {'title': title, 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
+        plotter.add_mesh(s, cmap='coolwarm', scalars=field, scalar_bar_args=colorbar)
+        bar = plotter.scalar_bars[title]
+        bar.GetTitleTextProperty().SetLineSpacing(1.5)
+
+        for m in sliced_meshes:
+            if len(m[i].points > 0):
+                plotter.add_mesh(m[i], color='black', line_width=5)
+
+        plotter.enable_parallel_projection()
+        match p:
+            case 'xy':
+                plotter.view_xy()
+            case 'xz':
+                plotter.view_xz()
+            case 'yz':
+                plotter.view_yz()
+        plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
 def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dict):
@@ -88,21 +94,18 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, addition
 
     data_points = PolyData(points)
     data_points['Uinterp'] = u
+    data_points['pinterp'] = p
     internal_mesh = mesh['internalMesh']
-    interp_mesh = internal_mesh.interpolate(data_points, radius=5)
+    interp_mesh = internal_mesh.interpolate(data_points, radius=interp_radius)
 
-    plotter = Plotter(shape=(1, 3), off_screen=save_path is not None, window_size=[3840, 1440])
+    plotter = Plotter(shape=(2, 4), off_screen=save_path is not None, window_size=[4096, 2048])
 
     plotter.subplot(0, 0)
     plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, add_objects)
 
-    plotter.subplot(0, 1)
     center = (0, 0, add_objects[0][0].center[2] if len(add_objects) > 0 else 1)
-    plot_2d_slice(interp_mesh, 'z', center, plotter, *add_objects)
-
-    plotter.subplot(0, 2)
-    center = (0, 0, add_objects[0][0].center[1] if len(add_objects) > 0 else 1)
-    plot_2d_slice(interp_mesh, 'y', center, plotter, *add_objects)
+    plot_2d_slice(interp_mesh, 'Uinterp', 'U', center, plotter, (0, 1), *add_objects)
+    plot_2d_slice(interp_mesh, 'pinterp', 'p', center, plotter, (1, 0), *add_objects)
 
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
     os.remove(empty_foam)

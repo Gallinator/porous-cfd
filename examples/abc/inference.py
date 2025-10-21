@@ -50,8 +50,10 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(predicted['U']).numpy(),
+                     p_scaler.inverse_transform(predicted['p']).numpy(),
                      additional_meshes,
-                     save_path=case_plot_path)
+                     save_path=case_plot_path,
+                     interp_radius=0.1)
 
     plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
                 raw_points,
@@ -63,8 +65,10 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(target['U'].numpy()),
+                     p_scaler.inverse_transform(target['p'].numpy()),
                      additional_meshes,
-                     save_path=case_plot_path)
+                     save_path=case_plot_path,
+                     interp_radius=0.1)
 
     u_error = (u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(target['U'])).numpy()
     p_error = p_scaler.inverse_transform(predicted['p']) - p_scaler.inverse_transform(target['p']).numpy()
@@ -78,8 +82,10 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                      case_path,
                      raw_points,
                      np.abs(u_error),
+                     np.abs(p_error),
                      additional_meshes,
-                     save_path=case_plot_path)
+                     save_path=case_plot_path,
+                     interp_radius=0.1)
 
 
 def run():

@@ -71,7 +71,8 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dic
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(title, case_dir, points: np.array, u: np.array, additional_meshes: dict[str, str], save_path=None):
+def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, additional_meshes: dict[str, str],
+                     save_path=None, interp_radius=0.1):
     empty_foam = f'{case_dir}/empty.foam'
     open(empty_foam, 'w').close()
 

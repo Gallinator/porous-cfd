@@ -17,6 +17,8 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     poly_points = PolyData(points)
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
     plotter.add_mesh(poly_points, scalars=value, scalar_bar_args=colorbar, point_size=5.0, cmap='coolwarm')
+    bar = plotter.scalar_bars[title]
+    bar.GetTitleTextProperty().SetLineSpacing(1.5)
     plotter.show_grid(all_edges=True)
 
     plotter.camera.position = np.array((-0.8, -1, 0.5)) * np.max(np.linalg.norm(points, axis=-1)) * 2.5

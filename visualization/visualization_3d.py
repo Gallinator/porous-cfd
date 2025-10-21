@@ -61,7 +61,7 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dic
     min_x = np.min(inlet_mesh.points, axis=0)[0]
     stream_start_points = stream_start_points[stream_start_points[..., 0] == min_x]
     stream_start_points = PointSet(random.choices(stream_start_points, k=250))
-    colorbar = {'title': f'$U {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
+    colorbar = {'title': f'$U \quad {M_S}$', 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
     streamlines = interp_mesh.streamlines_from_source(stream_start_points, vectors='Uinterp')
     plotter.add_mesh(streamlines, render_lines_as_tubes=False,
                      scalar_bar_args=colorbar,

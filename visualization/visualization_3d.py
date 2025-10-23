@@ -23,6 +23,7 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
 
     plotter.camera.position = np.array((-0.8, -1, 0.5)) * np.max(np.linalg.norm(points, axis=-1)) * 2.5
     plotter.camera.zoom(0.75)
+    plotter.disable_shadows()
 
 
 def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_meshes: tuple):

@@ -55,6 +55,7 @@ def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_mesh
             case 'yz':
                 plotter.view_yz()
         plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
+        plotter.disable_shadows()
 
 
 def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dict):

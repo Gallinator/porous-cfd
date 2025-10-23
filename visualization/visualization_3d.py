@@ -98,7 +98,7 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, addition
     internal_mesh = mesh['internalMesh']
     interp_mesh = internal_mesh.interpolate(data_points, radius=interp_radius)
 
-    plotter = Plotter(shape=(2, 4), off_screen=save_path is not None, window_size=[4096, 2048])
+    plotter = Plotter(shape=(2, 4), off_screen=save_path is not None, window_size=[4096, 3000])
 
     plotter.subplot(0, 0)
     plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, add_objects)

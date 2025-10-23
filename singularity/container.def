@@ -1,0 +1,17 @@
+Bootstrap: docker
+From: pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
+
+%post
+    # OpenFOAM
+    apt-get update && apt-get install curl -y
+    curl -s https://dl.openfoam.com/add-debian-repo.sh | sh
+    apt-get update && apt-get install build-essential openfoam2412 -y
+
+    # Blender
+    apt-get install libx11-dev libxxf86vm-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libegl-dev -y
+    apt-get install libwayland-dev wayland-protocols libxkbcommon-dev libdbus-1-dev libsm6 libxrender1 libfontconfig1 -y
+
+    # Python dependencies
+    pip install --no-cache-dir torch_geometric
+    pip install --no-cache-dir pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.7.0+cu128.html
+    pip install --no-cache-dir -r ../requirements.txt

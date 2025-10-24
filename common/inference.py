@@ -30,7 +30,7 @@ def build_arg_parser() -> ArgumentParser:
                             help='number of boundary points to sample', default=200)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
-    arg_parser.add_argument('--precision', type=str, default='bf16-mixed')
+    arg_parser.add_argument('--precision', type=str, default='32')
     return arg_parser
 
 

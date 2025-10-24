@@ -79,16 +79,20 @@ def build_arg_parser() -> ArgumentParser:
                             help='save all the inference plots', default=False)
     last_model = sorted(os.listdir('lightning_logs'))[-1]
     default_model_path = Path('lightning_logs') / last_model / 'model.ckpt'
-    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
-    arg_parser.add_argument('--data-dir', type=str, default='data/test')
-    arg_parser.add_argument('--meta-dir', type=str, default='data/train')
+    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path,
+                            help='path of the save model checkpoint. By default use the last checkpoint in alphabetical order')
+    arg_parser.add_argument('--data-dir', type=str, default='data/test',
+                            help='directory containing the data')
+    arg_parser.add_argument('--meta-dir', type=str, default='data/train',
+                            help='directory containing the meta.json file')
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-boundary', type=int,
                             help='number of boundary points to sample', default=200)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
-    arg_parser.add_argument('--precision', type=str, default='32')
+    arg_parser.add_argument('--precision', type=str, default='32',
+                            help='model training precision. Supports mixed precision.')
     arg_parser.add_argument('--batch-size', type=int, default=4)
     return arg_parser
 
@@ -209,7 +213,6 @@ def evaluate(args,
              enable_timing,
              sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
              postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None] | None):
-
     torch.manual_seed(8421)
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args.save_plots, data.data_dir, args.checkpoint)

@@ -21,16 +21,20 @@ def build_arg_parser() -> ArgumentParser:
                             help='save all the inference plots', default=False)
     last_model = sorted(os.listdir('lightning_logs'))[-1]
     default_model_path = Path('lightning_logs') / last_model / 'model.ckpt'
-    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path)
-    arg_parser.add_argument('--data-dir', type=str, default='data/test')
-    arg_parser.add_argument('--meta-dir', type=str, default='data/train')
+    arg_parser.add_argument('--checkpoint', type=str, default=default_model_path,
+                            help='path of the save model checkpoint. By default use the last checkpoint in alphabetical order')
+    arg_parser.add_argument('--data-dir', type=str, default='data/test',
+                            help='directory containing the data')
+    arg_parser.add_argument('--meta-dir', type=str, default='data/train',
+                            help='directory containing the meta.json file')
     arg_parser.add_argument('--n-internal', type=int,
                             help='number of internal points to sample', default=1000)
     arg_parser.add_argument('--n-boundary', type=int,
                             help='number of boundary points to sample', default=200)
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
-    arg_parser.add_argument('--precision', type=str, default='32')
+    arg_parser.add_argument('--precision', type=str, default='32',
+                            help='model weight precision. Supports mixed precision')
     return arg_parser
 
 

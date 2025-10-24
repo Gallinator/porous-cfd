@@ -26,15 +26,23 @@ def build_arg_parser() -> ArgumentParser:
     arg_parser.add_argument('--n-observations', type=int,
                             help='number of observation points to sample', default=500)
     arg_parser.add_argument('--batch-size', type=int, default=13)
-    arg_parser.add_argument('--precision', type=str, default='bf16-mixed')
+    arg_parser.add_argument('--precision', type=str, default='bf16-mixed',
+                            help='model weight precision. Supports mixed precision')
     arg_parser.add_argument('--epochs', type=int, default=3000)
-    arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd())
-    arg_parser.add_argument('--train-dir', type=str, default='data/train')
-    arg_parser.add_argument('--val-dir', type=str, default='data/val')
-    arg_parser.add_argument('--model', type=str)
-    arg_parser.add_argument('--name', type=str, default=None)
-    arg_parser.add_argument('--checkpoint', type=str, default=None)
-    arg_parser.add_argument('--loss-scaler', type=str, default='fixed')
+    arg_parser.add_argument('--logs-dir', type=str, default=os.getcwd(),
+                            help='base directory to save mdel weights. By default lightning_logs')
+    arg_parser.add_argument('--train-dir', type=str, default='data/train',
+                            help='directory containing the training data')
+    arg_parser.add_argument('--val-dir', type=str, default='data/val',
+                            help='directory containing the validation data')
+    arg_parser.add_argument('--model', type=str,
+                            help='model type. The available models depend on the experiment')
+    arg_parser.add_argument('--name', type=str, default=None,
+                            help='experiment name. The results will be saved inside a directory with this name')
+    arg_parser.add_argument('--checkpoint', type=str, default=None,
+                            help='path of the model weights. Use to finetune an existing model')
+    arg_parser.add_argument('--loss-scaler', type=str, default='fixed',
+                            help='loss scaler. Currently supports fixed and relobralo')
     return arg_parser
 
 

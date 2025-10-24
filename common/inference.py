@@ -71,7 +71,9 @@ def predict(args, model, data: FoamDataset,
         case_path = Path(data.samples[i])
         target = target.to('cpu')
         predicted = predicted.to('cpu').squeeze()
-        result_process_fn(data, target, predicted, case_path, plots_base_path)
+
+        case_plot_path = create_case_plot_dir(plots_base_path, case_path.name)
+        result_process_fn(data, target, predicted, case_path, case_plot_path)
 
     if args.save_plots:
         matplotlib.use(default_backend)

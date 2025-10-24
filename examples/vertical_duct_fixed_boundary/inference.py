@@ -25,16 +25,14 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plots_path: Path):
-    case_plot_path = create_case_plot_dir(plots_path, case_path.name)
-
+def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plot_path: Path):
     points_scaler = data.normalizers['C'].to()
     u_scaler = data.normalizers['U'].to()
     p_scaler = data.normalizers['p'].to()
 
     raw_points = points_scaler.inverse_transform(target['C'])
 
-    plt.interactive(case_plot_path is None)
+    plt.interactive(plot_path is None)
 
     mask_bboxes = [[[-0.4, 0.3], [-0.2, 0.5]],
                    [[0.0, 0.3], [0.6, 0.5]]]
@@ -44,14 +42,14 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 u_scaler.inverse_transform(predicted['U']).numpy(),
                 p_scaler.inverse_transform(predicted['p']).numpy(),
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path,
+                save_path=plot_path,
                 mask=mask_bboxes)
     plot_fields('Ground truth',
                 raw_points.numpy(),
                 u_scaler.inverse_transform(target['U']).numpy(),
                 p_scaler.inverse_transform(target['p']).numpy(),
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path,
+                save_path=plot_path,
                 mask=mask_bboxes)
 
     plt.interactive(False)
@@ -64,7 +62,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 np.abs(p_error),
                 target['cellToRegion'].numpy(),
                 False,
-                save_path=case_plot_path,
+                save_path=plot_path,
                 mask=mask_bboxes)
 
 

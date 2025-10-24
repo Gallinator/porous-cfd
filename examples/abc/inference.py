@@ -24,9 +24,7 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plots_path: Path):
-    case_plot_path = create_case_plot_dir(plots_path, case_path.name)
-
+def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plot_path: Path):
     points_scaler = data.normalizers['C'].to()
     u_scaler = data.normalizers['U'].to()
     p_scaler = data.normalizers['p'].to()
@@ -45,14 +43,14 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 u_scaler.inverse_transform(predicted['U']).numpy(),
                 p_scaler.inverse_transform(predicted['p']).numpy(),
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path)
+                save_path=plot_path)
     plot_streamlines('Predicted streamlines',
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(predicted['U']).numpy(),
                      p_scaler.inverse_transform(predicted['p']).numpy(),
                      additional_meshes,
-                     save_path=case_plot_path,
+                     save_path=plot_path,
                      interp_radius=0.1)
 
     plot_fields(f'Ground truth D={d:.3f} F={f:.3f} Inlet={inlet_ux:.3f}',
@@ -60,14 +58,14 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 u_scaler.inverse_transform(target['U']).numpy(),
                 p_scaler.inverse_transform(target['p']).numpy(),
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path)
+                save_path=plot_path)
     plot_streamlines('True streamlines',
                      case_path,
                      raw_points,
                      u_scaler.inverse_transform(target['U'].numpy()),
                      p_scaler.inverse_transform(target['p'].numpy()),
                      additional_meshes,
-                     save_path=case_plot_path,
+                     save_path=plot_path,
                      interp_radius=0.1)
 
     u_error = (u_scaler.inverse_transform(predicted['U']) - u_scaler.inverse_transform(target['U'])).numpy()
@@ -77,14 +75,14 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 np.abs(u_error),
                 np.abs(p_error),
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path)
+                save_path=plot_path)
     plot_streamlines('Error streamlines',
                      case_path,
                      raw_points,
                      np.abs(u_error),
                      np.abs(p_error),
                      additional_meshes,
-                     save_path=case_plot_path,
+                     save_path=plot_path,
                      interp_radius=0.1)
 
 

@@ -21,20 +21,18 @@ def get_model(checkpoint):
             raise NotImplementedError
 
 
-def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plots_path: Path):
-    case_plot_path = create_case_plot_dir(plots_path, case_path.name)
-
-    plt.interactive(case_plot_path is None)
+def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, case_path: Path, plot_path: Path):
+    plt.interactive(plot_path is None)
     plot_fields(f'Predicted', target['C'],
                 predicted['U'],
                 predicted['p'],
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path)
+                save_path=plot_path)
     plot_fields(f'Ground truth', target['C'],
                 target['U'],
                 target['p'],
                 target['cellToRegion'].numpy(),
-                save_path=case_plot_path)
+                save_path=plot_path)
 
     plt.interactive(False)
 
@@ -46,7 +44,7 @@ def sample_process_fn(data: FoamDataset, target: FoamData, predicted: FoamData, 
                 np.abs(p_error),
                 target['cellToRegion'].numpy(),
                 False,
-                case_plot_path)
+                plot_path)
 
 
 def run():

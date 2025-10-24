@@ -41,9 +41,10 @@ class PipnFoamBase(PorousPinnBase):
 
 
 class PipnFoam(PipnFoamBase):
-    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, seg_layers, seg_dropout,
+    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, seg_layers,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
+                 seg_dropout=None,
                  activation=Tanh):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
         self.feature_extract = PointNetFeatureExtract(fe_local_layers, fe_global_layers, activation)
@@ -66,9 +67,10 @@ class PipnFoam(PipnFoamBase):
 
 
 class PipnFoamPp(PipnFoamBase):
-    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, fe_radius, fe_fraction, seg_layers, seg_dropout,
+    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, fe_radius, fe_fraction, seg_layers,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
+                 seg_dropout=None,
                  activation=Mish,
                  max_neighbors=64):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
@@ -94,9 +96,10 @@ class PipnFoamPp(PipnFoamBase):
 
 
 class PipnFoamPpMrg(PipnFoamBase):
-    def __init__(self, n_dims, mrg_in_features, nu, d, f, fe_local_layers, seg_layers, seg_dropout,
+    def __init__(self, n_dims, mrg_in_features, nu, d, f, fe_local_layers, seg_layers,
                  scalers: dict[str, StandardScaler],
                  loss_scaler=None,
+                 seg_dropout=None,
                  activation=Mish,
                  max_neighbors=64):
         super().__init__(nu, d, f, seg_layers[-1], scalers, loss_scaler)
@@ -123,8 +126,9 @@ class PipnFoamPpMrg(PipnFoamBase):
 
 
 class PipnFoamPpFull(PipnFoamBase):
-    def __init__(self, nu, d, f, enc_layers, enc_radius, enc_fraction, dec_layers, dec_k, last_dec_dropout,
-                 scalers: dict[str, StandardScaler], loss_scaler, activation=Mish, max_neighbors=64):
+    def __init__(self, nu, d, f, enc_layers, enc_radius, enc_fraction, dec_layers, dec_k,
+                 scalers: dict[str, StandardScaler], loss_scaler, activation=Mish, max_neighbors=64,
+                 last_dec_dropout=None):
         super().__init__(nu, d, f, dec_layers[-1][-1], scalers, loss_scaler)
         self.encoder = SetAbstractionSeq(enc_fraction, enc_radius, enc_layers,
                                          activation=activation, max_neighbors=max_neighbors)

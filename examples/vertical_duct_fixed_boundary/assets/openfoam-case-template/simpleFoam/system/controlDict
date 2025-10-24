@@ -1,0 +1,193 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     simpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         4000;
+
+deltaT          1;
+
+writeControl    timeStep;
+
+writeInterval   100;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+boundaryFields (U p div(phi) mag(grad(Unorm)) grad(p) grad(U)xx grad(U)xy grad(U)xz grad(U)yx grad(U)yy grad(U)yz grad(U)zx grad(U)zy grad(U)zz grad(grad(U)xx) grad(grad(U)xy) grad(grad(U)xz) grad(grad(U)yx) grad(grad(U)yy) grad(grad(U)yz) grad(grad(U)zx) grad(grad(U)zy) grad(grad(U)zz));
+
+functions
+{
+    #include "momentumError"
+
+    contErr
+    {
+        type            div;
+        libs            (fieldFunctionObjects);
+        field           phi;
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+    Unorm
+    {
+        // Mandatory entries
+        type            norm;
+        libs            (fieldFunctionObjects);
+        field           U;
+        norm            L2;
+
+        // Optional (inherited) entries
+        result  Unorm;
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    gradUnorm
+    {
+        // Mandatory entries (unmodifiable)
+        type            grad;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory (inherited) entries (runtime modifiable)
+        field           Unorm;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    magGradUnorm
+    {
+        type            mag;
+        libs            (fieldFunctionObjects);
+
+        field           grad(Unorm);
+
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+    walls
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+        surfaceFormat   foam;
+
+        // Mandatory entries (runtime modifiable)
+        fields          $boundaryFields;
+        operation       none;
+        regionType      patch;
+        name            walls;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    inlet
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+        surfaceFormat   foam;
+
+        // Mandatory entries (runtime modifiable)
+        fields          $boundaryFields;
+        operation       none;
+        regionType      patch;
+        name            inlet;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    inlet-top
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+        surfaceFormat   foam;
+
+        // Mandatory entries (runtime modifiable)
+        fields          $boundaryFields;
+        operation       none;
+        regionType      patch;
+        name            inlet-top;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    outlet
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+        surfaceFormat   foam;
+
+        // Mandatory entries (runtime modifiable)
+        fields          $boundaryFields;
+        operation       none;
+        regionType      patch;
+        name            outlet;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeControl    writeTime;
+    }
+    interface
+    {
+        // Mandatory entries (unmodifiable)
+        type            surfaceFieldValue;
+        libs            (fieldFunctionObjects);
+
+        // Mandatory entries (runtime modifiable)
+        fields          $boundaryFields;
+        operation       none;
+        regionType      faceZone;
+        name            meshmesh_slaveCutFaceZone;
+
+        // Optional (inherited) entries
+        writeFields     true;
+        writeToFile     true;
+        writeControl    writeTime;
+        surfaceFormat   foam;
+    }
+    writeCellData
+    {
+        type            writeCellCentres;
+        libs            (fieldFunctionObjects);
+
+        writeControl    writeTime;
+    }
+}
+
+
+// ************************************************************************* //

@@ -1,6 +1,6 @@
 # Modeling diffusion in complex media through Physically Informed Neural Networks
 This repo contains the implementation of the paper *Geometry-Aware Physics-Informed PointNets
-for Modeling Flows Across Porous Structures* accepted at the MEDES 2025 conference.
+for Modeling Flows Across Porous Structures* accepted at the MEDES 25 conference.
 
 
  ## Quick start
@@ -40,12 +40,14 @@ for Modeling Flows Across Porous Structures* accepted at the MEDES 2025 conferen
     To save the plots as images pass  the ```--save-plots``` argument. The results will be saved in *abc/lightning_logs/pipn-pp-test/plots/stats*.
 
 ## Run on SLURM HPC with Singularity
-- Build the container
-```singularity build --fakeroot container.sif  singularity/container.def```
-- Run the sbatch script on the cluster
-```sbatch --job-name=abc-test sbatch.sh -c container.sif -x abc -g -i 1500 -b 1000 -o 700 -m pipn-pp -n pipn-pp-test```
+- #### Build the container
 
-The model weights and plots will be saved in ```examples/abc/lightning_logs/pipn-pp-test```
+    ```singularity build --fakeroot container.sif  singularity/container.def```
+- #### Run the sbatch script on the cluster
+
+    ```sbatch --job-name=abc-test sbatch.sh -c container.sif -x abc -g -i 1500 -b 1000 -o 700 -m pipn-pp -n pipn-pp-test```
+
+    The model weights and plots will be saved in ```examples/abc/lightning_logs/pipn-pp-test```.
 
 ## Use your own data
 The project was designed to allow customization of both the data and pipeline. The data generation can be customized to include porous and solid geometries and custom OpenFOAM simulation templates.

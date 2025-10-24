@@ -277,11 +277,8 @@ class FoamDataset(Dataset):
         :return:
         """
         n_internal = len(internal_fields)
-        porous_cells = internal_fields['cellToRegion']
-        porous_ids = porous_cells.reset_index().index[porous_cells > 0]
         domain = {'internal': np.arange(n_internal),
-                  'boundary': np.arange(len(boundary_fields)) + n_internal,
-                  'porous': porous_ids}
+                  'boundary': np.arange(len(boundary_fields)) + n_internal}
 
         for b in boundary_fields.index.unique():
             b_range = boundary_fields.index.get_loc(b)

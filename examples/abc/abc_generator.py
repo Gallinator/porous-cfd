@@ -41,8 +41,6 @@ class AbcGenerator(Generator3DBase):
             obj.scale = obj.scale * duct_r * 0.65 / mesh_r
 
     def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh in glob.glob(f'{meshes_dir}/*.obj'):
@@ -75,8 +73,6 @@ class AbcGenerator(Generator3DBase):
             shutil.copyfile(f'{meshes_dir}/walls/walls.obj', f'{meshes_subfolder}/walls.obj')
 
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         for mesh_set in glob.glob(f'{meshes_dir}/*/'):
             case_path = f"{dest_dir}/{Path(mesh_set).name}"
             shutil.copytree(self.case_template_dir, case_path)

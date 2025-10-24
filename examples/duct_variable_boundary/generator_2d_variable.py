@@ -13,8 +13,6 @@ from datagen.generator_2d import Generator2DBase
 
 class Generator2DVariable(Generator2DBase):
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
-        Path(dest_dir).mkdir(parents=True, exist_ok=True)
-
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')
@@ -56,8 +54,6 @@ class Generator2DVariable(Generator2DBase):
                 ops.object.delete()
 
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         with open(f'{case_config_dir}/config.json', 'r') as config:
             config = json.load(config)['cfd params']
             params = list(itertools.product(config['inlet'], config['coeffs']))

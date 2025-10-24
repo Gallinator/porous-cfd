@@ -53,8 +53,6 @@ class Generator2DFixedHardTop(Generator2DBase):
                 self.get_location_inside(f'{case_path}/constant/triSurface/{m}.obj'))
 
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         mesh_containers = glob.glob(f"{meshes_dir}/*/")
         for m_c in mesh_containers:
             case_path = f"{dest_dir}/{Path(m_c).stem}"
@@ -115,8 +113,6 @@ class Generator2DFixedHardTop(Generator2DBase):
         return mesh
 
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: random.Random):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             dest_dir.mkdir(parents=True, exist_ok=True)
             ops.ed.undo_push()

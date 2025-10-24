@@ -12,8 +12,6 @@ from datagen.generator_2d import Generator2DBase
 
 class Generator2DFixed(Generator2DBase):
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         meshes = glob.glob(f"{meshes_dir}/*.obj")
         for m in meshes:
             case_path = f"{dest_dir}/{Path(m).stem}"
@@ -25,8 +23,6 @@ class Generator2DFixed(Generator2DBase):
             self.set_decompose_par(f'{case_path}/simpleFoam')
 
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')

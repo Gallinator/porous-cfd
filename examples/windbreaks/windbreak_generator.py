@@ -61,8 +61,6 @@ class WindbreakGenerator(Generator3DBase):
         return trees
 
     def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')
@@ -109,8 +107,6 @@ class WindbreakGenerator(Generator3DBase):
             shutil.copytree(f'{meshes_dir}/houses', f'{dest_dir}/houses')
 
     def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
         with open(f'{case_config_dir}/config.json', 'r') as config:
             config = json.load(config)['cfd params']
             meshes = glob.glob(f"{meshes_dir}/*.obj")

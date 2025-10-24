@@ -314,9 +314,11 @@ class DataGeneratorBase:
 
             for mesh_set_path in self.meshes_sets_paths:
                 generate_set_dir = self.generated_meshes_dir / mesh_set_path.name
+                dest_dir.mkdir(parents=True, exist_ok=True)
                 self.generate_transformed_meshes(mesh_set_path, generate_set_dir, rng=rng)
 
                 set_dest_dir = dest_dir / mesh_set_path.name
+                set_dest_dir.mkdir(parents=True, exist_ok=True)
                 self.generate_openfoam_cases(generate_set_dir, set_dest_dir, mesh_set_path, rng=rng)
 
                 self.generate_split(set_dest_dir, mesh_set_path, rng=rng)

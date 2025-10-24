@@ -2,19 +2,26 @@ from numpy.random import default_rng
 
 from common.training import train, build_arg_parser
 from dataset.foam_dataset import FoamDataset
-from models.losses import FixedLossScaler
+from models.losses import FixedLossScaler, RelobraloScaler
 from models.pipn.pipn_foam import PipnFoamPpFull, PipnFoamPpMrg, PipnFoamPp, PipnFoam
 
 
-def get_model(name, normalizers):
+def get_loss_scaler(args):
+    if args.loss_scaler == 'relobralo':
+        return RelobraloScaler(12, alpha=1 - 0.995)
+    else:
+        return FixedLossScaler({'continuity': [1],
+                                'momentum': [1] * 3,
+                                'boundary': [1] * (3 + 1),
+                                'observations': [100] * (3 + 1)})
+
+
+def get_model(args, normalizers):
     n_dims = 3
-    loss_scaler = FixedLossScaler({'continuity': [1],
-                                   'momentum': [1] * n_dims,
-                                   'boundary': [1] * (n_dims + 1),
-                                   'observations': [100] * (n_dims + 1)})
+    loss_scaler = get_loss_scaler(args)
     nu, d, f = 1489.4e-6, 30000, 79.731
     n_boundary_ids = 4
-    match name:
+    match args.model:
         case 'pipn':
             return PipnFoam(nu=nu,
                             d=d,
@@ -84,7 +91,7 @@ def run():
     train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
-    model = get_model(args.model, train_data.normalizers)
+    model = get_model(args, train_data.normalizers)
 
     train(args, model, train_data, val_data)
 

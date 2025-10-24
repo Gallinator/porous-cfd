@@ -2,19 +2,26 @@ from numpy.random import default_rng
 from torch.nn import SiLU
 from common.training import build_arg_parser, train
 from examples.vertical_duct_fixed_boundary.vertical_duct_dataset import VerticalDuctDataset
-from models.losses import FixedLossScaler
+from models.losses import FixedLossScaler, RelobraloScaler
 from models.pipn.pipn_foam import PipnFoam, PipnFoamPp, PipnFoamPpMrg, PipnFoamPpFull
 
 
-def get_model(name, normalizers):
-    loss_scaler = FixedLossScaler({'continuity': [1],
-                                   'momentum': [1] * 2,
-                                   'boundary': [1] * 3,
-                                   'observations': [30, 30, 100]})
+def get_loss_scaler(args):
+    if args.loss_scaler == 'relobralo':
+        return RelobraloScaler(9, alpha=1 - 0.995)
+    else:
+        return FixedLossScaler({'continuity': [1],
+                                'momentum': [1] * 2,
+                                'boundary': [1] * 3,
+                                'observations': [100] * 3})
+
+
+def get_model(args, normalizers):
+    loss_scaler = get_loss_scaler(args)
     nu, d, f = 1489.4e-6, 14000, 17.11
     n_dim = 2
     n_boundary_ids = 4
-    match name:
+    match args.model:
         case 'pipn':
             return PipnFoam(nu=nu,
                             d=d,
@@ -84,9 +91,11 @@ if __name__ == '__main__':
     rng = default_rng(8421)
 
     region_weights = {'walls': 2.0}
-    train_data = VerticalDuctDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng,regions_weights=region_weights)
-    val_data = VerticalDuctDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir,regions_weights=region_weights)
+    train_data = VerticalDuctDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng,
+                                     regions_weights=region_weights)
+    val_data = VerticalDuctDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir,
+                                   regions_weights=region_weights)
 
-    model = type(get_model(args.model, train_data.normalizers)).load_from_checkpoint(args.checkpoint)
+    model = type(get_model(args, train_data.normalizers)).load_from_checkpoint(args.checkpoint)
 
     train(args, model, train_data, val_data)

@@ -8,14 +8,18 @@ from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
 
-def get_model(args, normalizers):
+def get_loss_scaler(args):
     if args.loss_scaler == 'relobralo':
-        loss_scaler = RelobraloScaler(12, alpha=1 - 0.995)
+        return RelobraloScaler(12, alpha=1 - 0.995)
     else:
-        loss_scaler = FixedLossScaler({'continuity': [10],
-                                       'momentum': [10] * 3,
-                                       'boundary': [1] * 4,
-                                       'observations': [1] * 4})
+        return FixedLossScaler({'continuity': [10],
+                                'momentum': [10] * 3,
+                                'boundary': [1] * 4,
+                                'observations': [1] * 4})
+
+
+def get_model(args, normalizers):
+    loss_scaler = get_loss_scaler(args)
     variable_boundaries = {'Subdomains': ['inlet', 'internal'], 'Features': ['Ux-inlet', 'd', 'f']}
     n_dim = 3
     n_boundary_id = 5

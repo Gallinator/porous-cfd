@@ -2,21 +2,28 @@ from numpy.random import default_rng
 
 from common.training import train, build_arg_parser
 from dataset.foam_dataset import FoamDataset
-from models.losses import FixedLossScaler
+from models.losses import FixedLossScaler, RelobraloScaler
 from models.pi_gano.pi_gano import PiGano, PiGanoFull
 from models.pi_gano.pi_gano_pp import PiGanoPp
 from models.pi_gano.pi_gano_pp_full import PiGanoPpFull
 
 
-def get_model(name, normalizers):
-    loss_scaler = FixedLossScaler({'continuity': [1],
-                                   'momentum': [1] * 2,
-                                   'boundary': [1] * 3,
-                                   'observations': [100] * 3})
+def get_loss_scaler(args):
+    if args.loss_scaler == 'relobralo':
+        return RelobraloScaler(9, alpha=1 - 0.995)
+    else:
+        return FixedLossScaler({'continuity': [1],
+                                'momentum': [1] * 2,
+                                'boundary': [1] * 3,
+                                'observations': [100] * 3})
+
+
+def get_model(args, normalizers):
+    loss_scaler = get_loss_scaler(args)
     variable_boundaries = {'Subdomains': ['inlet', 'internal'], 'Features': ['U-inlet', 'd', 'f']}
     n_dim = 2
     n_boundary_id = 4
-    match name:
+    match args.model:
         case 'pi-gano':
             return PiGano(nu=1489.4e-6,
                           out_features=3,
@@ -87,7 +94,7 @@ def run():
     train_data = FoamDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
     val_data = FoamDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
-    model = get_model(args.model, train_data.normalizers)
+    model = get_model(args, train_data.normalizers)
 
     train(args, model, train_data, val_data)
 

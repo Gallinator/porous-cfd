@@ -4,7 +4,7 @@ import numpy as np
 import pandas
 import torch
 from pandas import DataFrame
-from scipy.stats import kruskal, mannwhitneyu, f_oneway, shapiro
+from scipy.stats import kruskal, mannwhitneyu, f_oneway, shapiro, levene
 from common import evaluation
 from common.evaluation import evaluate
 from dataset.foam_dataset import FoamDataset
@@ -45,7 +45,7 @@ def get_name_from_checkpoint(checkpoint):
     return name
 
 
-def plot_max_difference(title, errors_1, errors_2, reduction_f, plots_path,data):
+def plot_max_difference(title, errors_1, errors_2, reduction_f, plots_path, data):
     max_1, max_2 = reduction_f(errors_1, axis=-2), reduction_f(errors_2, axis=-2)
     delta = max_1 - max_2
     plot_per_case(title, delta, plots_path)
@@ -77,8 +77,8 @@ def compare(args, model1, model2, data: FoamDataset):
     errors_1 = np.concatenate([results[name_1]['U error'], results[name_1]['p error']], axis=-1)
     errors_2 = np.concatenate([results[name_2]['U error'], results[name_2]['p error']], axis=-1)
 
-    plot_max_difference('Max error difference', errors_1, errors_2, np.max, plots_dir,data)
-    plot_max_difference('Average error difference', errors_1, errors_2, np.mean, plots_dir,data)
+    plot_max_difference('Max error difference', errors_1, errors_2, np.max, plots_dir, data)
+    plot_max_difference('Average error difference', errors_1, errors_2, np.mean, plots_dir, data)
 
     errors_1 = np.concatenate(errors_1)
     errors_2 = np.concatenate(errors_2)
@@ -98,6 +98,11 @@ def compare(args, model1, model2, data: FoamDataset):
     shapiro_2 = shapiro(transf_2, axis=0, keepdims=True)
     shapiro_df[name_1] = shapiro_1[-1].flatten()
     shapiro_df[name_2] = shapiro_2[-1].flatten()
+
+    levene_results = levene(transf_1, transf_2, center='mean')[-1]
+    print('Homoscedasticity transformed p-values')
+    print(DataFrame(data=[levene_results], columns=index))
+    print('\n')
 
     anova_results = f_oneway(transf_1, transf_2, axis=0, keepdims=True)
     results_df['ANOVA'] = anova_results[-1].flatten()

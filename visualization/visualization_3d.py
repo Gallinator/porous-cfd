@@ -38,7 +38,7 @@ def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_mesh
         plotter.subplot(cur_pos[0], i + cur_pos[1])
         title = f'${label}_{{{planes[i]}}} \\quad {M_S}$'
         colorbar = {'title': title, 'position_x': 0.25, 'height': 0.05, 'width': 0.5}
-        plotter.add_mesh(s, cmap='coolwarm', scalars=field, scalar_bar_args=colorbar)
+        plotter.add_mesh(s, cmap='coolwarm', scalars=field, scalar_bar_args=colorbar, lighting=False)
         bar = plotter.scalar_bars[title]
         bar.GetTitleTextProperty().SetLineSpacing(1.5)
 

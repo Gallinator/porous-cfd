@@ -90,11 +90,8 @@ if __name__ == '__main__':
 
     rng = default_rng(8421)
 
-    region_weights = {'walls': 2.0}
-    train_data = VerticalDuctDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng,
-                                     regions_weights=region_weights)
-    val_data = VerticalDuctDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir,
-                                   regions_weights=region_weights)
+    train_data = VerticalDuctDataset(args.train_dir, n_internal, n_boundary, n_obs, rng=rng)
+    val_data = VerticalDuctDataset(args.val_dir, n_internal, n_boundary, n_obs, rng=rng, meta_dir=args.train_dir)
 
     model = type(get_model(args, train_data.normalizers)).load_from_checkpoint(args.checkpoint)
 

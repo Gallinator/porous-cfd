@@ -1,5 +1,5 @@
 import torch
-from torch import Tensor
+from torch import Tensor, Module
 from torch.nn import Tanh
 from torch.optim.lr_scheduler import ExponentialLR
 
@@ -10,7 +10,29 @@ from models.modules import PointNetFeatureExtract, PointNetFeatureExtractPp, MLP
 
 
 class PipnManufactured(PorousPinnBase):
-    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, seg_layers, activation=Tanh):
+    """
+    PIPN modified for the mixed fluid-porous task, using the manufactured solutions losses.
+
+    Thi model does not use features scaling. The data loss is disabled by default.
+    """
+
+    def __init__(self,
+                 nu: float,
+                 d: float,
+                 f: float,
+                 fe_local_layers: list[int],
+                 fe_global_layers: list[int],
+                 seg_layers: list[int],
+                 activation: type[Module] = Tanh):
+        """
+        :param nu: Kinematic viscosity.
+        :param d: Darcy coefficient.
+        :param f: Forchheimer coefficient.
+        :param fe_local_layers: List of sizes for each layer in the first shared MLP.
+        :param fe_global_layers: List of sizes for each layer in MLP before the max pooling.
+        :param seg_layers: List of sizes for each layer in the final shared MLP.
+        :param activation: Activation function.
+        """
         super().__init__(seg_layers[-1], False, None)
         self.save_hyperparameters()
 
@@ -21,6 +43,11 @@ class PipnManufactured(PorousPinnBase):
         self.continuity_loss = ContinuityLoss()
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
+        """
+           :param autograd_points: Internal points to use for autograd gradients computations. Must be passed through the model.
+           :param x: Input features.
+           :return: The predicted values.
+        """
         global_in = torch.cat([x['boundaryId'], x['sdf']], dim=-1)
         local_features, global_feature = self.feature_extract(global_in, autograd_points)
 
@@ -37,8 +64,31 @@ class PipnManufactured(PorousPinnBase):
 
 
 class PipnManufacturedPorousPp(PorousPinnBase):
-    def __init__(self, nu, d, f, fe_local_layers, fe_global_layers, fe_global_radius, fe_global_fraction, seg_layers,
+    """
+    PIPN++ using the manufactured solutions equations without feature scaling.
+    """
+
+    def __init__(self,
+                 nu: float,
+                 d: float,
+                 f: float,
+                 fe_local_layers: list[int],
+                 fe_global_layers: list[list[int]],
+                 fe_global_radius: list[float],
+                 fe_global_fraction: list[float],
+                 seg_layers: list[int],
                  activation=Tanh):
+        """
+        :param nu: Kinematic viscosity.
+        :param d: Darcy coefficient.
+        :param f: Forchheimer coefficient.
+        :param fe_local_layers: List of sizes for each layer in the first shared MLP.
+        :param fe_global_layers: List of sizes for the geometry encoding layers. Must contain a list for each Set Abstraction layer.
+        :param fe_global_radius: List of radii to use in SetAbstraction layers. Set N-1 elements to add a Global Set Abstraction layer at the end.
+        :param fe_global_fraction: List of fractions to use in the SetAbstraction layers.
+        :param seg_layers: List of sizes for each layer in the final shared MLP.
+        :param activation: Activation function.
+        """
         super().__init__(seg_layers[-1], None, None)
         self.save_hyperparameters()
         self.feature_extract = PointNetFeatureExtractPp(fe_local_layers,
@@ -52,6 +102,11 @@ class PipnManufacturedPorousPp(PorousPinnBase):
         self.continuity_loss = ContinuityLoss()
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
+        """
+           :param autograd_points: Internal points to use for autograd gradients computations. Must be passed through the model.
+           :param x: Input features.
+           :return: The predicted values.
+        """
         geom_features = torch.cat([x['boundary']['boundaryId'], x['boundary']['C']], dim=-1)
         local_features, global_feature = self.feature_extract(geom_features,
                                                               x['boundary']['C'],

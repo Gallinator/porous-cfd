@@ -2,16 +2,33 @@ import torch
 from torch import Tensor
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import Normalizer, StandardScaler
-from models.losses import ContinuityLossStandardized, MomentumLossVariable
+from models.losses import ContinuityLossStandardized, MomentumLossVariable, LossScaler
 from models.model_base import PorousPinnBase
 
 
 class PiGanoBase(PorousPinnBase):
-    def __init__(self, nu,
-                 out_features,
+    """
+    Base class for PI-GANO models.
+
+    This model uses outputs scaling and enables the data loss by default. All modules must be defined in the subclasses.
+    The scalers must contain the U, p, c, d, anf keys.
+    The variable boundaries to use are set in the variable_boundaries dict. It must contain two sub dictionaries:
+    Subdomain specifies in which subdomain the boundary conditions are variable, Features sets the variable fields and coefficients.
+    """
+
+    def __init__(self,
+                 nu: float,
+                 out_features: int,
                  scalers: dict[str, Normalizer | StandardScaler],
-                 loss_scaler,
-                 variable_boundaries):
+                 loss_scaler: LossScaler,
+                 variable_boundaries: dict[str:list[str]]):
+        """
+        :param nu: Kinematic viscosity.
+        :param out_features: Number of output features.
+        :param scalers: Dictionary of output features scalers.
+        :param loss_scaler: Scaler applied to the losses.
+        :param variable_boundaries: Dictionary containing the variable boundaries subdomains and features.
+        """
         super().__init__(out_features, True, loss_scaler)
         self.save_hyperparameters()
 
@@ -31,7 +48,7 @@ class PiGanoBase(PorousPinnBase):
 
         self.variable_boundaries = variable_boundaries
 
-    def to(self, *args, **kwargs):
+    def to(self, *args, **kwargs) -> 'PiGanoBase':
         super().to(*args, *kwargs)
         self.u_scaler.to(*args, *kwargs).to(torch.float)
         self.p_scaler.to(*args, *kwargs).to(torch.float)
@@ -42,9 +59,9 @@ class PiGanoBase(PorousPinnBase):
 
     def get_parameters(self, x: FoamData) -> Tensor:
         """
-        Extracts boundary features for each subdomain.
-        :param x:
-        :return:
+        Extracts variable boundary features for each subdomain.
+        :param x: Input data.
+        :return: A tensor of shape (B,N,F) where F is the number of variable boundary features.
         """
         param_data = []
         for subdomain in self.variable_boundaries['Subdomains']:

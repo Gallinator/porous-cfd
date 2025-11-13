@@ -15,6 +15,12 @@ from dataset.foam_data import FoamData
 
 
 class StandardScaler:
+    """
+    Class to apply z-score scaling.
+
+    Supports, Tensors numpy arrays and array broadcasting to the shape of supplied parameters.
+    """
+
     def __init__(self, std, mean):
         super().__init__()
         self.std = std
@@ -29,13 +35,24 @@ class StandardScaler:
     def __getitem__(self, item):
         return StandardScaler(self.std[item], self.mean[item])
 
-    def to(self, *args, **kwargs):
+    def to(self, *args, **kwargs) -> 'StandardScaler':
+        """
+        Converts the scaler underlying data to Tensors.
+
+        Useful to scale data on GPU.
+        """
         self.std = torch.tensor(self.std).to(*args, *kwargs)
         self.mean = torch.tensor(self.mean).to(*args, *kwargs)
         return self
 
 
 class Normalizer:
+    """
+    Class to apply scaling to the zero-one range.
+
+    Supports, Tensors numpy arrays and array broadcasting to the shape of supplied parameters.
+    """
+
     def __init__(self, min, max):
         super().__init__()
         self.min = min
@@ -52,6 +69,11 @@ class Normalizer:
         return Normalizer(self.min[item], self.max[item])
 
     def to(self, *args, **kwargs):
+        """
+        Converts the scaler underlying data to Tensors.
+
+        Useful to scale data on GPU.
+        """
         self.min = torch.tensor(self.min).to(*args, **kwargs)
         self.max = torch.tensor(self.max).to(*args, **kwargs)
         self.range = torch.tensor(self.range).to(*args, **kwargs)
@@ -59,6 +81,9 @@ class Normalizer:
 
 
 def collate_fn(samples: list[FoamData]) -> FoamData:
+    """
+    Collates FoamData objects into batched data.
+    """
     batch_data = torch.stack([s.data for s in samples])
     subdomains = samples[0].domain.keys()
     domain = {subd: torch.stack([s.domain[subd] for s in samples]) for subd in subdomains}
@@ -66,8 +91,32 @@ def collate_fn(samples: list[FoamData]) -> FoamData:
 
 
 class FoamDataset(Dataset):
-    def __init__(self, data_dir, n_internal, n_boundary, n_obs, rng, meta_dir=None, extra_fields=[],
+    """
+    Base dataset class for OpenFOAM cases.
+
+    Data is parsed from a split of generated cases, according to data_config.json. The class supports normalization of features and selective feature loading.
+    The sampling is carried out with a modified stratified process that respect the minimum number of points found in min_points.json and the average number of points in each subdomain across the cases.
+    It is also possible to weight each subdomain independently. By default this class adds a Signed Distance Field function and a one-hot encoded boundary id. 2D and 3D data is supported.
+    The data is sampled and loaded in memory once on instantiation.
+    """
+
+    def __init__(self, data_dir: str,
+                 n_internal: int,
+                 n_boundary: int,
+                 n_obs: int, rng,
+                 meta_dir=None,
+                 extra_fields=[],
                  regions_weights: dict[str, float] = None):
+        """
+        :param data_dir: The base data directory. Must contain a folder for each OpenFOAM case
+        :param n_internal: The number of internal points to sample.
+        :param n_boundary: The number of boundary points to sample.
+        :param n_obs: The number of observation points to sample.
+        :param rng: Random object used for sampling.
+        :param meta_dir: Directory containing the meta.json file.
+        :param extra_fields: Additional fields to parse, by name.
+        :param regions_weights: A dictionary containing a weight for each subdomain name.
+        """
         self.n_boundary = n_boundary
         self.n_internal = n_internal
         self.n_obs = n_obs
@@ -106,6 +155,10 @@ class FoamDataset(Dataset):
         self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
 
     def check_sample_size(self):
+        """
+        Simple check on the number of internal and boundary points
+        :raises: ValueError if any constraint is violated.
+        """
         min_points = self.min_points['internal']
         if self.n_internal > min_points:
             raise ValueError(f'Cannot sample {self.n_internal} points from {min_points} points!')
@@ -115,7 +168,10 @@ class FoamDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
-    def get_weights(self, boundary_names):
+    def get_weights(self, boundary_names: list) -> np.ndarray:
+        """
+        Creates the weight for each subdomain, by default return ones.
+        """
         weights = np.ones((len(boundary_names)))
         if self.regions_weights:
             for i, b in enumerate(boundary_names):
@@ -123,12 +179,21 @@ class FoamDataset(Dataset):
                     weights[i] = self.regions_weights[b]
         return weights
 
-    def get_stratified_sampling_n(self, boundary_names, total_sample_size):
-        n_min = np.array([self.min_points[bound] for bound in boundary_names]).astype(np.int64)
-        n_mean = np.array([self.meta['Points'][bound]['Mean'] for bound in boundary_names]).astype(np.int64)
+    def get_stratified_sampling_n(self, subdomain_names, total_sample_size) -> np.ndarray:
+        """
+        Stratified sampling that takes in account the average size of each subdomain and the minimum available points.
+
+        If a subdomain requires more points than the minimum, the exceeding points are equally sampled from other subdomains.
+        :param subdomain_names: The boundary names to sample.
+        :param total_sample_size: Total number of points to sample.
+        :return: An array containing the sample size for each subdomain.
+        :raises: RuntimeError if it is not possible to satisfy the constraints.
+        """
+        n_min = np.array([self.min_points[bound] for bound in subdomain_names]).astype(np.int64)
+        n_mean = np.array([self.meta['Points'][bound]['Mean'] for bound in subdomain_names]).astype(np.int64)
         n_total = np.sum(n_mean)
 
-        weights = self.get_weights(boundary_names)
+        weights = self.get_weights(subdomain_names)
         fractions = n_mean / n_total * weights
         # Renormalize to [0,1]
         fractions = fractions / np.sum(fractions)
@@ -139,6 +204,8 @@ class FoamDataset(Dataset):
         n_free = np.count_nonzero(exceeding_samples <= 0)
         # Take into account int truncation
         total_to_redist = np.sum(exceeding_samples) + total_sample_size - np.sum(target_n)
+
+        # Redistribute points iteratively on free subdomains
         sort_ids = np.argsort(n_min)
         for id in sort_ids:
             # Check if exceeded
@@ -148,12 +215,13 @@ class FoamDataset(Dataset):
             target_n[id] += added_samples
             n_free -= 1
             total_to_redist -= added_samples
-        # Replace exceeded samples
+        # Replace exceeding sample sizes
         target_n[exceeding_samples > 0] = n_min[exceeding_samples > 0]
 
+        # Check constraints
         exceeding_samples = np.maximum(target_n - n_min, np.zeros_like(target_n))
         if np.sum(exceeding_samples) != 0:
-            n_exceeding = zip(boundary_names.values[exceeding_samples > 0], exceeding_samples[exceeding_samples > 0])
+            n_exceeding = zip(subdomain_names.values[exceeding_samples > 0], exceeding_samples[exceeding_samples > 0])
             raise RuntimeError(f'Unable to satisfy sampling constraints. '
                                f'The following samples exceed the minimum:\n{list(n_exceeding)}')
 
@@ -161,9 +229,7 @@ class FoamDataset(Dataset):
 
     def sample_boundary(self, boundary_fields: DataFrame) -> DataFrame:
         """
-        Samples the boundary points. Return internal_fields to avoid sampling.
-        :param boundary_fields:
-        :return: The samples boundary_fields
+        Samples the boundary points. Return boundary_fields to avoid sampling.
         """
         boundary_names = boundary_fields.index.unique()
         target_n_samples = self.get_stratified_sampling_n(boundary_names, self.n_boundary)
@@ -179,8 +245,6 @@ class FoamDataset(Dataset):
     def sample_internal(self, internal_fields: DataFrame) -> DataFrame:
         """
         Samples the internal points. Return internal_fields to avoid sampling.
-        :param internal_fields:
-        :return: The samples internal_fields
         """
 
         boundary_names = ['fluid', 'porous']
@@ -204,32 +268,28 @@ class FoamDataset(Dataset):
         sampled_df.index = ['internal'] * len(sampled_df)
         return sampled_df
 
-    def sample_obs(self, boundary_fields, internal_fields) -> np.ndarray:
+    def sample_obs(self, boundary_fields: DataFrame, internal_fields: DataFrame) -> np.ndarray:
         """
         Samples the observations points.
         This function must return a vector whose values are the indices of the observation points.
         It is assumed that internal fields and boundary fields to be concatenated in that order.
-        :param boundary_fields:
-        :param internal_fields:
-        :return: Vector of indices corresponding to observation points.
+        :return: Vector of indices corresponding to observation points of shape (N).
         """
         return self.rng.choice(len(internal_fields), replace=False, size=self.n_obs)
 
-    def decompose_multidim_label(self, label, size) -> list[str]:
+    def decompose_multidim_label(self, label: str, size: int) -> list[str]:
         """
-        Extracts labelled dimensions for a multidimensional label.
+        Extracts labelled dimensions for a multidimensional label by appending the dimension to label.
         Currently supports only x,y,z.
-        :param label: the label name
-        :param size: the number of components of a label
-        :return: the labels for each component of label
+        :param label: The label name.
+        :param size: The number of components of a label.
+        :return: The labels for each component of label.
         """
         return [label + self.dim_labels[i] for i in range(size)]
 
-    def get_labels(self, domain_fields: DataFrame) -> dict:
+    def get_labels(self, domain_fields: DataFrame) -> dict[str:(list | None)]:
         """
-        Create labels required by FoamDataset. Fields with more than one dimension are split.
-        :param domain_fields:
-        :return: the labels
+        Create labels required by FoamData. Fields with more than one dimension are split.
         """
         labels = {}
         sub_labels = {}
@@ -250,8 +310,6 @@ class FoamDataset(Dataset):
         """
         Creates a dataframe of variable boundary conditions.
         NANs are added to unaffected subdomains.
-        :param boundary_fields:
-        :return:
         """
         result_df = DataFrame(index=boundary_fields.index)
         columns_df = boundary_fields.columns.to_frame()
@@ -272,9 +330,6 @@ class FoamDataset(Dataset):
         """
         Creates a domain dictionary whose keys are subdomain names and values are lists of indices.
         It is assumed internal and boundary fields to be concatenated in that order.
-        :param boundary_fields:
-        :param internal_fields:
-        :return:
         """
         n_internal = len(internal_fields)
         domain = {'internal': np.arange(n_internal),
@@ -290,14 +345,18 @@ class FoamDataset(Dataset):
     def normalize(self, fields: DataFrame):
         """
         Scales or standardize fields using the normalizers passed to the constructor.
-        The fields are normalized in-place.
+        The fields must be normalized in-place.
         :param fields: Fields to normalize
-        :return:
         """
         for f, norm in self.normalizers.items():
             fields[f] = norm.transform(fields[f].to_numpy())
 
-    def add_sdf(self, internal_fields, boundary_fields):
+    def add_sdf(self, internal_fields: DataFrame, boundary_fields: DataFrame):
+        """
+        Adds the SDF feature to both internal and boundary data.
+
+        The distance is calculated from all boundary points including hte interface. The feature is added in-place.
+        """
         all_points = np.concatenate([internal_fields['C'].values, boundary_fields['C'].values])
         tgt_points = boundary_fields['C'].values
 
@@ -315,7 +374,10 @@ class FoamDataset(Dataset):
         # Boundary points are positive
         boundary_fields['sdf'] = sdf[len(internal_fields):]
 
-    def add_boundary_id(self, internal_fields, boundary_fields):
+    def add_boundary_id(self, internal_fields: DataFrame, boundary_fields: DataFrame):
+        """
+        Adds the one-hot encoded boundary id features in-place from boundary_fields index.
+        """
         unique_bc = boundary_fields.index.unique()
         boundary_multi_index = list(itertools.product(['boundaryId'], unique_bc))
 
@@ -327,10 +389,18 @@ class FoamDataset(Dataset):
         boundary_fields[boundary_multi_index] = ohe_values
 
     def add_features(self, internal_fields: DataFrame, boundary_fields):
+        """
+        This function can be overridden to customize the features added to the data.
+
+        By default adds the SDF and one-hot encoded boundary id.
+        """
         self.add_sdf(internal_fields, boundary_fields)
         self.add_boundary_id(internal_fields, boundary_fields)
 
-    def load_case(self, case_dir) -> FoamData:
+    def load_case(self, case_dir: str) -> FoamData:
+        """
+        Loads a single case according to data_config.json specifications into a FoamData object.
+        """
         boundary_fields = parse_boundary_fields(case_dir, *self.fields, max_dim=self.n_dims)
         internal_fields = parse_internal_fields(case_dir, *self.fields, max_dim=self.n_dims)
 

@@ -9,9 +9,10 @@ import numpy as np
 import pandas
 from foamlib import FoamCase, FoamFile
 from pandas import DataFrame, MultiIndex
+from pyvista import ArrayLike
 
 
-def parse_post_process_field(path: str):
+def parse_post_process_field(path: str) -> list:
     """This is a temporary workaround as foamlib cannot read post processed fields"""
 
     def parse_content(content: str):
@@ -33,13 +34,9 @@ def parse_post_process_field(path: str):
     return data
 
 
-def parse_boundary_patch(patch_dir, *fields, max_dim=3) -> DataFrame:
+def parse_boundary_patch(patch_dir: str, *fields: str, max_dim=3) -> DataFrame:
     """
-    See parse internal_fields
-    :param patch_dir:
-    :param fields:
-    :param max_dim:
-    :return:
+    See parse internal_fields().
     """
     scalar_fields = {Path(p).name: p for p in list(glob.glob(f'{patch_dir}/scalarField/*'))}
     vector_fields = {Path(p).name: p for p in list(glob.glob(f'{patch_dir}/vectorField/*'))}
@@ -70,11 +67,7 @@ def parse_boundary_patch(patch_dir, *fields, max_dim=3) -> DataFrame:
 
 def parse_boundary_fields(case_path: str, *fields, max_dim=3) -> DataFrame:
     """
-    See parse_case_fields
-    :param case_path:
-    :param fields:
-    :param max_dim:
-    :return:
+    See parse_case_fields().
     """
     last_step = int(FoamCase(case_path)[-1].time)
     postprocess_path = f"{case_path}/postProcessing"
@@ -90,7 +83,7 @@ def parse_boundary_fields(case_path: str, *fields, max_dim=3) -> DataFrame:
     return pandas.concat(boundary_df)
 
 
-def make_column(field) -> np.array:
+def make_column(field: ArrayLike) -> np.array:
     """
     Reshapes the input to a column array, if necessary.
     """
@@ -100,19 +93,22 @@ def make_column(field) -> np.array:
     return f
 
 
-def parse_coef(case_dir: str, coef: str):
+def parse_coef(case_dir: str, coef: str) -> np.ndarray:
+    """
+    Reads coef from fvOptions.
+    """
     fv_options = FoamFile(f'{case_dir}/system/fvOptions')
     return fv_options['porousFilter']['explicitPorositySourceCoeffs'][coef]
 
 
-def add_multidim_field(fields_df: DataFrame, field_name, field_values, max_dim) -> DataFrame:
+def add_multidim_field(fields_df: DataFrame, field_name: str, field_values: np.ndarray, max_dim: int) -> DataFrame:
     """
-    Adds a multidimensional field to the DataFrame, using multi level columns
-    :param fields_df: the source DataFrame
-    :param field_name: the name of the field to add
-    :param field_values: the values of the field to add. Must be a 2D array
-    :param max_dim: maximum dimension of the field. The exceeding dimensions will be dropped.
-    :return: the source dataframe with the field added
+    Adds a multidimensional field to the DataFrame, using multi level columns.
+    :param fields_df: The source DataFrame.
+    :param field_name: The name of the field to add.
+    :param field_values: The values of the field to add. Must be a 2D array.
+    :param max_dim: Maximum dimension of the field. The exceeding dimensions will be dropped.
+    :return: The source dataframe with the field added.
     """
     dim_labels = ['x', 'y', 'z']
     cols = list(itertools.product([field_name], dim_labels[:max_dim]))
@@ -122,11 +118,11 @@ def add_multidim_field(fields_df: DataFrame, field_name, field_values, max_dim) 
 
 def parse_internal_fields(case_dir: str, *fields, max_dim=3) -> DataFrame:
     """
-    Parses the internal fields of an OpenFOAM case
+    Parses the internal fields of an OpenFOAM case.
     :param case_dir: The case path
     :param fields: The fields to parse
-    :param max_dim:Maximum dimension of each field. If a field is larger than this value, the last component is dropped
-    :return: a DataFrame with index set as 'internal'
+    :param max_dim: Maximum dimension of each field. If a field is larger than this value, the last component is dropped
+    :return: A DataFrame with index set as 'internal'
     """
     case = FoamCase(case_dir)
     last_step = case[-1]
@@ -170,16 +166,25 @@ def parse_case_fields(case_dir, *fields, max_dim=3) -> DataFrame:
 
 
 def parse_meta(data_dir: str) -> dict:
+    """
+    Parses the meta.json file.
+    """
     with open(Path(data_dir, 'meta.json'), 'r') as f:
         return json.load(f)
 
 
-def parse_model_type(checkpoint) -> str:
-    root_dir = Path(checkpoint).parent
+def parse_model_type(checkpoint_path: str) -> str:
+    """
+    Parses the model type from the model_meta.json inside the parent of checkpoint_path.
+    """
+    root_dir = Path(checkpoint_path).parent
     with open(f'{root_dir}/model_meta.json', 'r') as f:
         return json.load(f)['Model type']
 
 
 def parse_elapsed_time(case_dir: str) -> int:
+    """
+    Parses the time to run the case from timing.txt in case_dir.
+    """
     with open(Path(case_dir, 'timing.txt'), 'r') as f:
         return int(f.readline())

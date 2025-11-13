@@ -3,13 +3,32 @@ from torch import Tensor
 
 
 class FoamData:
-    def __init__(self, data: Tensor, labels: dict, domain: dict):
+    """
+    Wrapper around a Tensor which supports indexing by variable and by subdomain.
+
+    The labels must be passed as a dict with entries according to label_name:sub_labels. If the label has no sub-labels set None.
+    The dictionary order of the single labels is used for indexing. The single labels must be added before all multi labels.
+    The domain must be passed as a dictionary with samples indices of shape (N) associated to each subdomain. Supports batched data.
+    Labels and subdomains must have different names.
+    """
+
+    def __init__(self, data: Tensor, labels: dict[str:Tensor], domain: dict[str:(list | None)]):
+        """
+        :param data: Tensor of shape (B,N,D) or (N,D)
+        :param labels: Dictionary of labels.
+        :param domain: Dictionary of sub domains.
+        """
         super().__init__()
         self.data = data
         self.labels = labels
         self.domain = domain
 
-    def make_ids_gatherable(self, flat_ids):
+    def make_ids_gatherable(self, flat_ids: Tensor) -> Tensor:
+        """
+        Allows the usage of torch.gather() on subdomain ids by repeating on last dimension.
+        :param flat_ids: Ids with shape (N).
+        :return: Gatherable flat_ids.
+        """
         return flat_ids.unsqueeze(dim=-1).repeat(1, 1, self.data.shape[-1])
 
     def __getitem__(self, item):
@@ -42,17 +61,18 @@ class FoamData:
     def __contains__(self, item):
         return item in self.domain or item in self.labels
 
-    def squeeze(self):
+    def squeeze(self) -> 'FoamData':
+        """
+        Removes the bach dimension.
+        """
         squeezed_data = self.data.squeeze()
         squeezed_domain = {k: v.squeeze() for k, v in self.domain.items()}
         return FoamData(squeezed_data, self.labels, squeezed_domain)
 
-    def to(self, *args, **kwargs):
+    def to(self, *args, **kwargs) -> 'FoamData':
         """
-        Calls to() on the underlying tensors
-        :param args:
-        :param kwargs:
-        :return: a copy of this FoamData
+        Calls to() on the underlying tensors.
+        :return: A copy of this FoamData.
         """
         new_data = self.data.to(*args, **kwargs)
         new_domain = {d: s.to(*args, **kwargs) for d, s in self.domain.items()}

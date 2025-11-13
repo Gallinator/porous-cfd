@@ -1,7 +1,7 @@
 import argparse
 import os
 import time
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -16,10 +16,14 @@ from torch.nn.functional import l1_loss
 from torch.utils.data import DataLoader
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn, StandardScaler, Normalizer
+from models.model_base import PorousPinnBase
 from visualization.common import plot_timing, box_plot, plot_data_dist, plot_multi_bar, plot_errors, plot_per_case
 
 
-def create_plots_root_dir(save_plots, data_dir, checkpoint):
+def create_plots_root_dir(save_plots, data_dir: str, checkpoint: str):
+    """
+    Creates the plots directory inside checkpoint.parent/plots/data_name/stats.
+    """
     plots_path = None
     if save_plots:
         matplotlib.use('Agg')
@@ -28,19 +32,38 @@ def create_plots_root_dir(save_plots, data_dir, checkpoint):
     return plots_path
 
 
-def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer):
+def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer) -> Tensor:
+    """
+    Extracts a generic coefficient by taking the max over all the samples.
+    :param coef: tensor of shape (n_samples,d). Only the first element in d is considered
+    :param scaler: used to denormalize coef
+    :return: the coefficient
+    """
     coef = scaler.inverse_transform(coef)[..., 0:1]
     return torch.max(coef, dim=-2, keepdim=True)[0]
 
 
 def extract_u_magnitude(u: Tensor, scaler: StandardScaler, spacing):
+    """
+    Extracts the magnitude of the inlet velocity. The results are snapped to values spaced bu spacing.
+    :param u: tensor of shape (n_samples,d)
+    :param scaler: used to denormalize u
+    :param spacing: used to snape the result
+    :return: the velocity magnitude
+    """
     u_mag = scaler.inverse_transform(u)
     u_mag = torch.norm(u_mag, dim=-1, keepdim=True)
     u_mag = torch.max(u_mag, dim=-2, keepdim=True)[0]
     return torch.round(u_mag / spacing) * spacing
 
 
-def extract_angle(u: Tensor, scaler: StandardScaler):
+def extract_angle(u: Tensor, scaler: StandardScaler) -> Tensor:
+    """
+    Extracts the velocity angle.
+    :param u: tensor of shape (n-samples,d)
+    :param scaler: used to denormalize u
+    :return: the inlet angle
+    """
     u = scaler.inverse_transform(u)
     u_mag = torch.norm(u, dim=-1, keepdim=True)
     a = torch.arccos(u[..., 0:1] / u_mag)
@@ -49,13 +72,26 @@ def extract_angle(u: Tensor, scaler: StandardScaler):
     return torch.rad2deg(a)
 
 
-def get_normalized_signed_distance(points: Tensor, target: Tensor):
+def get_normalized_signed_distance(points: Tensor, target: Tensor) -> Tensor:
+    """
+    Calculates the minimum normalized distance of each point in points from target.
+    :param points: tensor of shape (b,n,d)
+    :param target: tensor of shape (b,n,d)
+    :return: the normalized distance of points from target
+    """
     dist = cdist(points, target)
     dist = torch.min(dist, dim=-1)[0].unsqueeze(-1)
     return dist / torch.max(dist).item()
 
 
-def get_mean_max_error_distance(errors, quantile, interface_dist):
+def get_mean_max_error_distance(errors: Tensor, quantile: float, interface_dist: Tensor) -> Tensor:
+    """
+    Calculates the mean distance of the top quantile errors averaged over all cases.
+    :param errors: tensor of shape (b,n_cases,n_samples,d)
+    :param quantile: the error cutoff quantile
+    :param interface_dist: distance from the interface of shape (b,n_cases,n_samples,1)
+    :return: the mean distance of highest errors
+    """
     q_mask = errors > np.quantile(errors, quantile, axis=-2, keepdims=True)
     q_dist = []
     # Loop over each batch
@@ -69,7 +105,7 @@ def get_mean_max_error_distance(errors, quantile, interface_dist):
     return np.mean(np.stack(q_dist), axis=0)
 
 
-def get_pressure_drop(inlet_p, outlet_p):
+def get_pressure_drop(inlet_p: Tensor, outlet_p: Tensor):
     return torch.mean(inlet_p) - torch.mean(outlet_p)
 
 
@@ -98,6 +134,14 @@ def build_arg_parser() -> ArgumentParser:
 
 
 def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
+    """
+    Extracts common data from predictions. This is called on each predicted batch.
+    :param data: the source dataset
+    :param predicted: the predicted values of shape (b,n_cases,n_samples,d)
+    :param target: the target values of shape (b,n_cases,n_samples,d)
+    :param extras: extra values which can be used for computations. In this case the momentum and continuity residuals.
+    :return: a dictionary containing the extracted data
+    """
     predicted_u, predicted_p = predicted['U'], predicted['p']
     target_u, target_p = target['U'], target['p']
     if 'U' in data.normalizers:
@@ -135,7 +179,13 @@ def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, ex
             'Interface distance': interface_dist}
 
 
-def plot_common_data(data: dict, plots_path):
+def plot_common_data(data: dict, plots_path: str | None):
+    """
+    Plots the per case and average maximum and mean errors, top 20% errors,mean normalized distance from interface of maximum errors, residuals and MAE distributions, average equations residuals and per region average errors.
+    Data is saved as csv inside plots_path.
+    :param data: dictionary containing data extracted with get_common_data
+    :param plots_path: paths to save the plots. If None plots are shown and not saved
+    """
     errors = np.concatenate([data['U error'], data['p error']], axis=-1)
     n_dims = errors.shape[-1] - 1
     errors_labels = ['$U_x$', '$U_y$', '$U_z$'][:n_dims] + ['$p$']
@@ -207,12 +257,23 @@ def plot_common_data(data: dict, plots_path):
         print(eval_df)
 
 
-def evaluate(args,
-             model,
+def evaluate(args: Namespace,
+             model: PorousPinnBase,
              data: FoamDataset,
-             enable_timing,
+             enable_timing: bool,
              sample_process_fn: Callable[[FoamDataset, FoamData, FoamData, FoamData], dict[str, Any]] | None,
              postprocess_fn: Callable[[FoamDataset, dict[str, Any], Path], None] | None):
+    """
+    Evaluates the model. Runs a loop over each case and collects the data into a dictionary which is used to plot the results. Optionally plots timing statistics.
+    sample_process_fn is called on each predicted batch. The returned dictionaries are combined and are available in postprocess_fn. Tensors are converted to numpy arrays automatically.
+    A set of common data and plots is collected and is available for custom processing with postprocess_fn.
+    :param args: parsed arguments. Build with build_arg_parser()
+    :param model: the pretrained model weights
+    :param data: data to use for evaluation
+    :param enable_timing: enables timing plots
+    :param sample_process_fn: function used to add additional data
+    :param postprocess_fn: called after all the data has been collected
+    """
     torch.manual_seed(8421)
     model.verbose_predict = True
     plots_path = create_plots_root_dir(args.save_plots, data.data_dir, args.checkpoint)

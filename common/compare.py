@@ -8,16 +8,25 @@ from scipy.stats import kruskal, mannwhitneyu, f_oneway, shapiro, levene
 from common import evaluation
 from common.evaluation import evaluate
 from dataset.foam_dataset import FoamDataset
+from models.model_base import PorousPinnBase
 from visualization.common import plot_multi_bar, get_fields_names, plot_per_case
 
 
 def build_arg_parser() -> ArgumentParser:
+    """
+    Build the ArgumentParser by adding the --checkpoint-other to the default evaluation arguments.
+    :return: the built ArgumentParser
+    """
     arg_parser = evaluation.build_arg_parser()
     arg_parser.add_argument('--checkpoint-other', type=str)
     return arg_parser
 
 
-def switch_active_checkpoint(args):
+def switch_active_checkpoint(args: ArgumentParser):
+    """
+    Swaps the --checkpoint and --checkpoint-other model checkpoints paths.
+    :return: the swapped arguments
+    """
     args_dict = vars(args)
     old_active = args_dict['checkpoint']
     args_dict['checkpoint'] = args_dict['checkpoint_other']
@@ -25,7 +34,10 @@ def switch_active_checkpoint(args):
     return Namespace(**args_dict)
 
 
-def plot_error_comparison(name_1, name_2, errors_1: DataFrame, errors_2: DataFrame, plots_path):
+def plot_error_comparison(name_1: str, name_2: str, errors_1: DataFrame, errors_2: DataFrame, plots_path):
+    """
+    Plots the common metrics found in errors_1 and errors_2 with barplots. The error DataFrames must have the metric names as column index.
+    """
     metrics = set(errors_1.index).intersection(errors_2.index)
 
     for m in metrics:
@@ -38,24 +50,42 @@ def plot_error_comparison(name_1, name_2, errors_1: DataFrame, errors_2: DataFra
                        plots_path)
 
 
-def get_name_from_checkpoint(checkpoint):
+def get_name_from_checkpoint(checkpoint: str):
+    """
+    Extracts the name of the model from the checkpoint path. The name of the checkpoint parent folder is used. The name of th folder is capitalized and the hypens are replaced with whitespaces.
+    """
     name = Path(checkpoint).parent.name.replace('-', ' ')
     if not name[0].isupper():
         name = name.capitalize()
     return name
 
 
-def plot_max_difference(title, errors_1, errors_2, reduction_f, plots_path, data):
+def plot_max_difference(title: str, errors_1: np.ndarray, errors_2: np.ndarray, reduction_f, plots_path: str,
+                        data: FoamDataset):
+    """
+    Plots the maximum difference per case between errors_1 and errors_2.
+    :param title: the title of the plot
+    :param errors_1: shape (n_cases,n_samples,n_variables)
+    :param errors_2: shape (n_cases,n_samples,n_variables)
+    :param reduction_f: applied to the n_samples axis
+    :param plots_path:
+    :param data: the data used to calculate the errors
+    """
     max_1, max_2 = reduction_f(errors_1, axis=-2), reduction_f(errors_2, axis=-2)
     delta = max_1 - max_2
     plot_per_case(title, delta, plots_path)
 
 
-def compare(args, model1, model2, data: FoamDataset):
+def compare(args: Namespace, model1: PorousPinnBase, model2: PorousPinnBase, data: FoamDataset):
+    """
+    Compares models on the same dataset. This function saves plots for common metrics, the per-case difference in maximum and average errors, performs ANOVA and Mann-Whitney U statistical tests on errors.
+    The results are saved into a csv inside  a new folder in the parent of the first model checkpoint path. The evaluation results and plots of both model are overwritten.
+    """
     results = {}
     eval_data_path = []
     torch.manual_seed(8421)
 
+    # Cache the results and their path
     def postprocess_fn(dataset, partial_results, plots_path):
         results[active_model] = partial_results
         eval_data_path.append(plots_path)

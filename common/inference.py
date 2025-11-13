@@ -1,6 +1,6 @@
 import argparse
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Callable
 
@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 
 from dataset.foam_data import FoamData
 from dataset.foam_dataset import collate_fn, FoamDataset
+from models.model_base import PorousPinnBase
 
 
 def build_arg_parser() -> ArgumentParser:
@@ -38,7 +39,10 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
-def create_plots_root(args):
+def create_plots_root(args: Namespace):
+    """
+    Creates the root plot directory into checkpoint_parent/plots/data_name. args must contain --checkpoint and --data-dir.
+    """
     plots_path = None
     if args.save_plots:
         plots_path = Path(args.checkpoint).parent / 'plots' / Path(args.data_dir).name
@@ -46,7 +50,10 @@ def create_plots_root(args):
     return plots_path
 
 
-def create_case_plot_dir(plots_root, case_name):
+def create_case_plot_dir(plots_root: Path, case_name: str):
+    """
+    Creates the root directory for each case in plots_root/case_name
+    """
     case_plot_dir = None
     if plots_root is not None:
         case_plot_dir = plots_root / case_name
@@ -54,8 +61,11 @@ def create_case_plot_dir(plots_root, case_name):
     return case_plot_dir
 
 
-def predict(args, model, data: FoamDataset,
+def predict(args: Namespace, model: PorousPinnBase, data: FoamDataset,
             result_process_fn: Callable[[FoamDataset, FoamData, FoamData, Path, Path], None]):
+    """
+    Predicts using model on data. result_process_fn is called on each predicted case and allows to plt the results.
+    """
     torch.manual_seed(8421)
     data_loader = DataLoader(data, 1, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 

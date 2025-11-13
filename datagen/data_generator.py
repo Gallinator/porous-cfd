@@ -14,6 +14,7 @@ import matplotlib
 from bpy import ops
 import numpy as np
 from foamlib import FoamFile
+from numpy._typing import ArrayLike
 from pandas import DataFrame
 from rich.progress import track
 from welford import Welford
@@ -36,17 +37,44 @@ def build_arg_parser() -> ArgumentParser:
 
 
 class MinMaxTracker:
+    """
+    Live-tracks minimum and maximum values of arbitrary dimensional data.
+    """
+
     def __init__(self):
         self.min, self.max = None, None
 
     def update(self, value: np.ndarray):
+        """
+        Update the minimum and maximum values with new samples. The last dimension must be constant across all samples.
+        :param value: Samples of shape (n,d)
+        """
         min_val, max_val = np.min(value, axis=0), np.max(value, axis=0)
         self.min = min_val if self.min is None else np.min(np.stack([self.min, min_val]), axis=0)
         self.max = max_val if self.max is None else np.max(np.stack([self.max, max_val]), axis=0)
 
 
 class DataGeneratorBase:
+    """
+    Base class for generating OpenFOAM data programmatically.
+
+    This class must be extended to implement custom functionality.
+    The class generates all the data starting form an OpenFOAM template. Meta files containing statistics about the main variables is saved to a json file.
+    This class allows to automatically split data into arbitrary sets and support generating running cases from multiple base sets.
+    The template is organized into a base assets directory that contains: an OpenFOAM case template folder, a meshes folder containing custom meshes in obj format, a data_config.json file that allows configuration of the data.
+    Inside the meshes folder a config.json file is found which allows the configuration of data splits and variable boundary conditions. A further transforms.json file is used to specify data augmentation.
+    Supports parallel simulations. If a case fails to run the error is written inside the log.txt file inside the case directory and an error is raised.
+    The momentum residuals are not calculated using OpenFOAM function objects due to a possible bug.
+    """
+
     def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
+        """
+        :param src_dir: The base assets directory path
+        :param openfoam_bin: The path to the OpenFOAM binary, typically /usr/lib/openfoam/openfoamXXXX
+        :param n_procs: Number of processors to use
+        :param keep_p: Used to randomly drop cases
+        :param meta_only: Allows to generate only metadata without running all the cases
+        """
         self.openfoam_bin = openfoam_bin
         self.n_procs = n_procs
         self.src_dir = Path(src_dir)
@@ -71,12 +99,18 @@ class DataGeneratorBase:
             for d in dirs:
                 shutil.rmtree(os.path.join(root, d))
 
-    def write_locations_in_mesh(self, case_path: str, loc_in_mesh):
+    def write_locations_in_mesh(self, case_path: str, loc_in_mesh: ArrayLike):
+        """
+        Writes the locationInMesh and insidePoint fields of the snappyHexMeshDict file. Allows to keep or remove domain areas.
+        """
         snappy_dict = FoamFile(f'{case_path}/system/snappyHexMeshDict')
         snappy_dict['castellatedMeshControls']['locationInMesh'] = loc_in_mesh
         snappy_dict['castellatedMeshControls']['refinementSurfaces']['mesh']['insidePoint'] = loc_in_mesh
 
     def set_par_dict_coeffs(self, dict_path: str):
+        """
+        Sets the decomposeParDict split entries for parallel computation. The number of splits is calculated by increasing the number of splits in an axis until it is greater than the other one.
+        """
         i, prev = 1, self.n_procs
         while True:
             proc_x = 2 ** i
@@ -97,6 +131,9 @@ class DataGeneratorBase:
             f.write(lines)
 
     def set_run_n_proc(self, run_path: str):
+        """
+        Replaces $n_proc with the number of processor in the Run script.
+        """
         with open(run_path, 'r') as f:
             data = f.read()
             data = re.sub('\$n_proc', str(self.n_procs), data, re.MULTILINE)
@@ -104,6 +141,9 @@ class DataGeneratorBase:
             f.write(data)
 
     def set_decompose_par(self, case_path: str):
+        """
+        Sets both the split entries and number of processor in decomposeParDict.
+        """
         if self.n_procs % 2 != 0:
             raise ValueError('n_proc must be an even number!')
         dict_path = f'{case_path}/system/decomposeParDict'
@@ -111,10 +151,13 @@ class DataGeneratorBase:
         self.set_par_dict_coeffs(dict_path)
         self.set_run_n_proc(f'{case_path}/Run')
 
-    def write_coefs(self, fv_options_path: str, coefs: list, coef: str):
+    def write_coefs(self, fv_options_path: str, values: list, coef: str):
+        """
+        Sets the coef coefficients with values in the fvOptions file. values must contain exactly 3 values.
+        """
         with open(fv_options_path) as f:
             lines = f.read()
-        lines = re.sub(f'{coef}\s+(.+);', f'{coef} ({coefs[0]} {coefs[1]} {coefs[2]});', lines)
+        lines = re.sub(f'{coef}\s+(.+);', f'{coef} ({values[0]} {values[1]} {values[2]});', lines)
 
         with open(fv_options_path, 'w') as f:
             f.write(lines)
@@ -122,19 +165,39 @@ class DataGeneratorBase:
     @abstractmethod
     def create_case_template_dirs(self):
         """
-        Creates the missing directories in the case template because git does not track directories
+        Creates the missing directories in the case template because git does not track directories.
         """
         pass
 
     @abstractmethod
     def generate_transformed_meshes(self, meshes_dir, dest_dir, rng):
+        """
+        Generates the transformed meshes using augmentation defined in transforms.json. This is called for each directory inside meshes.
+        :param meshes_dir: The source mesh directory
+        :param dest_dir: The target directory for generated meshes, by default src_dir/generated_meshes
+        :param rng: Random instance for reproducibility
+        """
         pass
 
     @abstractmethod
     def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir, rng):
+        """
+        Creates and run all cases. This must generate a directory for each case by copying the template and copy the meshes in scr_dir/generated_meshes into that folder.
+        config.json can be used for the simulation parameters data augmentation. The generated cases will be split according to config.json
+        :param meshes_dir: The source generated meshes directory, by default src_dir/generated_meshes
+        :param dest_dir: The OpenFOAM cases target directory, by default data/base_split
+        :param case_config_dir: Path to config.json, by default assets/meshes/base_split
+        :param rng: Random instance for reproducibility
+        """
         pass
 
     def generate_split(self, data_path: Path, config_dir: Path, rng):
+        """
+        Generates data splits according to config.json. The splits are placed into data/split_name. The size of the first split might not respect the one defined in config.json.
+        :param data_path: Source data directory, by default data/base_split
+        :param config_dir: Path to config.json, by default assets/meshes/base_split
+        :param rng: Random instance for reproducibility
+        """
         config_path = config_dir / 'config.json'
         if not os.path.exists(config_path):
             return
@@ -162,34 +225,38 @@ class DataGeneratorBase:
 
     @abstractmethod
     def generate_data(self, split_dir: Path):
+        """
+        This function must run all the OpenFOAM cases.
+        :param split_dir: The directory containing all the cases
+        """
         pass
 
     def get_random_in_range(self, l, h, rng):
         return l + rng.random() * (h - l)
 
-    def import_mesh(self, mesh: str):
-        ops.wm.obj_import(filepath=mesh, forward_axis='Y', up_axis='Z')
+    def import_mesh(self, mesh_path: str):
+        """
+        Imports and obj file with Blender.
+        """
+        ops.wm.obj_import(filepath=mesh_path, forward_axis='Y', up_axis='Z')
 
-    def raise_with_log_text(self, case_path, text):
+    def raise_with_log_text(self, case_path: str, text: str):
+        """
+        Raises an error if the OpenFOAM case failed. The message is stored inside case_dir/log.txt. Supports custom message prefix.
+        :param case_path: The case path
+        :param text: The error message prefix
+        """
         with open(f'{case_path}/log.txt') as log:
             raise RuntimeError(f'{text} {case_path}\n\n {log.read()}')
 
-    def get_location_inside(self, mesh: str):
+    def get_location_inside(self, mesh_path: str):
+        """
+        Calculates a valid value for the location inside to be set in the snappyHexMesh dict. It works by taking the center of mass of the object.
+        This works only with convex objects.
+        """
         ops.object.select_all(action='SELECT')
         ops.object.delete()
-        self.import_mesh(mesh)
-        ops.object.select_all(action='SELECT')
-        obj = bpy.context.object
-        verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
-        verts = np.array(verts)
-        center = np.sum(verts, axis=0) / len(verts)
-        ops.object.delete()
-        return center
-
-    def get_location_inside(self, mesh: str):
-        ops.object.select_all(action='SELECT')
-        ops.object.delete()
-        self.import_mesh(mesh)
+        self.import_mesh(mesh_path)
         ops.object.select_all(action='SELECT')
         obj = bpy.context.object
         verts = [obj.matrix_world @ v.co for v in obj.data.vertices]
@@ -198,7 +265,10 @@ class DataGeneratorBase:
         ops.object.delete()
         return center
 
-    def is_sane(self, case_path):
+    def is_sane(self, case_path: str):
+        """
+        Basic sanity check for generated cases. Checks if the number of porous cells is greater than half the total.
+        """
         with open(f'{case_path}/constant/polyMesh/cellZones', 'r') as f:
             lines = f.read()
             match = re.search('>.+\n(\d+)\n\(', lines, flags=re.MULTILINE)
@@ -209,7 +279,13 @@ class DataGeneratorBase:
             n_total = int(match.groups()[0])
         return n_porous < n_total / 2
 
-    def generate_meta(self, data_dir: str | Path, *fields, max_dim=3):
+    def generate_meta(self, data_dir: str | Path, *fields: str, max_dim=3):
+        """
+        Generates the metadata of a data split for each field in fields and for the size of each subdomain. The results are saved into data_dir/meta.json.
+        :param data_dir: The target directory
+        :param fields: The fields to compute the meta of
+        :param max_dim: Maximum number of dimensions, allows to truncate 3D data
+        """
         fields_min_max_tracker, count_min_max_tracker = MinMaxTracker(), MinMaxTracker()
         fields_stats_tracker, count_stats_tracker = Welford(), Welford()
         fields_columns, boundary_names = None, None
@@ -283,9 +359,13 @@ class DataGeneratorBase:
             for proc in glob.glob(f'{case}/processor*/'):
                 shutil.rmtree(proc)
 
-    def generate_min_points(self, data_parent: str | Path):
+    def generate_min_points(self, splits_parent: str | Path):
+        """
+        Calculates the minimum number of available points in each subdomain over the whole data. The results are saved into splits_parent/min_points.json.
+        :param splits_parent: The parent directory of all the data splits, by default data
+        """
         dicts = []
-        for split in glob.glob(f'{data_parent}/*/'):
+        for split in glob.glob(f'{splits_parent}/*/'):
             if Path(split).name == 'plots':
                 continue
             with open(f'{split}/meta.json', 'r') as f:
@@ -295,10 +375,15 @@ class DataGeneratorBase:
         for d in dicts:
             out = {k: int(min(out[k], d[k]['Min'])) for k in d.keys()}
 
-        with open(f'{data_parent}/min_points.json', 'w') as f:
+        with open(f'{splits_parent}/min_points.json', 'w') as f:
             f.write(json.dumps(out))
 
     def generate(self, dest_dir, seed=8421):
+        """
+        Generates the whole dataset. Performs the following tasks: augments the meshes found in src_dir/meshes according to transforms.json, generates the OpenFOAM cases from the template, augments the cases with boundary conditions according to config.json, creates the data splits, calculates the metadata and minimum available points.
+        :param dest_dir: The target data directory containing all the splits
+        :param seed: Used for reproducibility
+        """
         rng = Random(seed)
 
         dest_dir = Path(dest_dir)

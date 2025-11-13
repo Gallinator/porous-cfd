@@ -14,10 +14,18 @@ from datagen.momentum_error import write_momentum_error
 
 
 class Generator3DBase(DataGeneratorBase):
-    def get_location_inside(self, mesh: str):
+    """
+    Base class for 3D cases generation.
+    """
+
+    def get_location_inside(self, mesh_path: str):
+        """
+        Calculates a valid value for the location inside to be set in the snappyHexMesh dict. It works by laying a grid of uniform points over the mesh and selecting the point inside the mesh with the maximum distance from the surface.
+        """
+
         ops.object.select_all(action='SELECT')
         ops.object.delete()
-        self.import_mesh(mesh)
+        self.import_mesh(mesh_path)
         ops.object.select_all(action='SELECT')
         obj = bpy.context.object
         verts = np.array([v.co for v in obj.data.vertices])
@@ -49,6 +57,10 @@ class Generator3DBase(DataGeneratorBase):
         (self.case_template_dir / 'constant/triSurface').mkdir(parents=True, exist_ok=True)
 
     def generate_data(self, split_dir: Path):
+        """
+        Run £D simulations inside split_dir.
+        :raises: RuntimeError if one case fails
+        """
         for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
             process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                        stdout=subprocess.DEVNULL, text=True)

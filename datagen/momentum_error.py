@@ -10,8 +10,20 @@ from torch import Tensor
 from dataset.data_parser import parse_case_fields
 
 
-def momentum_error(nu, d: Tensor, f: Tensor, u: Tensor, u_jac: Tensor, u_laplace: Tensor, p_grad: Tensor,
-                   zone_id: Tensor):
+def momentum_error(nu: float, d: Tensor, f: Tensor, u: Tensor, u_jac: Tensor, u_laplace: Tensor, p_grad: Tensor,
+                   zone_id: Tensor) -> Tensor:
+    """
+    Calculates the momentum error. All tensors have shape (n_points,d)
+    :param nu: kinematic viscosity
+    :param d: Darcy coefficients
+    :param f: Forchheimer coefficients
+    :param u: Velocity
+    :param u_jac: Velocity Jacobian
+    :param u_laplace: Velocity laplace operator
+    :param p_grad: Pressure gradients
+    :param zone_id: Zero if fluid, one if porous
+    :return: The momentum error
+    """
     source = u * (d * nu + 1 / 2 * torch.norm(u, dim=-1, keepdim=True) * f)
     return (torch.matmul(u_jac, u.unsqueeze(-1)).squeeze() -
             nu * torch.matmul(u_laplace, torch.ones_like(u).unsqueeze(-1)).squeeze() +
@@ -23,8 +35,6 @@ def write_momentum_error(case_path: str):
     """
     Write the momentum error field.
     This is necessary as the openfoam momentum calculation seems to not take into account the porous material.
-    :param case_path:
-    :return:
     """
     # Set labels
     jac_labels = ['grad(U)xx', 'grad(U)xy', 'grad(U)xz',

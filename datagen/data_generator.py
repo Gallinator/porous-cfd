@@ -83,6 +83,7 @@ class DataGeneratorBase:
         self.case_template_dir = self.src_dir / 'openfoam-case-template'
         self.drop_p = keep_p
         self.meta_only = meta_only
+        self.save_plots = True
 
         self.data_config_path = self.src_dir / 'data_config.json'
         with open(self.data_config_path) as f:
@@ -436,10 +437,11 @@ class DataGeneratorBase:
 
             shutil.copyfile(self.data_config_path, split_path / 'data_config.json')
 
-            case_plots_dir = plots_dir / split_path.name
-            case_plots_dir.mkdir(exist_ok=True, parents=True)
-            plot_dataset_dist(split, case_plots_dir)
-            plot_u_direction_change(split, case_plots_dir)
+            if self.save_plots:
+                case_plots_dir = plots_dir / split_path.name
+                case_plots_dir.mkdir(exist_ok=True, parents=True)
+                plot_dataset_dist(split, case_plots_dir)
+                plot_u_direction_change(split, case_plots_dir)
 
         matplotlib.use(default_backend)
 

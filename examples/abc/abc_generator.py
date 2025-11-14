@@ -2,15 +2,26 @@ import glob
 import math
 from pathlib import Path
 import shutil
+from random import Random
+
 import bpy
 import mathutils
 import numpy as np
 from bpy import ops
+from bpy.typing import Object
 from datagen.generator_3d import Generator3DBase
 
 
 class AbcGenerator(Generator3DBase):
-    def align_to_x(self, obj):
+    """
+    Generates OpenFOAM cases with A Big Cad dataset porous objects.
+
+    The objects are aligned to the x-axis along the longest dimension, rescaled so that the bounding box radius is inside the duct and centered at (0,0,0).
+    The duct is a cylinder with a rough surface.
+    """
+
+    def align_to_x(self, obj: Object):
+        """Aligns the object longest dimension to the duct x-axis."""
         sorted_dims = np.argsort(obj.dimensions)
         # Align to z
         if sorted_dims[-1] == 0:
@@ -22,11 +33,13 @@ class AbcGenerator(Generator3DBase):
         if sorted_dims[1] == 0:
             obj.rotation_euler = mathutils.Euler((0, 0, math.pi / 2))
 
-    def set_com_and_recenter(self, obj):
+    def set_com_and_recenter(self, obj: Object):
+        """Sets the object center to Center of Mass and moves it to (0,0,0)."""
         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
         obj.location = [0, 0, 0]
 
     def rescale(self, obj):
+        """Rescales obj so that the bounding box lies inside the 0.65*duct_radius."""
         duct_size = np.array([1, 0.6, 0.6])
         delta = np.abs(np.array(obj.dimensions) - duct_size)
         max_dim = np.argmax(delta)
@@ -40,7 +53,7 @@ class AbcGenerator(Generator3DBase):
         if mesh_r > duct_r * 0.65:
             obj.scale = obj.scale * duct_r * 0.65 / mesh_r
 
-    def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         ops.object.select_all(action='SELECT')
         ops.object.delete()
         for mesh in glob.glob(f'{meshes_dir}/*.obj'):
@@ -72,7 +85,7 @@ class AbcGenerator(Generator3DBase):
             ops.object.delete()
             shutil.copyfile(f'{meshes_dir}/walls/walls.obj', f'{meshes_subfolder}/walls.obj')
 
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         for mesh_set in glob.glob(f'{meshes_dir}/*/'):
             case_path = f"{dest_dir}/{Path(mesh_set).name}"
             shutil.copytree(self.case_template_dir, case_path)

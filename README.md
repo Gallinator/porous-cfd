@@ -59,7 +59,7 @@ A selection of 2D and 3D experiments can be run both locally and on SLURM cluste
 The project was designed to allow customization of both the data and pipeline. The data generation can be customized to include porous and solid geometries and custom OpenFOAM simulation templates.
 
 ### Directory setup
-Create a new directory inside the *examples* folder. This will contain the experiment. Add your own case template or copy one of the OpenFOAM case template from the other examples and customize its settings. Depending on the base experiment some parameters will be overridden when generating the data such as the ones found in *decomposeParDict*, *snappyHexMeshDict* and *fvOptions*. Those can be customized with the data generator class. The SLURM uses the ```run()``` functions inside each script.
+Create a new directory inside the *examples* folder. This will contain the experiment. Add your own case template or copy one from the examples and customize its settings. Depending on the base experiment some parameters will be overridden when generating the data such as the ones found in *decomposeParDict*, *snappyHexMeshDict* and *fvOptions*. Those can be customized with the data generator class. The ```run()``` functions inside each script is called when running on SLURM clusters.
 
 ### Create your own meshes
 Save the base objects as *.obj* and place them inside the *examples/your_example/assets/meshes/split_name* directory. It is recommended to create a *config.json* which includes the data splitting and optional variable boundary parameters:

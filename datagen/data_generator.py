@@ -67,7 +67,7 @@ class DataGeneratorBase:
     The momentum residuals are not calculated using OpenFOAM function objects due to a possible bug.
     """
 
-    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
+    def __init__(self, src_dir:str, openfoam_bin:str, n_procs: int, keep_p=0.5, meta_only=False):
         """
         :param src_dir: The base assets directory path
         :param openfoam_bin: The path to the OpenFOAM binary, typically /usr/lib/openfoam/openfoamXXXX
@@ -170,7 +170,7 @@ class DataGeneratorBase:
         pass
 
     @abstractmethod
-    def generate_transformed_meshes(self, meshes_dir, dest_dir, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         """
         Generates the transformed meshes using augmentation defined in transforms.json. This is called for each directory inside meshes.
         :param meshes_dir: The source mesh directory
@@ -180,7 +180,7 @@ class DataGeneratorBase:
         pass
 
     @abstractmethod
-    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         """
         Creates and run all cases. This must generate a directory for each case by copying the template and copy the meshes in scr_dir/generated_meshes into that folder.
         config.json can be used for the simulation parameters data augmentation. The generated cases will be split according to config.json
@@ -191,7 +191,7 @@ class DataGeneratorBase:
         """
         pass
 
-    def generate_split(self, data_path: Path, config_dir: Path, rng):
+    def generate_split(self, data_path: Path, config_dir: Path, rng: Random):
         """
         Generates data splits according to config.json. The splits are placed into data/split_name. The size of the first split might not respect the one defined in config.json.
         :param data_path: Source data directory, by default data/base_split

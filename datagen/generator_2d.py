@@ -5,6 +5,8 @@ import shutil
 import subprocess
 from abc import abstractmethod
 from pathlib import Path
+from random import Random
+
 import numpy as np
 from rich.progress import track
 
@@ -67,11 +69,11 @@ class Generator2DBase(DataGeneratorBase):
             return [0]
 
     @abstractmethod
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         pass
 
     @abstractmethod
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         pass
 
     def generate_data(self, split_dir: Path):

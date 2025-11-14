@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from abc import abstractmethod
 from pathlib import Path
+from random import Random
 from warnings import warn
 import mathutils
 import numpy as np
@@ -76,9 +77,9 @@ class Generator3DBase(DataGeneratorBase):
                 shutil.rmtree(case)
 
     @abstractmethod
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         pass
 
     @abstractmethod
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir: Path, rng: Random):
         pass

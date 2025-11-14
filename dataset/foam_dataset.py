@@ -95,9 +95,11 @@ class FoamDataset(Dataset):
     Base dataset class for OpenFOAM cases.
 
     Data is parsed from a split of generated cases, according to data_config.json. The class supports normalization of features and selective feature loading.
+
     The sampling is carried out with a modified stratified process that respect the minimum number of points found in min_points.json and the average number of points in each subdomain across the cases.
-    It is also possible to weight each subdomain independently. By default this class adds a Signed Distance Field function and a one-hot encoded boundary id. 2D and 3D data is supported.
-    The data is sampled and loaded in memory once on instantiation.
+    It is also possible to weight each subdomain independently. The data is sampled and loaded in memory once on instantiation.
+
+    By default this class adds a Signed Distance Field function and a one-hot encoded boundary id. 2D and 3D data are supported.
     """
 
     def __init__(self, data_dir: str,

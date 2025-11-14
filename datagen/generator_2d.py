@@ -21,7 +21,7 @@ class Generator2DBase(DataGeneratorBase):
     It uses two sub-cases for each case: the first is used for meshing, the second extrudes the front surface of the first and performs the simulations.
     """
 
-    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
+    def __init__(self, src_dir: str, openfoam_bin: str, n_procs: int, keep_p=0.5, meta_only=False):
         super().__init__(src_dir, openfoam_bin, n_procs, keep_p, meta_only)
         self.write_momentum = True
 

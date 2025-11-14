@@ -21,7 +21,7 @@ class GeneratorManufactured(Generator2DBase):
     def __init__(self, src_dir: str, openfoam_bin: str, n_procs: int, meta_only=False):
         super().__init__(src_dir, openfoam_bin, n_procs, meta_only)
         self.write_momentum = False
-        # Disable plots as only geometry dta is generated
+        # Disable plots as only geometry data is generated
         self.save_plots = False
 
     def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):

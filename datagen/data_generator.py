@@ -59,16 +59,21 @@ class DataGeneratorBase:
     Base class for generating OpenFOAM data programmatically.
 
     This class must be extended to implement custom functionality.
-    The class generates all the data starting form an OpenFOAM template. Meta files containing statistics about the main variables is saved to a json file.
+    The class generates all the data starting form an OpenFOAM template. Meta files containing statistics about the main variables are saved to json files.
+
     This class allows to automatically split data into arbitrary sets and support generating running cases from multiple base sets.
-    The template is organized into a base assets directory that contains: an OpenFOAM case template folder, a meshes folder containing custom meshes in obj format, a data_config.json file that allows configuration of the data.
+
+    The needed resources are organized into a base assets directory that contains: an OpenFOAM case template folder, a meshes folder containing custom meshes in obj format, a data_config.json file that allows configuration of the data.
     Inside the meshes folder a config.json file is found which allows the configuration of data splits and variable boundary conditions. A further transforms.json file is used to specify data augmentation.
-    Supports parallel simulations. If a case fails to run the error is written inside the log.txt file inside the case directory and an error is raised.
+
+    If a case fails to run the error is written inside the log.txt file inside the case directory and an error is raised. The cases can be run in parallel.
     The momentum residuals are not calculated using OpenFOAM function objects due to a possible bug.
-    This class optionally allows to save plots of each data split features distributions and of the average veolcity diretion change to evaluate the dataset difficulty.
+
+    This class optionally allows to save plots of each data split features distributions and of the average velocity direction change to evaluate the dataset difficulty.
+    To disable saving plots set save_plots to False.
     """
 
-    def __init__(self, src_dir:str, openfoam_bin:str, n_procs: int, keep_p=0.5, meta_only=False):
+    def __init__(self, src_dir: str, openfoam_bin: str, n_procs: int, keep_p=0.5, meta_only=False):
         """
         :param src_dir: The base assets directory path
         :param openfoam_bin: The path to the OpenFOAM binary, typically /usr/lib/openfoam/openfoamXXXX

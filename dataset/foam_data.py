@@ -8,8 +8,10 @@ class FoamData:
 
     The labels must be passed as a dict with entries according to label_name:sub_labels. If the label has no sub-labels set None.
     The dictionary order of the single labels is used for indexing. The single labels must be added before all multi labels.
-    The domain must be passed as a dictionary with samples indices of shape (N) associated to each subdomain. Supports batched data.
-    Labels and subdomains must have different names.
+
+    The domain must be passed as a dictionary with samples indices of shape (N) associated to each subdomain. Labels and subdomains must have different names.
+
+    Supports batched data tensors.
     """
 
     def __init__(self, data: Tensor, labels: dict[str:Tensor], domain: dict[str:(list | None)]):

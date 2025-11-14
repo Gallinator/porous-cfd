@@ -71,7 +71,9 @@ class PorousPinnBase(L.LightningModule):
     Base class for porous PINNs.
 
     This class abstracts the subdomain management and output computation to allow easy model definition.
-    This class supports data loss disabling, training and inference functions, loss logging, output postprocessing.
+
+    Supports data loss disabling, training and inference functions, loss logging, output postprocessing.
+
     Setting verbose_predict = True allows to obtain the equation residuals from the predict_step() function at inference time.
     """
 

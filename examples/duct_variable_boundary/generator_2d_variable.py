@@ -4,6 +4,7 @@ import json
 import math
 import shutil
 from pathlib import Path
+from random import Random
 import bpy
 import mathutils
 from bpy import ops
@@ -12,7 +13,15 @@ from datagen.generator_2d import Generator2DBase
 
 
 class Generator2DVariable(Generator2DBase):
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
+    """
+    Base generator for 2D variable boundary conditions OpenFOAM cases.
+
+    The cases are set up using a rectangular duct and augmented porous objects. The variable boundary conditions are the Darcy and Forchheimer coefficients, the inlet velocity and the inlet angle.
+    Data augmentation is taken from transforms.json while the boundary conditions from config.json using all possible values combinations respectively. Each case is dropped with probability p from the final dataset.
+    The position of porous objects and the inlet velocities are jittered randomly by (0.5,0.1) and 0.015 m/s. The inlet angle is randomly sampled within the limits defined in config.json.
+    """
+
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')
@@ -53,7 +62,7 @@ class Generator2DVariable(Generator2DBase):
                 ops.object.select_all(action='SELECT')
                 ops.object.delete()
 
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         with open(f'{case_config_dir}/config.json', 'r') as config:
             config = json.load(config)['cfd params']
             params = list(itertools.product(config['inlet'], config['coeffs']))

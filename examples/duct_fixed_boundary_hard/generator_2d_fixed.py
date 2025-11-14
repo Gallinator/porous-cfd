@@ -2,24 +2,45 @@ import glob
 import json
 import math
 import pathlib
-import random
+from random import Random
 import shutil
 from pathlib import Path
 import bpy
 import mathutils
 from bpy import ops
+from bpy.types import Object
 from foamlib import FoamFile
-
 from datagen.generator_2d import Generator2DBase
 
 
 class Generator2DFixedHard(Generator2DBase):
+    """
+    Generator for the hard fixed boundary condition case.
+
+    The duct is rectangular while the porous objects are created by combining up to 4 meshes with different rotations and positions.
+    The combined object are remeshed using a voxel-based remesh modifier.
+    The data is not augmented and 200 cases are generated.
+    """
+
     def get_location_inside(self, mesh: str):
+        """
+        Calculates the location inside vlue to be set into the snappyHexMeshDict.
+
+        The location point is forced to be on the xy plane.
+        """
         location = super().get_location_inside(mesh)
         location[-1] = 0
         return location
 
-    def add_porous_meshes_to_case(self, case_path, meshes):
+    def add_porous_meshes_to_case(self, case_path: str, meshes: list[str]):
+        """
+        Adds multiple meshes to an OpenFOAM case snappyHexMeshDict and surfaceFeatureExtractDict files. This function is not actually used.
+
+        Support multiple porous or solid meshes. The snappyHexMeshDict must be configured to have template entry defining the type of mesh.
+        The name of the entries must match the mesh names and the .obj files must have beem copied to case_path/constant/triSurface.
+        :param case_path: Path to the OpenFOAM case.
+        :param meshes: List of meshes names without extension.
+        """
         surface_extract = FoamFile(f'{case_path}/system/surfaceFeatureExtractDict')
         template_extract = surface_extract['mesh.obj'].as_dict()
         surface_extract.pop('mesh.obj')
@@ -49,7 +70,7 @@ class Generator2DFixedHard(Generator2DBase):
             snappy_dict['castellatedMeshControls']['refinementSurfaces'][m]['insidePoint'] = (
                 self.get_location_inside(f'{case_path}/constant/triSurface/{m}.obj'))
 
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng):
         mesh_containers = glob.glob(f"{meshes_dir}/*/")
         for m_c in mesh_containers:
             case_path = f"{dest_dir}/{Path(m_c).stem}"
@@ -65,7 +86,14 @@ class Generator2DFixedHard(Generator2DBase):
             self.set_decompose_par(f'{case_path}/snappyHexMesh')
             self.set_decompose_par(f'{case_path}/simpleFoam')
 
-    def generate_object(self, meshes_dir, src_meshes, rng):
+    def generate_object(self, meshes_dir: str, src_meshes: list[str], rng: Random) -> list[Object]:
+        """
+        Arranges up to 4 meshes that can be safely combined.
+        :param meshes_dir: Directory containing the source meshes.
+        :param src_meshes: List of source meshes to arrange.
+        :param rng: Used to randomize the mesh selection, rotation and position.
+        :return: The arranged objects.
+        """
         src_mesh = rng.choice(src_meshes)
         self.import_mesh(f'{meshes_dir}/{src_mesh}')
         ops.object.select_all(action='SELECT')
@@ -97,7 +125,12 @@ class Generator2DFixedHard(Generator2DBase):
             meshes.append(obj)
         return meshes
 
-    def merge_mehses(self, meshes):
+    def merge_mehses(self, meshes: list[Object]) -> Object:
+        """
+        Merges the input meshes into a single object using the Blender boolena Union modifier.
+        :param meshes: The meshes to merge.
+        :return: The merged mesh.
+        """
         ops.object.select_all(action='DESELECT')
         mesh = meshes[0]
         mesh.select_set(True)
@@ -109,7 +142,7 @@ class Generator2DFixedHard(Generator2DBase):
             bpy.ops.object.modifier_apply(modifier=modifier.name)
         return mesh
 
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: random.Random):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             dest_dir.mkdir(parents=True, exist_ok=True)
             ops.ed.undo_push()

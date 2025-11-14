@@ -4,6 +4,8 @@ import json
 import math
 import shutil
 from pathlib import Path
+from random import Random
+
 import bpy
 import mathutils
 from bpy import ops
@@ -11,7 +13,13 @@ from datagen.generator_2d import Generator2DBase
 
 
 class Generator2DFixed(Generator2DBase):
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    """
+    Generator of the 2D cases with fixed boundary conditions.
+
+    Porous objects are added to rectangular 2D duct. Data is augmented with rotation and scaling of the porous object.
+    """
+
+    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng: Random):
         meshes = glob.glob(f"{meshes_dir}/*.obj")
         for m in meshes:
             case_path = f"{dest_dir}/{Path(m).stem}"
@@ -22,7 +30,12 @@ class Generator2DFixed(Generator2DBase):
             self.set_decompose_par(f'{case_path}/snappyHexMesh')
             self.set_decompose_par(f'{case_path}/simpleFoam')
 
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
+        """
+        Generates fixed boundary porous meshes.
+
+        Rotation and scaling is applied from the transforms.json file using all the possible values combinations.
+        """
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')

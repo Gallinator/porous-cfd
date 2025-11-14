@@ -5,15 +5,21 @@ import pathlib
 from pathlib import Path
 import re
 import shutil
+from random import Random
+
 import bpy
 from foamlib import FoamFile
 from bpy import ops
 from datagen.generator_3d import Generator3DBase
 import bmesh
 from mathutils.bvhtree import BVHTree
+from bpy.types import Object
 
 
-def get_bvh_tree(obj):
+def get_bvh_tree(obj: Object) -> BVHTree:
+    """
+    Calculates the Bounding Volume Hierarchy tree for obj.
+    """
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.transform(obj.matrix_world)
@@ -23,7 +29,23 @@ def get_bvh_tree(obj):
 
 
 class WindbreakGenerator(Generator3DBase):
-    def merge_trees(self, trees):
+    """
+    Data generator for the 3D windbreaks experiment with variable inlet velocity.
+
+    The data is generated from a sample of tree species models, each containing a single tree, and a sample of 3D house models.
+    Each tree is randomly rotated and scaled on the z-axis and xy plane, then it is arranged into a row.
+    All trees in a row are merged with a Union boolean modifier, then remeshed and smoothed using the Catmull-Clark subdivision.
+    The number of trees in each windbreak and the number of windbreaks to generate for each species is defined in transforms.json.
+    One house model is added to each case.
+    The transforms.json defines the data augmentation while the config.json the inlet velocities.
+    """
+
+    def merge_trees(self, trees: list[Object]) -> Object:
+        """
+        Merges a row of trees into a windbreak model.
+        :param trees: The trees forming the row.
+        :return: The merged windbreak object.
+        """
         ops.object.select_all(action='DESELECT')
         windbreak = trees[0]
         windbreak.select_set(True)
@@ -35,7 +57,18 @@ class WindbreakGenerator(Generator3DBase):
             bpy.ops.object.modifier_apply(modifier=modifier.name)
         return windbreak
 
-    def create_windbreak(self, src_tree, n_trees, scales, rng):
+    def create_windbreak(self, src_tree: Object, n_trees: int, scales: dict, rng: Random) -> list[Object]:
+        """
+        Creates a windbreak starting from a single tree object.
+
+        The tree is duplicated, randomly rotated and scaled. To the windbreak each tree is offset with respect to the original such that it intersect the other model.
+        The intersection check is carried out using a Bounding Volume Hierarchy tree.
+        :param src_tree: The source tree model.
+        :param n_trees: The number of trees to place into the row.
+        :param scales: Scaling factor dictionary containing the z and xy keys.
+        :param rng: Used to randomize the rotation and scaling.
+        :return: A list of trees arranged into a windbreak.
+        """
         trees = []
         prev_obj = src_tree
         for n in range(n_trees):
@@ -51,6 +84,7 @@ class WindbreakGenerator(Generator3DBase):
             obj.rotation_euler = (*obj.rotation_euler[0:2], rot_z)
             bpy.ops.object.transform_apply(scale=False, location=False, rotation=True)
 
+            # Iteratively offset the current tree until intersection
             if n > 0:
                 prev_bvh = get_bvh_tree(prev_obj)
                 obj.location[1] = prev_obj.location[1] + prev_obj.dimensions[1] / 2
@@ -60,7 +94,7 @@ class WindbreakGenerator(Generator3DBase):
             prev_obj = obj
         return trees
 
-    def generate_transformed_meshes(self, meshes_dir, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')
@@ -106,7 +140,7 @@ class WindbreakGenerator(Generator3DBase):
 
             shutil.copytree(f'{meshes_dir}/houses', f'{dest_dir}/houses')
 
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         with open(f'{case_config_dir}/config.json', 'r') as config:
             config = json.load(config)['cfd params']
             meshes = glob.glob(f"{meshes_dir}/*.obj")

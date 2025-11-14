@@ -3,6 +3,7 @@ import json
 import math
 import shutil
 from pathlib import Path
+from random import Random
 import bpy
 import mathutils
 from bpy import ops
@@ -10,11 +11,20 @@ from datagen.generator_2d import Generator2DBase
 
 
 class GeneratorManufactured(Generator2DBase):
-    def __init__(self, src_dir, openfoam_bin, n_procs: int, keep_p=0.5, meta_only=False):
-        super().__init__(src_dir, openfoam_bin, n_procs, keep_p, meta_only)
-        self.write_momentum = False
+    """
+    Generator for the manufactured solution data.
 
-    def generate_openfoam_cases(self, meshes_dir, dest_dir, case_config_dir, rng):
+    This class only generates cases meshes.
+    Data augmentation consists in rotation and scaling as defined in transforms.json using all possible values combinations.
+    """
+
+    def __init__(self, src_dir: str, openfoam_bin: str, n_procs: int, meta_only=False):
+        super().__init__(src_dir, openfoam_bin, n_procs, meta_only)
+        self.write_momentum = False
+        # Disable plots as only geometry dta is generated
+        self.save_plots = False
+
+    def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         meshes = glob.glob(f"{meshes_dir}/*.obj")
         for m in meshes:
             case_path = f"{dest_dir}/{Path(m).stem}"
@@ -25,7 +35,7 @@ class GeneratorManufactured(Generator2DBase):
             self.set_decompose_par(f'{case_path}/snappyHexMesh')
             self.set_decompose_par(f'{case_path}/simpleFoam')
 
-    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng):
+    def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         with open(f'{meshes_dir}/transforms.json', 'r') as f:
             ops.ed.undo_push()
             ops.object.select_all(action='SELECT')

@@ -1,7 +1,7 @@
 import argparse
 import json
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 import torch
@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 import lightning as L
 
 from dataset.foam_dataset import collate_fn
+from models.model_base import PorousPinnBase
 
 
 def get_log_steps(n_data, batch_size):
@@ -46,7 +47,13 @@ def build_arg_parser() -> ArgumentParser:
     return arg_parser
 
 
-def train(args, model, train_data: Dataset, val_data: Dataset):
+def train(args: Namespace, model: PorousPinnBase, train_data: Dataset, val_data: Dataset):
+    """
+    Trains the model using the provided model and datasets.
+
+    The training is carried out with PyTorch Lightning and the training parameters are saved into a model_meta.json file inside logs_dir/name/model_meta.json.
+    During training a checkpoint is saved every 500 epochs and also when the training ends. The last model weights are saved into logs_dir/name/model.ckpt.
+    """
     train_loader = DataLoader(train_data, args.batch_size, True, num_workers=8, collate_fn=collate_fn)
     val_loader = DataLoader(val_data, args.batch_size, False, num_workers=8, pin_memory=True, collate_fn=collate_fn)
 

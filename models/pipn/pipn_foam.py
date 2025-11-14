@@ -1,6 +1,6 @@
 import torch
 from torch import Tensor
-from torch.nn import Tanh, Mish, Module
+from torch.nn import Module, SiLU
 from torch.optim.lr_scheduler import ExponentialLR
 from torch_geometric.utils import unbatch
 
@@ -67,7 +67,7 @@ class PipnFoam(PipnFoamBase):
                  scalers: dict[str, StandardScaler],
                  loss_scaler: LossScaler = None,
                  seg_dropout: list[float] = None,
-                 activation: type[Module] = Tanh):
+                 activation: type[Module] = SiLU):
         """
         :param nu: Kinematic viscosity.
         :param d: Darcy coefficient.
@@ -122,7 +122,7 @@ class PipnFoamPp(PipnFoamBase):
                  scalers: dict[str, StandardScaler],
                  loss_scaler: LossScaler = None,
                  seg_dropout: list[float] = None,
-                 activation: type[Module] = Tanh,
+                 activation: type[Module] = SiLU,
                  max_neighbors=64):
         """
         :param nu: Kinematic viscosity.
@@ -182,7 +182,7 @@ class PipnFoamPpMrg(PipnFoamBase):
                  scalers: dict[str, StandardScaler],
                  loss_scaler: LossScaler = None,
                  seg_dropout: list[float] = None,
-                 activation: type[Module] = Mish,
+                 activation: type[Module] = SiLU,
                  max_neighbors=64):
         """
         :param n_dims: Coordinates dimensionality.
@@ -244,7 +244,7 @@ class PipnFoamPpFull(PipnFoamBase):
                  dec_k: list[int],
                  scalers: dict[str, StandardScaler],
                  loss_scaler: LossScaler = None,
-                 activation: type[Module] = Mish,
+                 activation: type[Module] = SiLU,
                  max_neighbors=64,
                  dec_dropout: list[list[float]] = None):
         """

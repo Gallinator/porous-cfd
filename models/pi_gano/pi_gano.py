@@ -1,6 +1,6 @@
 import torch
-from torch import nn, Tensor, Module
-from torch.nn import SiLU
+from torch import Tensor
+from torch.nn import SiLU, Module, Sequential, Linear
 from torch.optim.lr_scheduler import ExponentialLR
 from dataset.foam_dataset import StandardScaler, FoamData, Normalizer
 from models.losses import LossScaler
@@ -44,7 +44,7 @@ class PiGano(PiGanoBase):
 
         operator_features = geometry_layers[-1] + local_layers[-1]
         self.neural_ops = NeuralOperatorSequential(n_operators, operator_features, operator_dropout, activation)
-        self.reduction = nn.Linear(operator_features, out_features)
+        self.reduction = Linear(operator_features, out_features)
 
     def forward(self, autograd_points: Tensor, x: FoamData) -> FoamData:
         """
@@ -111,7 +111,7 @@ class PiGanoFull(PiGano):
         operator_features = geometry_layers[-1] + local_layers[-1]
 
         # This is a hacky solution to allow torch module registration
-        self.neural_ops = nn.Sequential(
+        self.neural_ops = Sequential(
             *[NeuralOperatorSequential(n_operators, operator_features, operator_dropout, activation, False) for _
               in range(out_features)])
         self.reduction = None

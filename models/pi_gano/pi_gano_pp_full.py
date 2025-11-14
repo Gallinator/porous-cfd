@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor, Module
-from torch.nn import SiLU
+from torch import Tensor
+from torch.nn import SiLU, Module
 from torch.optim.lr_scheduler import ExponentialLR
 from torch_geometric.utils import unbatch
 

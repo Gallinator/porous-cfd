@@ -1,6 +1,6 @@
 import torch
-from torch import Tensor, Module
-from torch.nn import Tanh
+from torch import Tensor
+from torch.nn import Tanh, Module
 from torch.optim.lr_scheduler import ExponentialLR
 
 from dataset.foam_data import FoamData

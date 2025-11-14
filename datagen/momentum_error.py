@@ -14,15 +14,15 @@ def momentum_error(nu: float, d: Tensor, f: Tensor, u: Tensor, u_jac: Tensor, u_
                    zone_id: Tensor) -> Tensor:
     """
     Calculates the momentum error. All tensors have shape (n_points,d)
-    :param nu: kinematic viscosity
-    :param d: Darcy coefficients
-    :param f: Forchheimer coefficients
-    :param u: Velocity
-    :param u_jac: Velocity Jacobian
-    :param u_laplace: Velocity laplace operator
-    :param p_grad: Pressure gradients
-    :param zone_id: Zero if fluid, one if porous
-    :return: The momentum error
+    :param nu: kinematic viscosity.
+    :param d: Darcy coefficients.
+    :param f: Forchheimer coefficients.
+    :param u: Velocity.
+    :param u_jac: Velocity Jacobian.
+    :param u_laplace: Velocity laplace operator.
+    :param p_grad: Pressure gradients.
+    :param zone_id: Zero if fluid, one if porous.
+    :return: The momentum error.
     """
     source = u * (d * nu + 1 / 2 * torch.norm(u, dim=-1, keepdim=True) * f)
     return (torch.matmul(u_jac, u.unsqueeze(-1)).squeeze() -

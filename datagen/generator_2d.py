@@ -79,7 +79,7 @@ class Generator2DBase(DataGeneratorBase):
     def generate_data(self, split_dir: Path):
         """
         Run 2D simulations inside split_dir.
-        :raises: RuntimeError if one case fails
+        :raises: RuntimeError if one case fails.
         """
         for case in track(glob.glob(f"{split_dir}/*"), description="Generating geometries"):
             process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,

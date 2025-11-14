@@ -35,9 +35,9 @@ def create_plots_root_dir(save_plots, data_dir: str, checkpoint: str):
 def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer) -> Tensor:
     """
     Extracts a generic coefficient by taking the max over all the samples.
-    :param coef: tensor of shape (n_samples,d). Only the first element in d is considered
-    :param scaler: used to denormalize coef
-    :return: the coefficient
+    :param coef: Tensor of shape (N,D). Only the first element in d is considered.
+    :param scaler: Used to denormalize coef.
+    :return: Uhe coefficient.
     """
     coef = scaler.inverse_transform(coef)[..., 0:1]
     return torch.max(coef, dim=-2, keepdim=True)[0]
@@ -46,10 +46,10 @@ def extract_coef(coef: Tensor, scaler: StandardScaler | Normalizer) -> Tensor:
 def extract_u_magnitude(u: Tensor, scaler: StandardScaler, spacing):
     """
     Extracts the magnitude of the inlet velocity. The results are snapped to values spaced bu spacing.
-    :param u: tensor of shape (n_samples,d)
-    :param scaler: used to denormalize u
-    :param spacing: used to snape the result
-    :return: the velocity magnitude
+    :param u: Tensor of shape (N,D).
+    :param scaler: Used to denormalize u.
+    :param spacing: Used to snape the result.
+    :return: The velocity magnitude.
     """
     u_mag = scaler.inverse_transform(u)
     u_mag = torch.norm(u_mag, dim=-1, keepdim=True)
@@ -60,9 +60,9 @@ def extract_u_magnitude(u: Tensor, scaler: StandardScaler, spacing):
 def extract_angle(u: Tensor, scaler: StandardScaler) -> Tensor:
     """
     Extracts the velocity angle.
-    :param u: tensor of shape (n-samples,d)
-    :param scaler: used to denormalize u
-    :return: the inlet angle
+    :param u: Tensor of shape (N,D).
+    :param scaler: Used to denormalize u.
+    :return: The inlet angle.
     """
     u = scaler.inverse_transform(u)
     u_mag = torch.norm(u, dim=-1, keepdim=True)
@@ -75,22 +75,22 @@ def extract_angle(u: Tensor, scaler: StandardScaler) -> Tensor:
 def get_normalized_signed_distance(points: Tensor, target: Tensor) -> Tensor:
     """
     Calculates the minimum normalized distance of each point in points from target.
-    :param points: tensor of shape (b,n,d)
-    :param target: tensor of shape (b,n,d)
-    :return: the normalized distance of points from target
+    :param points: Tensor of shape (B,N,D).
+    :param target: Tensor of shape (B,N,D).
+    :return: The normalized distance of points from target.
     """
     dist = cdist(points, target)
     dist = torch.min(dist, dim=-1)[0].unsqueeze(-1)
     return dist / torch.max(dist).item()
 
 
-def get_mean_max_error_distance(errors: Tensor, quantile: float, interface_dist: Tensor) -> Tensor:
+def get_mean_max_error_distance(errors: np.ndarray, quantile: float, interface_dist: Tensor) -> Tensor:
     """
     Calculates the mean distance of the top quantile errors averaged over all cases.
-    :param errors: tensor of shape (b,n_cases,n_samples,d)
-    :param quantile: the error cutoff quantile
-    :param interface_dist: distance from the interface of shape (b,n_cases,n_samples,1)
-    :return: the mean distance of highest errors
+    :param errors: Tensor of shape (B,N,D).
+    :param quantile: The error cutoff quantile.
+    :param interface_dist: Distance from the interface of shape (B,N,1).
+    :return: The mean distance of highest errors.
     """
     q_mask = errors > np.quantile(errors, quantile, axis=-2, keepdims=True)
     q_dist = []
@@ -136,11 +136,11 @@ def build_arg_parser() -> ArgumentParser:
 def get_common_data(data: FoamDataset, predicted: FoamData, target: FoamData, extras: FoamData) -> dict[str, Any]:
     """
     Extracts common data from predictions. This is called on each predicted batch.
-    :param data: the source dataset
-    :param predicted: the predicted values of shape (b,n_cases,n_samples,d)
-    :param target: the target values of shape (b,n_cases,n_samples,d)
-    :param extras: extra values which can be used for computations. In this case the momentum and continuity residuals.
-    :return: a dictionary containing the extracted data
+    :param data: The source dataset.
+    :param predicted: The predicted values of shape (B,N,D).
+    :param target: The target values of shape (B,N,D).
+    :param extras: Extra values which can be used for computations. In this case the momentum and continuity residuals.
+    :return: Dictionary containing the extracted data.
     """
     predicted_u, predicted_p = predicted['U'], predicted['p']
     target_u, target_p = target['U'], target['p']
@@ -183,8 +183,8 @@ def plot_common_data(data: dict, plots_path: str | None):
     """
     Plots the per case and average maximum and mean errors, top 20% errors,mean normalized distance from interface of maximum errors, residuals and MAE distributions, average equations residuals and per region average errors.
     Data is saved as csv inside plots_path.
-    :param data: dictionary containing data extracted with get_common_data
-    :param plots_path: paths to save the plots. If None plots are shown and not saved
+    :param data: Dictionary containing data extracted with get_common_data.
+    :param plots_path: Paths to save the plots. If None plots are shown and not saved.
     """
     errors = np.concatenate([data['U error'], data['p error']], axis=-1)
     n_dims = errors.shape[-1] - 1
@@ -267,12 +267,12 @@ def evaluate(args: Namespace,
     Evaluates the model. Runs a loop over each case and collects the data into a dictionary which is used to plot the results. Optionally plots timing statistics.
     sample_process_fn is called on each predicted batch. The returned dictionaries are combined and are available in postprocess_fn. Tensors are converted to numpy arrays automatically.
     A set of common data and plots is collected and is available for custom processing with postprocess_fn.
-    :param args: parsed arguments. Build with build_arg_parser()
-    :param model: the pretrained model weights
-    :param data: data to use for evaluation
-    :param enable_timing: enables timing plots
-    :param sample_process_fn: function used to add additional data
-    :param postprocess_fn: called after all the data has been collected
+    :param args: Parsed arguments. Build with build_arg_parser()
+    :param model: The pretrained model weights.
+    :param data: Data to use for evaluation.
+    :param enable_timing: Eenables timing plots.
+    :param sample_process_fn: Function used to add additional data.
+    :param postprocess_fn: Called after all the data has been collected.
     """
     torch.manual_seed(8421)
     model.verbose_predict = True

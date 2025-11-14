@@ -103,7 +103,8 @@ class FoamDataset(Dataset):
     def __init__(self, data_dir: str,
                  n_internal: int,
                  n_boundary: int,
-                 n_obs: int, rng,
+                 n_obs: int,
+                 rng,
                  meta_dir=None,
                  extra_fields=[],
                  regions_weights: dict[str, float] = None):
@@ -113,7 +114,7 @@ class FoamDataset(Dataset):
         :param n_boundary: The number of boundary points to sample.
         :param n_obs: The number of observation points to sample.
         :param rng: Random object used for sampling.
-        :param meta_dir: Directory containing the meta.json file.
+        :param meta_dir: Directory containing the meta.json file. Pass None to use the file inside data_dir.
         :param extra_fields: Additional fields to parse, by name.
         :param regions_weights: A dictionary containing a weight for each subdomain name.
         """
@@ -152,7 +153,7 @@ class FoamDataset(Dataset):
         self.min_boundary = sum([self.min_points[k] for k in self.min_points.keys() if k != 'internal'])
 
         self.check_sample_size()
-        self.data = [self.load_case(case) for case in track(self.samples, description='Loading data into memory')]
+        self.data = [self.load_case(str(case)) for case in track(self.samples, description='Loading data into memory')]
 
     def check_sample_size(self):
         """

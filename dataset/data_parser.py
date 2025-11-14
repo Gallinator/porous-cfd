@@ -13,7 +13,7 @@ from pyvista import ArrayLike
 
 
 def parse_post_process_field(path: str) -> list:
-    """This is a temporary workaround as foamlib cannot read post processed fields"""
+    """This is a temporary workaround as foamlib cannot read post processed fields."""
 
     def parse_content(content: str):
         if content[0] == '(':
@@ -119,10 +119,10 @@ def add_multidim_field(fields_df: DataFrame, field_name: str, field_values: np.n
 def parse_internal_fields(case_dir: str, *fields, max_dim=3) -> DataFrame:
     """
     Parses the internal fields of an OpenFOAM case.
-    :param case_dir: The case path
-    :param fields: The fields to parse
-    :param max_dim: Maximum dimension of each field. If a field is larger than this value, the last component is dropped
-    :return: A DataFrame with index set as 'internal'
+    :param case_dir: The case path.
+    :param fields: The fields to parse.
+    :param max_dim: Maximum dimension of each field. If a field is larger than this value, the last component is dropped.
+    :return: A DataFrame with index set as 'internal'.
     """
     case = FoamCase(case_dir)
     last_step = case[-1]
@@ -155,10 +155,10 @@ def parse_internal_fields(case_dir: str, *fields, max_dim=3) -> DataFrame:
 def parse_case_fields(case_dir, *fields, max_dim=3) -> DataFrame:
     """
     Parses the fields of an OpenFoam case.
-    :param case_dir: The case path
-    :param fields: The fields to parse
-    :param max_dim: Maximum dimension of each field. If a field is larger than this value, the last component is dropped
-    :return: a DataFrame indexed according to each subdomain
+    :param case_dir: The case path.
+    :param fields: The fields to parse.
+    :param max_dim: Maximum dimension of each field. If a field is larger than this value, the last component is dropped.
+    :return: a DataFrame indexed according to each subdomain.
     """
     internal_fields = parse_internal_fields(case_dir, *fields, max_dim=max_dim)
     boundary_fields = parse_boundary_fields(case_dir, *fields, max_dim=max_dim)

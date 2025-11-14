@@ -65,6 +65,7 @@ class DataGeneratorBase:
     Inside the meshes folder a config.json file is found which allows the configuration of data splits and variable boundary conditions. A further transforms.json file is used to specify data augmentation.
     Supports parallel simulations. If a case fails to run the error is written inside the log.txt file inside the case directory and an error is raised.
     The momentum residuals are not calculated using OpenFOAM function objects due to a possible bug.
+    This class optionally allows to save plots of each data split features distributions and of the average veolcity diretion change to evaluate the dataset difficulty.
     """
 
     def __init__(self, src_dir:str, openfoam_bin:str, n_procs: int, keep_p=0.5, meta_only=False):
@@ -173,9 +174,9 @@ class DataGeneratorBase:
     def generate_transformed_meshes(self, meshes_dir: Path, dest_dir: Path, rng: Random):
         """
         Generates the transformed meshes using augmentation defined in transforms.json. This is called for each directory inside meshes.
-        :param meshes_dir: The source mesh directory
-        :param dest_dir: The target directory for generated meshes, by default src_dir/generated_meshes
-        :param rng: Random instance for reproducibility
+        :param meshes_dir: The source mesh directory.
+        :param dest_dir: The target directory for generated meshes, by default src_dir/generated_meshes.
+        :param rng: Random instance for reproducibility.
         """
         pass
 
@@ -184,19 +185,19 @@ class DataGeneratorBase:
         """
         Creates and run all cases. This must generate a directory for each case by copying the template and copy the meshes in scr_dir/generated_meshes into that folder.
         config.json can be used for the simulation parameters data augmentation. The generated cases will be split according to config.json
-        :param meshes_dir: The source generated meshes directory, by default src_dir/generated_meshes
-        :param dest_dir: The OpenFOAM cases target directory, by default data/base_split
-        :param case_config_dir: Path to config.json, by default assets/meshes/base_split
-        :param rng: Random instance for reproducibility
+        :param meshes_dir: The source generated meshes directory, by default src_dir/generated_meshes.
+        :param dest_dir: The OpenFOAM cases target directory, by default data/base_split.
+        :param case_config_dir: Path to config.json, by default assets/meshes/base_split.
+        :param rng: Random instance for reproducibility.
         """
         pass
 
     def generate_split(self, data_path: Path, config_dir: Path, rng: Random):
         """
         Generates data splits according to config.json. The splits are placed into data/split_name. The size of the first split might not respect the one defined in config.json.
-        :param data_path: Source data directory, by default data/base_split
-        :param config_dir: Path to config.json, by default assets/meshes/base_split
-        :param rng: Random instance for reproducibility
+        :param data_path: Source data directory, by default data/base_split.
+        :param config_dir: Path to config.json, by default assets/meshes/base_split.
+        :param rng: Random instance for reproducibility.
         """
         config_path = config_dir / 'config.json'
         if not os.path.exists(config_path):
@@ -227,7 +228,7 @@ class DataGeneratorBase:
     def generate_data(self, split_dir: Path):
         """
         This function must run all the OpenFOAM cases.
-        :param split_dir: The directory containing all the cases
+        :param split_dir: The directory containing all the cases.
         """
         pass
 
@@ -243,8 +244,8 @@ class DataGeneratorBase:
     def raise_with_log_text(self, case_path: str, text: str):
         """
         Raises an error if the OpenFOAM case failed. The message is stored inside case_dir/log.txt. Supports custom message prefix.
-        :param case_path: The case path
-        :param text: The error message prefix
+        :param case_path: The case path.
+        :param text: The error message prefix.
         """
         with open(f'{case_path}/log.txt') as log:
             raise RuntimeError(f'{text} {case_path}\n\n {log.read()}')
@@ -282,9 +283,9 @@ class DataGeneratorBase:
     def generate_meta(self, data_dir: str | Path, *fields: str, max_dim=3):
         """
         Generates the metadata of a data split for each field in fields and for the size of each subdomain. The results are saved into data_dir/meta.json.
-        :param data_dir: The target directory
-        :param fields: The fields to compute the meta of
-        :param max_dim: Maximum number of dimensions, allows to truncate 3D data
+        :param data_dir: The target directory.
+        :param fields: The fields to compute the meta of.
+        :param max_dim: Maximum number of dimensions, allows to truncate 3D data.
         """
         fields_min_max_tracker, count_min_max_tracker = MinMaxTracker(), MinMaxTracker()
         fields_stats_tracker, count_stats_tracker = Welford(), Welford()
@@ -362,7 +363,7 @@ class DataGeneratorBase:
     def generate_min_points(self, splits_parent: str | Path):
         """
         Calculates the minimum number of available points in each subdomain over the whole data. The results are saved into splits_parent/min_points.json.
-        :param splits_parent: The parent directory of all the data splits, by default data
+        :param splits_parent: The parent directory of all the data splits, by default data.
         """
         dicts = []
         for split in glob.glob(f'{splits_parent}/*/'):
@@ -381,8 +382,8 @@ class DataGeneratorBase:
     def generate(self, dest_dir, seed=8421):
         """
         Generates the whole dataset. Performs the following tasks: augments the meshes found in src_dir/meshes according to transforms.json, generates the OpenFOAM cases from the template, augments the cases with boundary conditions according to config.json, creates the data splits, calculates the metadata and minimum available points.
-        :param dest_dir: The target data directory containing all the splits
-        :param seed: Used for reproducibility
+        :param dest_dir: The target data directory containing all the splits.
+        :param seed: Used for reproducibility.
         """
         rng = Random(seed)
 

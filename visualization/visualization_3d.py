@@ -1,19 +1,27 @@
 import os
 import random
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import vtk
 import pyvista as pv
-from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet
-
+from pyvista import Plotter, PolyData, OpenFOAMReader, PointSet, DataSet, UnstructuredGrid
 from dataset import data_parser
 from visualization.common import M_S, M2_S2
 
 pv.global_theme.transparent_background = True
 
 
-def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plotter):
+def plot_scalar_field(title: str, points: np.ndarray, value: np.ndarray, porous_id: np.ndarray, plotter: Plotter):
+    """
+    Creates a 3D scatter plot from a scalar field.
+    :param title: The title of the subplot.
+    :param points: Array of points of shape (N,3).
+    :param value: Array of scalar values of shape (N,1).
+    :param porous_id: Binary vector of porous indicator values, shape (N,1). Reserved for future use.
+    :param plotter: The PyVista plotter to add this plot to.
+    """
     poly_points = PolyData(points)
     colorbar = {'title': title, 'vertical': True, 'position_y': 0.25, 'height': 0.5}
     plotter.add_mesh(poly_points, scalars=value, scalar_bar_args=colorbar, point_size=5.0, cmap='coolwarm')
@@ -26,7 +34,25 @@ def plot_scalar_field(title, points: np.array, value: np.array, zones_ids, plott
     plotter.disable_shadows()
 
 
-def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_meshes: tuple):
+def plot_2d_slice(mesh: UnstructuredGrid,
+                  field: str,
+                  label: str,
+                  origin: Sequence[float],
+                  plotter: Plotter,
+                  cur_pos: list[int],
+                  *additional_meshes: dict[DataSet:str]):
+    """
+    Plots 2D slices of a 3D field.
+
+    Supports outlines of additional 3D objects specified as a dictionary of PyVista datasets and colors.
+    :param mesh: The mesh to plot.
+    :param field: The name of the field to plot..
+    :param label: Label of the subplot.
+    :param origin: TOrigin point of the slicing planes.
+    :param plotter: PyVist plotter to add the subplot to.
+    :param cur_pos: Position of the subplot in the parent plot grid.
+    :param additional_meshes: Additional meshes to add to the plot.
+    """
     slices = mesh.slice_orthogonal(x=origin[0], y=origin[1], z=origin[2])
     planes = ['yz', 'xz', 'xy']
     sliced_meshes = []
@@ -58,7 +84,19 @@ def plot_2d_slice(mesh, field, label, origin, plotter, cur_pos, *additional_mesh
         plotter.disable_shadows()
 
 
-def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dict):
+def plot_3d_streamlines(interp_mesh: UnstructuredGrid,
+                        inlet_mesh: PolyData,
+                        plotter: Plotter,
+                        additional_meshes: dict[DataSet:str]):
+    """
+    Plots the 3D velocity streamlines.
+
+    Supports additional 3D objects specified as a dictionary of PyVista datasets and colors.
+    :param interp_mesh: The interpolated domain mesh to use for plotting.
+    :param inlet_mesh: The inlet mesh used to generate the streamlines starting points
+    :param plotter: The PyVista plotter to add the subplot to.
+    :param additional_meshes: Additional meshes to add to the plot.
+    """
     stream_start_points = np.array(inlet_mesh.points)
     min_x = np.min(inlet_mesh.points, axis=0)[0]
     stream_start_points = stream_start_points[stream_start_points[..., 0] == min_x]
@@ -81,8 +119,32 @@ def plot_3d_streamlines(interp_mesh, inlet_mesh, plotter, additional_meshes: dic
     plotter.show_bounds(location='outer', xtitle='X', ytitle='Y', ztitle='z')
 
 
-def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, additional_meshes: dict[str, str],
-                     save_path=None, interp_radius=0.1):
+def plot_streamlines(title: str,
+                     case_dir: str,
+                     points: np.ndarray,
+                     u: np.ndarray,
+                     p: np.ndarray,
+                     additional_meshes: dict[str, str],
+                     save_path=None,
+                     interp_radius=0.1):
+    """
+    Plots or saves the velocity streamlines and sliced velocity and pressure fields.
+
+    It is possible to add 3D objects to the plots by passing the names of the .obj files located in the constant/triSurface case directory and the color of each object.
+    For a list of available color see the `PyVista colors`_.
+    The sliced are created on the xy, xz and yz planes starting from the center of the first additional mesh.
+    The filename is taken from the plot title.
+
+    .. _PyVista colors: https://docs.pyvista.org/api/utilities/named_colors.html
+    :param title: The main title of the plot.
+    :param case_dir: The directory of the OpenFOAM case to plot.
+    :param points: Array of domain points, shape (N,3).
+    :param u: Array of velocity values, shape (N,3).
+    :param p: Array of pressure values, shape (N,1).
+    :param additional_meshes: Additional objects to add to the plots.
+    :param save_path: The directory to save the plot image into. Pass None to show the plot instead of saving.
+    :param interp_radius: Radius used to interpolate the sampled points onto the full OpenFOAM mesh.
+    """
     empty_foam = f'{case_dir}/empty.foam'
     open(empty_foam, 'w').close()
 
@@ -105,7 +167,7 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, addition
     plotter.subplot(0, 0)
     plot_3d_streamlines(interp_mesh, mesh['boundary']['inlet'], plotter, add_objects)
 
-    center = (0, 0, add_objects[0][0].center[2] if len(add_objects) > 0 else 1)
+    center = (0., 0., add_objects[0][0].center[2] if len(add_objects) > 0 else 1.)
     plot_2d_slice(interp_mesh, 'Uinterp', 'U', center, plotter, (0, 1), *add_objects)
     plot_2d_slice(interp_mesh, 'pinterp', 'p', center, plotter, (1, 0), *add_objects)
 
@@ -113,7 +175,18 @@ def plot_streamlines(title, case_dir, points: np.array, u: np.array, p, addition
     os.remove(empty_foam)
 
 
-def plot_houses(title, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_mesh_path, save_path=None):
+def plot_houses(title: str, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_mesh_path: str, save_path=None):
+    """
+    Scatter of plot of houses surface points values.
+
+    The filename of the saved plot is taken from the title.
+    :param title: The title of the plot.
+    :param points: The points to plot, shape (N,3).
+    :param u: The velocity at points, shape (N,3).
+    :param p: The pressure at points, shape (N,1).
+    :param house_mesh_path: path to the house mesh .obj file.
+    :param save_path: directory to save the plot into. Pass None to show the plot instead fo saving.
+    """
     house = pv.get_reader(house_mesh_path).read()
     data = PolyData(points)
     data['Uinterp'] = u
@@ -136,7 +209,18 @@ def plot_houses(title, points: np.ndarray, u: np.ndarray, p: np.ndarray, house_m
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
 
 
-def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
+def plot_fields(title: str, points: np.array, u: np.array, p: np.array, porous: np.array or None, save_path=None):
+    """
+    Scatter plot of a 3D field.
+
+    Porous points marking is currently disabled. The filename of the saved plot is taken from the title.
+    :param title: Title of the plot.
+    :param points: The points to plot, shape (N,3).
+    :param u: The velocity at points, shape (N,3).
+    :param p: The pressure at points, shape (N,1).
+    :param porous: Array of porous points binary indicator. Reserved for future use.
+    :param save_path: directory to save the plot into. Pass None to show the plot instead of saving.
+    """
     plotter = Plotter(shape=(2, 2), off_screen=save_path is not None, window_size=[2500, 1080])
 
     # Pressure
@@ -153,10 +237,18 @@ def plot_fields(title, points: np.array, u: np.array, p: np.array, porous: np.ar
     plotter.show(screenshot=f'{save_path}/{title}.png' if save_path else False)
 
 
-def plot_case(path: str):
+def plot_case(path: str, save_path=None):
+    """
+    Scatter plot of a 3D OpenFOAM case.
+
+    The filename of the saved plot is taken from the title.
+    :param path: Path to the OpenFOAM case.
+    :param save_path: directory to save the plot into. Pass None to show the plot instead of saving.
+    """
     fields = data_parser.parse_case_fields(path, 'C', 'U', 'p', 'cellToRegion')
     plot_fields(Path(path).stem,
                 fields['C'].to_numpy(),
                 fields['U'].to_numpy(),
                 fields['p'].to_numpy(),
-                fields['cellToRegion'])
+                fields['cellToRegion'],
+                save_path=save_path)

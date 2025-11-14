@@ -7,6 +7,8 @@ import matplotlib
 import numpy as np
 import pandas
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from numpy.linalg import norm
 from rich.progress import track
 from scipy.interpolate import make_smoothing_spline
@@ -23,7 +25,12 @@ LIGHT_COLORS = ['lightblue', 'lightcoral', 'bisque',
                 'thistle', 'lightpink']
 
 
-def plot_or_save(fig, save_path):
+def plot_or_save(fig: Figure, save_path: str | Path | None):
+    """
+    Shows the plot or saves it to a .png file.
+
+    The filename is taken from the plot title. Pass a None path to show the plot without saving.
+    """
     if fig._suptitle is not None:
         file_name = fig._suptitle.get_text()
     else:
@@ -36,12 +43,25 @@ def plot_or_save(fig, save_path):
         plt.show()
 
 
-def plot_histogram(ax, data, color: str, title: str, bins='doane'):
+def plot_histogram(ax: Axes, data, color: str, title: str, bins: str | int = 'doane'):
+    """
+    Plots a histogram on ax.
+    :param ax: The axis to use for the plot.
+    :param data: The data to plot of shape (N).
+    :param color: Bars color.
+    :param title: Title of the histogram.
+    :param bins: Bins argument passed to the hist() function. Can be a number or a string for automatic binning.
+    """
     ax.set_title(title, pad=10)
     ax.hist(data, bins=bins, color=color, edgecolor='black')
 
 
 def plot_dataset_dist(path: str, save_path=None):
+    """
+    Plots the distribution of the velocity, pressure and number of porous points of a whole OpenFOAM dataset.
+    :param path: Path to the data. The folder must contain a child folder for each OpenFOAM case.
+    :param save_path: Pass None to show the plot without saving.
+    """
     data = []
     for case in track(glob.glob(f"{path}/*/"), description="Reading data"):
         case_data = data_parser.parse_case_fields(case, 'U', 'p', 'cellToRegion')
@@ -56,7 +76,19 @@ def plot_dataset_dist(path: str, save_path=None):
              save_path)
 
 
-def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
+def plot_data_dist(title: str,
+                   u: np.ndarray,
+                   p: np.ndarray,
+                   zones_ids: np.ndarray | None = None,
+                   save_path=None):
+    """
+    Plots the distribution of a single case.
+    :param title: The title of the plot.
+    :param u: The velocity data of shape (N,D).
+    :param p: The pressure data of shape (N,1).
+    :param zones_ids: The binary porous media indicator of shape (N,1). If not provided the distribution of the velocity magnitude is used.
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig = plt.figure(layout='constrained')
     fig.suptitle(title, fontsize=20)
     ax_ux, ax_uy, ax_uz, ax_p, ax_zones, _ = fig.subplots(ncols=3, nrows=2).flatten()
@@ -73,7 +105,17 @@ def plot_data_dist(title, u, p, zones_ids=None, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
+def plot_barh(ax: Axes, title: str, values: list, labels: list[str], colors: list[str], spacing=0.01, offset=0.0):
+    """
+    Plots a horizontal bar graph on ax. Numerical values are formatted with the scientific notation.
+    :param ax: The axis to plot on.
+    :param title: The title of the plot.
+    :param values: List of values to plot.
+    :param labels: The label of each bar.
+    :param colors: The color of each bar.
+    :param spacing:
+    :param offset:
+    """
     ax.set_title(title, pad=10)
     ax.set_xlim(right=max(values) * 1.3)
     w = 0.01
@@ -85,6 +127,14 @@ def plot_barh(ax, title, values, labels, colors, spacing=0.01, offset=0.0):
 
 
 def plot_timing(total: list, average: list, save_path=None):
+    """
+    Plots the average and total simulation times of both the OpenFOAM and PINN solvers.
+
+    The PINN data must be the first in each list.
+    :param total: Total simulation times over the whole dataset.
+    :param average: Average per case simulation time.
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig = plt.figure()
     ax_total, ax_avg = fig.subplots(2)
     colors = ['salmon', 'lightblue']
@@ -97,7 +147,13 @@ def plot_timing(total: list, average: list, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_errors(title, *args, save_path=None):
+def plot_errors(title: str, *args, save_path=None):
+    """
+    Plots errors with horizontal bars.
+    :param title: The title of the plot.
+    :param args: The values to plot. Must be provided as Ux, Uy, Uz, p. Uz is optional.
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig, ax = plt.subplots()
     colors = ['salmon', 'lightblue', 'palegreen']
     labels = [f'$U_x {M_S}$', f'$U_y {M_S}$', f'$p {M2_S2}$']
@@ -110,7 +166,14 @@ def plot_errors(title, *args, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_multi_bar(title, values: dict, values_labels, save_path=None):
+def plot_multi_bar(title: str, values: dict[str:list], values_labels: list[str], save_path=None):
+    """
+    Plots comparison bar graphs for multiple variables.
+    :param title: The title of the plot.
+    :param values: The values to plot. Must contain a vector of values for each key. The key names will be added to the legend.
+    :param values_labels: The labels to add to the x-axis.
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig, ax = plt.subplots(figsize=(len(values_labels) * len(values), 5))
     ax.set_title(title, pad=10)
     n_groups = len(values)
@@ -129,7 +192,12 @@ def plot_multi_bar(title, values: dict, values_labels, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_u_direction_change(data_dir, save_path=None):
+def plot_u_direction_change(data_dir: str, save_path=None):
+    """
+    Plots the distribution and per case average velocity direction change at each point.
+    :param data_dir: The dataset directory. Must contain a subfolder for each OpenFOAM case.
+    :param save_path: Pass None to show the plot without saving.
+    """
     diff = []
     for c in list(set(glob.glob(f'{data_dir}/*')) - set(glob.glob(f'{data_dir}/*.json'))):
         data = parse_internal_fields(c, 'mag(grad(Unorm))')
@@ -157,6 +225,13 @@ def plot_u_direction_change(data_dir, save_path=None):
 
 
 def box_plot(title: str, values, labels, save_path=None):
+    """
+    Box plot of multi variable data.
+    :param title: Title of the plot.
+    :param values: The data to plot of shape (N,D).
+    :param labels: Labels of shape (D).
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig, axs = plt.subplots(nrows=1, ncols=len(values))
     fig.suptitle(title)
 
@@ -166,10 +241,25 @@ def box_plot(title: str, values, labels, save_path=None):
 
 
 def get_fields_names(f: np.ndarray):
+    """Extracts the field names from data of shape (N,D). Assumes velocities before pressure ordering."""
     return ['$U_x$', '$U_y$', '$U_z$'][:f.shape[-1] - 1] + ['$p$']
 
 
-def plot_errors_vs_var(title, errors, var, labels, save_path=None):
+def plot_errors_vs_var(title: str,
+                       errors: np.ndarray,
+                       var: np.ndarray,
+                       labels: list[str],
+                       save_path=None):
+    """
+    Plots the value of multidimensional errors with respect to a variable using a scatter plot and a smoothed trand line.
+
+    The trend is added only if N > 5.
+    :param title: The title of the plot.
+    :param errors: Error data of shape (N,D).
+    :param var: Value of the target variable at each sample, shape (N).
+    :param labels: Label of each variable, shape (D).
+    :param save_path: Pass None to show the plot without saving.
+    """
     n_errors = errors.shape[-1]
     fig, axs = plt.subplots(ncols=1, nrows=n_errors, figsize=(8, 10))
     fig.suptitle(title)
@@ -193,13 +283,13 @@ def plot_errors_vs_var(title, errors, var, labels, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def get_heatmap(mae: np.array, x: np.array, y: np.array) -> tuple[np.array, np.array, np.array]:
+def get_heatmap(mae: np.array, x: np.array, y: np.array) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Creates a 2D heatmap matrix.
-    :param field_mae: N
-    :param x: N
-    :param y: N
-    :return a tuple with the matrix and the sorted x and y
+    Creates a 2D heatmap matrix of mae with respect to two variables x and y.
+    :param mae: Errors vector of shape (N).
+    :param x: First variable values of shape (N).
+    :param y: Second variable values of shape (N).
+    :return: a tuple with the matrix and the sorted x and y variables.
     """
     x_unique = np.unique(x)
     y_unique = np.unique(y)[::-1]
@@ -213,7 +303,22 @@ def get_heatmap(mae: np.array, x: np.array, y: np.array) -> tuple[np.array, np.a
     return heatmap, x_unique, y_unique
 
 
-def plot_errors_vs_multi_vars(title, errors, x, y, labels, save_path=None):
+def plot_errors_vs_multi_vars(title: str,
+                              errors: np.array,
+                              x: np.array,
+                              y: np.array,
+                              labels: list[str],
+                              save_path=None):
+    """
+    Plots the value of multidimensional errors with respect to a multidimensional variable with a heatmap.
+
+    :param title: The title of the plot.
+    :param errors: Errors vector of shape (N).
+    :param x: First variable values of shape (N).
+    :param y: Second variable values of shape (N).
+    :param labels: The variables label.
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig = plt.figure(figsize=(16, 9))
     axs = fig.subplots(nrows=1, ncols=errors.shape[-1], )
     fig.suptitle(title)
@@ -228,7 +333,16 @@ def plot_errors_vs_multi_vars(title, errors, x, y, labels, save_path=None):
     plot_or_save(fig, save_path)
 
 
-def plot_heatmap(ax, matrix, x, y, labels):
+def plot_heatmap(ax: Axes, matrix: np.ndarray, x: np.ndarray, y: np.ndarray, labels: list[str]):
+    """
+    Plots a heatmap with custom number formatting on ax.
+    :param ax: The axis to use for plotting.
+    :param matrix: The heatmap matrix created with get_heatmap()-
+    :param x: The sorted x-axis variable.
+    :param y: The sorted y-axis variable.
+    :param labels: The variables label.
+    """
+
     def tick_fmt(i, pos, l):
         if isinstance(l[0], np.int64):
             return f'{l[i]:d}'
@@ -253,7 +367,13 @@ def plot_heatmap(ax, matrix, x, y, labels):
                 ax.text(j, i, f'{value:.2e}', ha="center", va="center", color="black")
 
 
-def plot_per_case(title, values, save_path):
+def plot_per_case(title: str, values, save_path=None):
+    """
+    Plots multiple variables per case bar plots.
+    :param title: The title of the plot.
+    :param values: The values to plot of shape (C,D).
+    :param save_path: Pass None to show the plot without saving.
+    """
     fig = plt.figure(layout='constrained')
     fig.suptitle(title)
     axs = fig.subplots(nrows=values.shape[-1], ncols=1).flatten()

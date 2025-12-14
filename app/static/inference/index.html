@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" class="mdui-theme-auto">
+
+<head>
+    <title>Porous CFD</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.3.0.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <mdui-layout full-height>
+        <mdui-navigation-rail value="predicted" style="position: relative">
+            <mdui-button-icon id="backIcon" icon="arrow_back--rounded" slot="top"></mdui-button-icon>
+            <mdui-navigation-rail-item id="predictedIcon" icon="air--rounded" value="predicted">Predicted</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="trueIcon" icon="check--rounded" value="ground">True</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="errorIcon" icon="error--rounded" value="error">Errors</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="residualsIcon" icon="functions--rounded" value="residuals">Residuals</mdui-navigation-rail-item>
+            <mdui-button-icon id="infoIcon" icon="info--rounded" slot="bottom"></mdui-button-icon>
+        </mdui-navigation-rail>
+
+        <mdui-top-app-bar variant="center-aligned">
+            <mdui-top-app-bar-title>Predictions</mdui-top-app-bar-title>
+        </mdui-top-app-bar>
+
+        <mdui-layout-main>
+            <div class="inference-plots" id="plotsDiv"></div>
+        </mdui-layout-main>
+
+        <mdui-dialog close-on-overlay-click id="infoDialog">
+            <span slot="headline">About</span>
+            <span slot="description">This webapp allows to experiment with the 2D models presented in the paper
+                <i>Modeling diffusion in complex media through Physically Informed Neural Networks</i>. The goal of the
+                paper was the simulation of variable mixed fluid-porous domains using Physics Informed Neural
+                Networks.<br>
+                The predictions are computed using the Physics Informed PointNet or the Physics Informed PointNet++.<br>
+                Both the predictions obtained from the models and the ground truth simulations
+                resulting from OpenFOAM are available, together with the Mean Absolute Error and the Navier-Stokes-Darcy
+                equations
+                residuals, calculated using autograd.<br>
+                The source code of the project is available on <a
+                    href="https://github.com/Gallinator/porous-cfd">GitHub</a>.<br><br>
+                © 2025 Ciceri Luigi
+            </span>
+        </mdui-dialog>
+    </mdui-layout>
+    <script src="../js/inference.js"></script>
+</body>
+
+</html>

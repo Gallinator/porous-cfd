@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" class="mdui-theme-auto">
+
+<head>
+    <title>Porous CFD</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <script src="https://unpkg.com/mdui@2/mdui.global.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.3.0.js" charset="utf-8"></script>
+    <script src="./js/bspline.js"></script>
+    <script src="./js/visualization.js"></script>
+</head>
+
+<body>
+    <div id="baseContainer" style="position: relative; overflow: hidden">
+        <mdui-top-app-bar variant="center-aligned" scroll-target="myDiv">
+            <mdui-button-icon id="menuIcon" icon="menu--rounded"></mdui-button-icon>
+            <mdui-top-app-bar-title>Porous object drawer</mdui-top-app-bar-title>
+            <div style="flex-grow: 1"></div>
+            <mdui-button-icon id="acceptIcon" icon="check--rounded"></mdui-button-icon>
+        </mdui-top-app-bar>
+
+        <mdui-navigation-drawer modal close-on-esc close-on-overlay-click contained>
+            <div style="margin: 10%;">
+                <div class="mdui-prose">
+                    <label>Model</label>
+                </div>
+                <mdui-segmented-button-group id="modelSelector" full-width selects="single" value="pipn"
+                    style="margin-top: 5%;">
+                    <mdui-segmented-button value="pipn">PIPN</mdui-segmented-button>
+                    <mdui-segmented-button value="pipn_pp">PIPN++</mdui-segmented-button>
+                </mdui-segmented-button-group>
+
+                <div class="mdui-prose" style="margin-top: 5%;">
+                    <label>Spline degree</label>
+                </div>
+                <mdui-slider id="splineDegreeSlider" step="1" min="1" max="5" value="2" tickmarks
+                    style="margin-top: 1%;"></mdui-slider>
+
+                <div class="mdui-prose" style="margin-top: 5%;">
+                    <label>Object points</label>
+                </div>
+                <mdui-slider id="splinePointsSlider" tickmarks step="20" min="20" max="500" value="100"
+                    style="margin-top: 1%;"></mdui-slider>
+
+                <div class="mdui-prose" style="margin-top: 5%;">
+                    <label>Darcy coefficient</label>
+                </div>
+                <mdui-slider id="darcySlider" disabled tickmarks step="500" min="1000" max="16000" value="14000"
+                    style="margin-top: 1%;"></mdui-slider>
+
+                <div class="mdui-prose" style="margin-top: 5%;">
+                    <label>Inlet velocity m/s</label>
+                </div>
+                <mdui-slider id="velocitySlider" disabled step="0.005" min="0.095" max="0.25" value="0.2"
+                    style="margin-top: 1%;"></mdui-slider>
+
+                <div class="mdui-prose" style="margin-top: 5%;">
+                    <label>Inlet angle</label>
+                </div>
+                <mdui-slider id="velocitySlider" disabled step="1" min="-45" max="45" value="0"
+                    style="margin-top: 1%;"></mdui-slider>
+            </div>
+        </mdui-navigation-drawer>
+
+        <div style="display: flex; align-items: center; height: 100vh; width: 100vw; justify-content: center;">
+            <div id="myDiv" class="polygon-draw"></div>
+            <script src="./js/editor.js"></script>
+        </div>
+    </div>
+</body>
+
+</html>

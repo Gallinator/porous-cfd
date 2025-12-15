@@ -1,3 +1,4 @@
+let uuid = self.crypto.randomUUID();
 
 let myDiv = document.getElementById("myDiv")
 
@@ -126,6 +127,7 @@ splineDegreeSlider.addEventListener("change", () => {
 
 acceptIcon.addEventListener("click", async () => {
   let body = {
+    "uuid":uuid,
     model: modelSelector.value.toLowerCase(),
     points: curve.getPlotlyCurve(nPoints)
   }

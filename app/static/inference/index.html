@@ -13,12 +13,16 @@
 
 <body>
     <mdui-layout full-height>
-        <mdui-navigation-rail value="predicted" style="position: relative">
+        <mdui-navigation-rail value="predicted">
             <mdui-button-icon id="backIcon" icon="arrow_back--rounded" slot="top"></mdui-button-icon>
-            <mdui-navigation-rail-item id="predictedIcon" icon="air--rounded" value="predicted">Predicted</mdui-navigation-rail-item>
-            <mdui-navigation-rail-item id="trueIcon" icon="check--rounded" value="ground">True</mdui-navigation-rail-item>
-            <mdui-navigation-rail-item id="errorIcon" icon="error--rounded" value="error">Errors</mdui-navigation-rail-item>
-            <mdui-navigation-rail-item id="residualsIcon" icon="functions--rounded" value="residuals">Residuals</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="predictedIcon" icon="air--rounded"
+                value="predicted">Predicted</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="trueIcon" icon="check--rounded"
+                value="ground">True</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="errorIcon" icon="error--rounded"
+                value="error">MAE</mdui-navigation-rail-item>
+            <mdui-navigation-rail-item id="residualsIcon" icon="functions--rounded"
+                value="residuals">Residuals</mdui-navigation-rail-item>
             <mdui-button-icon id="infoIcon" icon="info--rounded" slot="bottom"></mdui-button-icon>
         </mdui-navigation-rail>
 

@@ -20,52 +20,10 @@ let secondaryColor = mdColorToPlotly(style.getPropertyValue("--mdui-color-invers
 let onSurfaceColor = mdColorToPlotly(style.getPropertyValue("--mdui-color-on-surface"))
 let gridcolor = mdColorToPlotly(style.getPropertyPriority("--mdui-color-on-surface-variant"))
 
-let data = JSON.parse(sessionStorage.getItem("data"))
-console.log(data)
+let storedData = JSON.parse(sessionStorage.getItem("data"))
+let rawData = storedData.raw_data
+let gridData = storedData.grid_data
 
-var trace1 = {
-    x: data.points.x,
-    y: data.points.y,
-    mode: 'markers',
-    type: 'scatter',
-    marker: { color: data.predicted.Ux },
-    colorscale: "balance"
-};
-
-
-var trace2 = {
-    x: data.points.x,
-    y: data.points.y,
-    xaxis: 'x2',
-    yaxis: 'y',
-    mode: 'markers',
-    type: 'scatter',
-    marker: { color: data.predicted.Uy },
-};
-
-
-var trace3 = {
-    x: data.points.x,
-    y: data.points.y,
-    xaxis: 'x',
-    yaxis: 'y3',
-    mode: 'markers',
-    type: 'scatter',
-    marker: { color: data.predicted.p },
-};
-
-
-var trace4 = {
-    x: data.points.x,
-    y: data.points.y,
-    xaxis: 'x2',
-    yaxis: 'y3',
-    mode: 'markers',
-    type: 'scatter',
-    marker: { color: data.predicted.U },
-};
-
-let traces = [trace1, trace2, trace3, trace4];
 let xaxis = {
     title: { text: "$x$" },
     range: [-0.4, 0.6],
@@ -159,22 +117,49 @@ function updatePlot(plotDiv, rawData, gridData, unitText, title) {
         "z": [gridData],
         "colorbar.title.text": unitText
     }
+
+    let layoutUpdate = {
+        "title.text": title
+    }
+
+    Plotly.update(plotDiv, contourUpdate, layoutUpdate, [1])
+
+    let equalAspectPlotSize = getEqualAspectSize(plotDiv, 1 / 0.6)
+    Plotly.update(plotDiv, { "hovertemplate": "%{customdata:.3f}" + " " + unitText },
+        { height: equalAspectPlotSize.y, autosize: false }, [0])
+    // This has tp be manually set because using restyle does not work
+    plotDiv._fullData[0].customdata = rawData
 }
 
-Plotly.newPlot(plots, traces, layout)
+createPlot("$U_x$", tlPlot, rawData.points, rawData.predicted.Ux, gridData.points, gridData.predicted.Ux, "m \\ s")
+createPlot("$U_y$", trPlot, rawData.points, rawData.predicted.Uy, gridData.points, gridData.predicted.Uy, "m \\ s")
+createPlot("$p$", blPlot, rawData.points, rawData.predicted.p, gridData.points, gridData.predicted.p, "m² \\ s²")
+createPlot("$U_x$", brPlot, rawData.points, rawData.predicted.U, gridData.points, gridData.predicted.U, "m \\ s")
 
 predictedIcon.addEventListener("focus", () => {
-    Plotly.restyle(plots, { "marker.color": [data.predicted.Ux, data.predicted.Uy, data.predicted.p, data.predicted.U] })
+    updatePlot(tlPlot, rawData.predicted.Ux, gridData.predicted.Ux, "m \\ s", "$U_x$")
+    updatePlot(trPlot, rawData.predicted.Uy, gridData.predicted.Uy, "m \\ s", "$U_y$")
+    updatePlot(blPlot, rawData.predicted.p, gridData.predicted.p, "m² \\ s²", "$p$")
+    updatePlot(brPlot, rawData.predicted.U, gridData.predicted.U, "m \\ s", "$U$")
 })
 
 trueIcon.addEventListener("focus", () => {
-    Plotly.restyle(plots, { "marker.color": [data.target.Ux, data.target.Uy, data.target.p, data.target.U] })
+    updatePlot(tlPlot, rawData.target.Ux, gridData.target.Ux, "m \\ s", "$U_x$")
+    updatePlot(trPlot, rawData.target.Uy, gridData.target.Uy, "m \\ s", "$U_y$")
+    updatePlot(blPlot, rawData.target.p, gridData.target.p, "m² \\ s²", "$p$")
+    updatePlot(brPlot, rawData.target.U, gridData.target.U, "m \\ s", "$U$")
 })
 
 errorIcon.addEventListener("focus", () => {
-    Plotly.restyle(plots, { "marker.color": [data.error.Ux, data.error.Uy, data.error.p, data.error.U] })
+    updatePlot(tlPlot, rawData.error.Ux, gridData.error.Ux, "m \\ s", "$U_x$")
+    updatePlot(trPlot, rawData.error.Uy, gridData.error.Uy, "m \\ s", "$U_y$")
+    updatePlot(blPlot, rawData.error.p, gridData.error.p, "m² \\ s²", "$p$")
+    updatePlot(brPlot, rawData.error.U, gridData.error.U, "m \\ s", "$U$")
 })
 
 residualsIcon.addEventListener("focus", () => {
-    Plotly.restyle(plots, { "marker.color": [data.residuals.Momentumx, data.residuals.Momentumx, data.residuals.div, data.residuals.Momentum] })
+    updatePlot(tlPlot, rawData.residuals.Momentumx, gridData.residuals.Momentumx, "", "$Momentum_x$")
+    updatePlot(trPlot, rawData.residuals.Momentumy, gridData.residuals.Momentumy, "", "$Momentum_y$")
+    updatePlot(blPlot, rawData.residuals.div, gridData.residuals.div, "", "$Divergence$")
+    updatePlot(brPlot, rawData.residuals.Momentum, gridData.residuals.Momentum, "", "$Momentum$")
 })

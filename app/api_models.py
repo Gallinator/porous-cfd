@@ -13,4 +13,4 @@ class Response2d(BaseModel):
     predicted: dict[str, list[float]]
     error: dict[str, list[float]]
     residuals: dict[str, list[float]]
-    porous_ids: list[float]
+    porous_ids: list[float] | None = None

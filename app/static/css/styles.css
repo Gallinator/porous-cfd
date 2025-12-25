@@ -12,8 +12,15 @@ html {
     aspect-ratio: 1/0.6;
 }
 
-.inference-plots {
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
+.inference-plots-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+.inference-plot {
+    flex: 0 0 48%;
+    gap: 5%;
+    align-self: center;
 }

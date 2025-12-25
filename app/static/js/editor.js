@@ -13,7 +13,7 @@ const acceptIcon = document.getElementById("acceptIcon")
 const splineDegreeSlider = document.getElementById("splineDegreeSlider")
 const splinePointsSlider = document.getElementById("splinePointsSlider")
 const modelSelector = document.getElementById("modelSelector")
-
+const loadingDialog = document.getElementById("loadingDialog")
 
 let style = getComputedStyle(document.documentElement)
 let backgroundColor = mdColorToPlotly(style.getPropertyValue("--mdui-color-background"))
@@ -36,7 +36,8 @@ var curveTrace = {
   x: curveData.x,
   y: curveData.y,
   mode: 'lines+markers',
-  line: { color: primaryColor }
+  line: { color: primaryColor },
+  fill: "toself"
 };
 
 
@@ -108,7 +109,6 @@ acceptIcon.addEventListener("click", () => {
 
 splinePointsSlider.addEventListener("input", () => {
   nPoints = splinePointsSlider.value
-  console.log(curveEditor.curve)
   curveEditor.onupdate()
 })
 
@@ -126,8 +126,10 @@ splineDegreeSlider.addEventListener("change", () => {
 })
 
 acceptIcon.addEventListener("click", async () => {
+  loadingDialog.open = true
+
   let body = {
-    "uuid":uuid,
+    "uuid": uuid,
     model: modelSelector.value.toLowerCase(),
     points: curve.getPlotlyCurve(nPoints)
   }
@@ -147,4 +149,6 @@ acceptIcon.addEventListener("click", async () => {
   sessionStorage.setItem("data", JSON.stringify(data))
 
   window.open("inference/index.html", "_self")
+
+  loadingDialog.open = false
 })

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from fastapi import FastAPI
 from lightning import Trainer
+from scipy.interpolate import griddata
 from starlette.staticfiles import StaticFiles
 from torch.utils.data import DataLoader
 
@@ -24,6 +25,23 @@ def get_model(model_type):
             return PipnFoamPpMrg.load_from_checkpoint("assets/weights/pipn-pp-mrg.ckpt")
         case _:
             raise NotImplementedError
+
+
+def get_interpolation_grid(points, grid_res) -> list[np.ndarray]:
+    points_x, points_y = points[:, 0].flatten(), points[:, 1].flatten()
+    xx = np.linspace(points_x.min(), points_x.max(), grid_res)
+    yy = np.linspace(points_y.min(), points_y.max(), grid_res)
+    return np.meshgrid(xx, yy)
+
+
+def interpolate_on_grid(grid, points, *data) -> list:
+    return [griddata(points, d, tuple(grid), method='cubic', fill_value=0).flatten() for d in data]
+
+
+def ndarrays_to_list(data: dict[str:np.ndarray]):
+    for k, v in data.items():
+        data[k] = v.flatten().tolist()
+    return data
 
 
 def inverse_transform_output(dataset: FoamDataset, data: FoamData, *fields) -> list[np.ndarray]:

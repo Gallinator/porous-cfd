@@ -69,14 +69,18 @@ let traces = [trace1, trace2, trace3, trace4];
 let xaxis = {
     title: { text: "$x$" },
     range: [-0.4, 0.6],
-    gridcolor: gridcolor,
+    minallowed: -0.4,
+    maxallowed: 0.6,
+    "gridcolor": gridcolor,
     zeroline: false,
     dtick: 0.1
 }
 let yaxis = {
     title: { text: "$y$" },
     range: [-0.3, 0.3],
-    gridcolor: gridcolor,
+    minallowed: -0.3,
+    maxallowed: 0.3,
+    "gridcolor": gridcolor,
     zeroline: false,
     dtick: 0.1
 }

@@ -27,7 +27,12 @@
         </mdui-navigation-rail>
 
         <mdui-layout-main>
-            <div class="inference-plots" id="plotsDiv"></div>
+            <div class="inference-plots-container">
+                <div id="tlPlot" class="inference-plot"></div>
+                <div id="trPlot" class="inference-plot"></div>
+                <div id="blPlot" class="inference-plot"></div>
+                <div id="brPlot" class="inference-plot"></div>
+            </div>
         </mdui-layout-main>
 
         <mdui-dialog close-on-overlay-click id="infoDialog">

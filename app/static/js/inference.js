@@ -4,7 +4,6 @@ let infoDialog = document.getElementById("infoDialog")
 
 document.getElementById("infoIcon").addEventListener("click", () => infoDialog.open = true)
 
-let plots = document.getElementById("plotsDiv")
 let predictedIcon = document.getElementById("predictedIcon")
 let trueIcon = document.getElementById("trueIcon")
 let errorIcon = document.getElementById("errorIcon")
@@ -82,22 +81,79 @@ let yaxis = {
     dtick: 0.1
 }
 
-let layout = {
-    "xaxis": xaxis,
-    "yaxis": yaxis,
-    "xaxis2": xaxis,
-    "yaxis3": yaxis,
-    grid: {
-        rows: 2,
-        columns: 2,
-        subplots: [['xy3', 'x3y4'], ['xy', 'x2y']],
-        roworder: 'bottom to top'
-    },
-    aspectmode: "equal",
-    paper_bgcolor: backgroundColor,
-    plot_bgcolor: backgroundColor,
-    font: {
-        color: onSurfaceColor
+let tlPlot = document.getElementById("tlPlot")
+let trPlot = document.getElementById("trPlot")
+let blPlot = document.getElementById("blPlot")
+let brPlot = document.getElementById("brPlot")
+
+function getEqualAspectSize(plotDiv, aspect) {
+    let plotPixSize = getPlotPixelSize(plotDiv)
+    let margins = plotDiv._fullLayout.margin
+    plotPixSize.y = plotPixSize.x * 1 / aspect
+
+    plotPixSize.x += margins.l + margins.r
+    plotPixSize.y += margins.t + margins.b
+    return plotPixSize
+}
+
+function createPlot(title, plotDiv, rawPoints, rawData, gridPoints, gridField, unitText) {
+    let scatterTrace = {
+        x: rawPoints.x,
+        y: rawPoints.y,
+        mode: 'markers',
+        type: 'scatter',
+        marker: { color: "black" },
+        colorscale: "balance",
+        name: "",
+        customdata: rawData,
+        hovertemplate: "%{customdata:.3f}" + " " + unitText
+    }
+
+    let contourTrace = {
+        x: gridPoints.x,
+        y: gridPoints.y,
+        z: gridField,
+        type: 'contour',
+        colorscale: "Portland",
+        contours: { coloring: 'heatmap' },
+        ncontours: 20,
+        line: { width: 0 },
+        colorbar: {
+            title: { text: unitText, color: onSurfaceColor },
+            thickness: 0.025,
+            thicknessmode: "fraction"
+        },
+        name: "",
+        hovertemplate: false,
+        hoverinfo: "skip"
+    }
+
+    let layout = {
+        "title": { text: title, font: { color: onSurfaceColor } },
+        "xaxis": xaxis,
+        "yaxis": yaxis,
+        paper_bgcolor: backgroundColor,
+        plot_bgcolor: backgroundColor,
+        font: { color: onSurfaceColor },
+        showlegend: false
+    }
+
+    let config = {
+        responsive: true,
+        displaylogo: false
+    }
+
+    Plotly.newPlot(plotDiv, [scatterTrace, contourTrace], layout, config)
+
+    // Update the plot to have the correct aspect ratio after automatically calculating the margins
+    let equalAspectPlotSize = getEqualAspectSize(plotDiv, 1 / 0.6)
+    Plotly.relayout(plotDiv, { height: equalAspectPlotSize.y, autosize: false })
+}
+
+function updatePlot(plotDiv, rawData, gridData, unitText, title) {
+    let contourUpdate = {
+        "z": [gridData],
+        "colorbar.title.text": unitText
     }
 }
 

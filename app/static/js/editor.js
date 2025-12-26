@@ -14,6 +14,8 @@ const splineDegreeSlider = document.getElementById("splineDegreeSlider")
 const splinePointsSlider = document.getElementById("splinePointsSlider")
 const modelSelector = document.getElementById("modelSelector")
 const loadingDialog = document.getElementById("loadingDialog")
+const errorDialog = document.getElementById("errorDialog")
+const errorDialogAcceptButton = document.getElementById("errorDialogAcceptButton")
 
 let style = getComputedStyle(document.documentElement)
 let backgroundColor = mdColorToPlotly(style.getPropertyValue("--mdui-color-background"))
@@ -103,8 +105,10 @@ menuIcon.addEventListener("click", () => {
 
 navigationDrawer.addEventListener("close", () => curveEditor.enabled = true)
 
-acceptIcon.addEventListener("click", () => {
+errorDialog.addEventListener("closed", () => { curveEditor.enabled = true })
 
+errorDialogAcceptButton.addEventListener("click", () => {
+  errorDialog.open = false
 })
 
 splinePointsSlider.addEventListener("input", () => {
@@ -126,6 +130,7 @@ splineDegreeSlider.addEventListener("change", () => {
 })
 
 acceptIcon.addEventListener("click", async () => {
+  curveEditor.enabled = false
   loadingDialog.open = true
 
   let body = {
@@ -145,10 +150,23 @@ acceptIcon.addEventListener("click", async () => {
     })
 
   let data = await response.json()
+  console.log(response.status)
+  if (response.status >= 300) {
+    loadingDialog.open = false
 
-  sessionStorage.setItem("data", JSON.stringify(data))
+    let errorListener = function () {
+      errorDialog.open = true
+      loadingDialog.removeEventListener("closed", errorListener)
+    }
 
-  window.open("inference/index.html", "_self")
+    loadingDialog.addEventListener("closed", errorListener)
+  }
+  else {
+    sessionStorage.setItem("data", JSON.stringify(data))
 
-  loadingDialog.open = false
+    window.open("inference/index.html", "_self")
+
+    loadingDialog.open = false
+    curveEditor.enabled = true
+  }
 })

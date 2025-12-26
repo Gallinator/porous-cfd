@@ -72,6 +72,15 @@
             <p style="text-align: center;">Simulating...</p>
             <mdui-linear-progress></mdui-linear-progress>
         </mdui-dialog>
+        <mdui-dialog close-on-overlay-click id="errorDialog">
+            <span slot="headline">An error occurred!</span>
+            <span slot="description">Please try again. <br>If the error persists, reduce the sharpness of the porous
+                object
+                corners.</span>
+            <div style="width: 100%;">
+                <mdui-button id="errorDialogAcceptButton" variant="text" style="float: right;">OK</mdui-button>
+            </div>
+        </mdui-dialog>
     </div>
 
 

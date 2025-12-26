@@ -2,7 +2,7 @@ import shutil
 from multiprocessing import Process
 import numpy as np
 import torch
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from lightning import Trainer
 from scipy.interpolate import griddata
 from starlette.staticfiles import StaticFiles
@@ -72,101 +72,104 @@ openfoam_cmd = f'{settings.openfoam_dir}/etc/openfoam'
 
 @app.post("/predict", summary="Predict flow from porous object", response_model=dict[str, Response2d])
 def predict(input_data: Predict2dInput):
-    session_dir = f"sessions/{input_data.uuid}"
+    try:
+        session_dir = f"sessions/{input_data.uuid}"
 
-    # Generate mesh using a new process due to blender import issues
-    predict_process = Process(target=generate_f, args=(input_data, session_dir))
-    predict_process.start()
-    predict_process.join()
+        # Generate mesh using a new process due to blender import issues
+        predict_process = Process(target=generate_f, args=(input_data, session_dir))
+        predict_process.start()
+        predict_process.join()
 
-    # Override the generated min_points.json
-    shutil.copy("assets/min_points.json", f"{session_dir}/data")
+        # Override the generated min_points.json
+        shutil.copy("assets/min_points.json", f"{session_dir}/data")
 
-    dataset = FoamDataset(f"{session_dir}/data/split", 1000, 200, 500, np.random.default_rng(8421), meta_dir="assets")
+        dataset = FoamDataset(f"{session_dir}/data/split", 1000, 200, 500, np.random.default_rng(8421), meta_dir="assets")
 
-    model = get_model(input_data.model)
-    model.verbose_predict = True
+        model = get_model(input_data.model)
+        model.verbose_predict = True
 
-    torch.manual_seed(8421)
-    data_loader = DataLoader(dataset,
-                             1,
-                             num_workers=settings.n_procs,
-                             persistent_workers=True,
-                             shuffle=False,
-                             pin_memory=True,
-                             collate_fn=collate_fn)
+        torch.manual_seed(8421)
+        data_loader = DataLoader(dataset,
+                                 1,
+                                 num_workers=settings.n_procs,
+                                 persistent_workers=True,
+                                 shuffle=False,
+                                 pin_memory=True,
+                                 collate_fn=collate_fn)
 
-    trainer = Trainer(logger=False,
-                      enable_checkpointing=False,
-                      inference_mode=False)
+        trainer = Trainer(logger=False,
+                          enable_checkpointing=False,
+                          inference_mode=False)
 
-    predicted, residuals = trainer.predict(model, dataloaders=data_loader)[0]
+        predicted, residuals = trainer.predict(model, dataloaders=data_loader)[0]
 
-    shutil.rmtree(session_dir)
+        shutil.rmtree(session_dir)
 
-    c, tgt_u, tgt_p = inverse_transform_output(dataset, dataset[0], "C", "U", "p")
-    points = {"x": c[..., 0],
-              "y": c[..., 1]}
+        c, tgt_u, tgt_p = inverse_transform_output(dataset, dataset[0], "C", "U", "p")
+        points = {"x": c[..., 0],
+                  "y": c[..., 1]}
 
-    target = {"Ux": tgt_u[..., 0],
-              "Uy": tgt_u[..., 1],
-              "U": np.linalg.norm(tgt_u, axis=1),
-              "p": tgt_p}
+        target = {"Ux": tgt_u[..., 0],
+                  "Uy": tgt_u[..., 1],
+                  "U": np.linalg.norm(tgt_u, axis=1),
+                  "p": tgt_p}
 
-    pred_u, pred_p = inverse_transform_output(dataset, predicted, "U", "p")
+        pred_u, pred_p = inverse_transform_output(dataset, predicted, "U", "p")
 
-    pred = {"Ux": pred_u[0, ..., 0],
-            "Uy": pred_u[0, ..., 1],
-            "U": np.linalg.norm(pred_u[0], axis=1),
-            "p": pred_p[0]}
+        pred = {"Ux": pred_u[0, ..., 0],
+                "Uy": pred_u[0, ..., 1],
+                "U": np.linalg.norm(pred_u[0], axis=1),
+                "p": pred_p[0]}
 
-    error_u, error_p = np.abs(pred_u - tgt_u), np.abs(pred_p - tgt_p)
-    error = {"Ux": error_u[0, ..., 0],
-             "Uy": error_u[0, ..., 1],
-             "U": np.linalg.norm(error_u[0], axis=1),
-             "p": error_p[0]}
+        error_u, error_p = np.abs(pred_u - tgt_u), np.abs(pred_p - tgt_p)
+        error = {"Ux": error_u[0, ..., 0],
+                 "Uy": error_u[0, ..., 1],
+                 "U": np.linalg.norm(error_u[0], axis=1),
+                 "p": error_p[0]}
 
-    residuals = {"Momentumx": residuals["Momentumx"].numpy(force=True)[0],
-                 "Momentumy": residuals["Momentumy"].numpy(force=True)[0],
-                 "Momentum": np.linalg.norm(residuals["Momentum"].numpy(force=True)[0], axis=1),
-                 "div": residuals["div"].numpy(force=True)[0]}
+        residuals = {"Momentumx": residuals["Momentumx"].numpy(force=True)[0],
+                     "Momentumy": residuals["Momentumy"].numpy(force=True)[0],
+                     "Momentum": np.linalg.norm(residuals["Momentum"].numpy(force=True)[0], axis=1),
+                     "div": residuals["div"].numpy(force=True)[0]}
 
-    porous_ids = dataset[0]["cellToRegion"].flatten()
+        porous_ids = dataset[0]["cellToRegion"].flatten()
 
-    grid = get_interpolation_grid(c, 50)
-    grid_points = {"x": grid[0].flatten(), "y": grid[1].flatten()}
+        grid = get_interpolation_grid(c, 50)
+        grid_points = {"x": grid[0].flatten(), "y": grid[1].flatten()}
 
-    grid_pred = interpolate_on_grid(grid, c, pred["Ux"], pred["Uy"], pred["U"], pred["p"])
-    grid_pred = dict(zip(pred.keys(), grid_pred))
+        grid_pred = interpolate_on_grid(grid, c, pred["Ux"], pred["Uy"], pred["U"], pred["p"])
+        grid_pred = dict(zip(pred.keys(), grid_pred))
 
-    grid_target = interpolate_on_grid(grid, c, target["Ux"], target["Uy"], target["U"], target["p"])
-    grid_target = dict(zip(target.keys(), grid_target))
+        grid_target = interpolate_on_grid(grid, c, target["Ux"], target["Uy"], target["U"], target["p"])
+        grid_target = dict(zip(target.keys(), grid_target))
 
-    grid_error = interpolate_on_grid(grid, c, error["Ux"], error["Uy"], error["U"], error["p"])
-    grid_error = dict(zip(pred.keys(), grid_error))
+        grid_error = interpolate_on_grid(grid, c, error["Ux"], error["Uy"], error["U"], error["p"])
+        grid_error = dict(zip(pred.keys(), grid_error))
 
-    internal_c = dataset.normalizers["C"].inverse_transform(dataset[0]["internal"]["C"].numpy(force=True))
+        internal_c = dataset.normalizers["C"].inverse_transform(dataset[0]["internal"]["C"].numpy(force=True))
 
-    grid_residuals = interpolate_on_grid(grid, internal_c, residuals["Momentumx"],
-                                         residuals["Momentumy"],
-                                         residuals["Momentum"],
-                                         residuals["div"])
-    grid_residuals = dict(zip(residuals.keys(), grid_residuals))
+        grid_residuals = interpolate_on_grid(grid, internal_c, residuals["Momentumx"],
+                                             residuals["Momentumy"],
+                                             residuals["Momentum"],
+                                             residuals["div"])
+        grid_residuals = dict(zip(residuals.keys(), grid_residuals))
 
-    raw_data = Response2d(points=ndarrays_to_list(points),
-                          target=ndarrays_to_list(target),
-                          porous_ids=porous_ids.tolist(),
-                          predicted=ndarrays_to_list(pred),
-                          error=ndarrays_to_list(error),
-                          residuals=ndarrays_to_list(residuals))
+        raw_data = Response2d(points=ndarrays_to_list(points),
+                              target=ndarrays_to_list(target),
+                              porous_ids=porous_ids.tolist(),
+                              predicted=ndarrays_to_list(pred),
+                              error=ndarrays_to_list(error),
+                              residuals=ndarrays_to_list(residuals))
 
-    grid_data = Response2d(points=ndarrays_to_list(grid_points),
-                           target=ndarrays_to_list(grid_target),
-                           predicted=ndarrays_to_list(grid_pred),
-                           error=ndarrays_to_list(grid_error),
-                           residuals=ndarrays_to_list(grid_residuals))
+        grid_data = Response2d(points=ndarrays_to_list(grid_points),
+                               target=ndarrays_to_list(grid_target),
+                               predicted=ndarrays_to_list(grid_pred),
+                               error=ndarrays_to_list(grid_error),
+                               residuals=ndarrays_to_list(grid_residuals))
 
-    return {"raw_data": raw_data, "grid_data": grid_data}
+        return {"raw_data": raw_data, "grid_data": grid_data}
+    except:
+        raise HTTPException(status_code=500)
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

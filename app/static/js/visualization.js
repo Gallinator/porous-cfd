@@ -168,7 +168,36 @@ class CurveEditor {
             event.preventDefault();
 
             let clickedPoint = getPlotPos(this.div, event)
-            this.curve.addControlPoint(new Point(clickedPoint.x, clickedPoint.y));
+
+            let minDist = Number.MAX_VALUE
+            let minId = 0
+
+            let nControls = this.curve.closed ? this.curve.controlPoints.length - this.curve.degree : this.curve.controlPoints.length
+
+            for (let i = 0; i < nControls; i++) {
+                let p = this.curve.controlPoints[i]
+                let dist = this.getDistance(clickedPoint, p)
+                if (dist < minDist) {
+                    minDist = dist
+                    minId = i
+                }
+            }
+
+            let nextP = this.curve.controlPoints[(minId + 1) % nControls]
+            let prevP = this.curve.controlPoints[(minId - 1 + nControls) % nControls]
+            let minP = this.curve.controlPoints[minId]
+
+            let nextVec = { x: nextP.x - minP.x, y: nextP.y - minP.y }
+            let prevVec = { x: minP.x - prevP.x, y: minP.y - prevP.y }
+            let halfVec = { x: (nextVec.x + prevVec.x) / 2, y: (nextVec.y + prevVec.y) / 2 }
+            let clickedVec = { x: clickedPoint.x - minP.x, y: clickedPoint.y - minP.y }
+            
+            let dot = halfVec.x * clickedVec.x + halfVec.y * clickedVec.y
+
+            if (dot > 0)
+                minId = (minId + 1) % nControls
+
+            this.curve.addControlPoint(new Point(clickedPoint.x, clickedPoint.y), minId);
             this.onupdate();
         });
     }

@@ -24,3 +24,7 @@ html {
     gap: 5%;
     align-self: center;
 }
+
+.button-icon{
+    color: inherit;
+}

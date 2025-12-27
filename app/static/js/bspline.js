@@ -20,9 +20,21 @@ class BSpline {
 
     };
 
-    addControlPoint(p) {
-        let insertId = this.controlPoints.length + (this.closed) ? -this.degree : 0
+    updateOverlappingControlPoints() {
+        if (!this.closed)
+            return
+
+        for (let i = 0; i < this.degree; i++) {
+            let anchorPoint = this.controlPoints[i]
+            let overlapId = this.controlPoints.length - (this.degree - i)
+            this.controlPoints[overlapId].x = anchorPoint.x
+            this.controlPoints[overlapId].y = anchorPoint.y
+        }
+    }
+
+    addControlPoint(p, insertId) {
         this.controlPoints.splice(insertId, 0, p);
+        this.updateOverlappingControlPoints()
         this.knots = this.createKnots()
     };
 

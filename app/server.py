@@ -169,6 +169,7 @@ async def predict(input_data: Predict2dInput):
 
         return {"raw_data": raw_data, "grid_data": grid_data}
     except:
+        traceback.print_exc()
         raise HTTPException(status_code=500)
 
 

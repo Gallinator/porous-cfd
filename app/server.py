@@ -1,6 +1,8 @@
+import asyncio
 import os.path
 import shutil
 import traceback
+from contextlib import asynccontextmanager
 from multiprocessing import Process
 import numpy as np
 import torch
@@ -15,18 +17,6 @@ from dataset.foam_data import FoamData
 from dataset.foam_dataset import FoamDataset, collate_fn
 from models.pipn.pipn_foam import PipnFoam, PipnFoamPp, PipnFoamPpMrg
 from app.api_models import Predict2dInput, Response2d
-
-
-def get_model(model_type):
-    match model_type:
-        case 'pipn':
-            return PipnFoam.load_from_checkpoint("assets/weights/pipn.ckpt")
-        case 'pipn_pp':
-            return PipnFoamPp.load_from_checkpoint("assets/weights/pipn-pp.ckpt")
-        case 'pipn_pp_mrg':
-            return PipnFoamPpMrg.load_from_checkpoint("assets/weights/pipn-pp-mrg.ckpt")
-        case _:
-            raise NotImplementedError
 
 
 def get_interpolation_grid(points, grid_res) -> list[np.ndarray]:
@@ -67,15 +57,28 @@ def generate_f(input_data: Predict2dInput, session_root: str):
     datagen.generate(f"{session_root}/data")
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.models = {}
+    app.models['pipn'] = PipnFoam.load_from_checkpoint("assets/weights/pipn.ckpt")
+    app.models['pipn'].verbose_predict = True
+    app.models['pipn_pp'] = PipnFoamPp.load_from_checkpoint("assets/weights/pipn-pp.ckpt")
+    app.models['pipn_pp'].verbose_predict = True
+    app.models['pipn_pp_mrg'] = PipnFoamPpMrg.load_from_checkpoint("assets/weights/pipn-pp-mrg.ckpt")
+    app.models['pipn_pp_mrg'].verbose_predict = True
+    yield
+
+
 settings = AppSettings()
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 openfoam_cmd = f'{settings.openfoam_dir}/etc/openfoam'
+app.model_lock = asyncio.Lock()
 
 
 @app.post("/predict", summary="Predict flow from porous object", response_model=dict[str, Response2d])
 async def predict(input_data: Predict2dInput):
     session_dir = f"sessions/{input_data.uuid}"
-
+    is_lock_acquired = False
     try:
         # Generate mesh using a new process due to blender import issues
         predict_process = Process(target=generate_f, args=(input_data, session_dir))
@@ -86,9 +89,6 @@ async def predict(input_data: Predict2dInput):
         shutil.copy("assets/min_points.json", f"{session_dir}/data")
 
         dataset = FoamDataset(f"{session_dir}/data/split", 1000, 200, 500, np.random.default_rng(8421), meta_dir="assets")
-
-        model = get_model(input_data.model)
-        model.verbose_predict = True
 
         torch.manual_seed(8421)
         data_loader = DataLoader(dataset,
@@ -103,7 +103,11 @@ async def predict(input_data: Predict2dInput):
                           enable_checkpointing=False,
                           inference_mode=False)
 
+        is_lock_acquired = await app.model_lock.acquire()
+        model = app.models[input_data.model]
         predicted, residuals = trainer.predict(model, dataloaders=data_loader)[0]
+        app.model_lock.release()
+        is_lock_acquired = False
 
         shutil.rmtree(session_dir)
 
@@ -175,6 +179,9 @@ async def predict(input_data: Predict2dInput):
 
         if os.path.exists(session_dir):
             shutil.rmtree(session_dir)
+
+        if is_lock_acquired:
+            app.model_lock.release()
 
         raise HTTPException(status_code=500)
 

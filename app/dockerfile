@@ -1,0 +1,29 @@
+FROM pytorch/pytorch:2.7.0-cuda12.8-cudnn9-runtime
+RUN useradd -ms /bin/bash appuser
+USER appuser
+
+WORKDIR /porous-cfd
+COPY --chown=appuser:appuser ../ .
+
+USER root
+
+RUN apt-get update && apt-get install curl -y
+RUN curl -s https://dl.openfoam.com/add-debian-repo.sh | sh
+RUN apt-get update && apt-get install build-essential openfoam2412 -y
+
+
+# Blender
+RUN apt-get install libx11-dev libxxf86vm-dev libxcursor-dev libxi-dev libxrandr-dev libxinerama-dev libegl-dev -y
+RUN apt-get install libwayland-dev wayland-protocols libxkbcommon-dev libdbus-1-dev libsm6 libxrender1 libfontconfig1 -y
+
+# Python dependencies
+RUN pip install --no-cache-dir torch_geometric
+RUN pip install --no-cache-dir pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.7.0+cu128.html
+RUN pip install --no-cache-dir -r requirements.txt
+
+USER appuser
+WORKDIR ./app
+
+ENV OPENFOAM_DIR="/usr/lib/openfoam/openfoam2412"
+ENV N_PROCS=2
+CMD [ "fastapi", "run", "server.py"]

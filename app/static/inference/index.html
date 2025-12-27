@@ -25,7 +25,6 @@
                 value="error">MAE</mdui-navigation-rail-item>
             <mdui-navigation-rail-item id="residualsIcon" icon="functions--rounded"
                 value="residuals">Residuals</mdui-navigation-rail-item>
-            <mdui-button-icon id="infoIcon" icon="info--rounded" slot="bottom"></mdui-button-icon>
         </mdui-navigation-rail>
 
         <mdui-layout-main>
@@ -37,22 +36,6 @@
             </div>
         </mdui-layout-main>
 
-        <mdui-dialog close-on-overlay-click id="infoDialog">
-            <span slot="headline">About</span>
-            <span slot="description">This webapp allows to experiment with the 2D models presented in the paper
-                <i>Modeling diffusion in complex media through Physically Informed Neural Networks</i>. The goal of the
-                paper was the simulation of variable mixed fluid-porous domains using Physics Informed Neural
-                Networks.<br>
-                The predictions are computed using the Physics Informed PointNet or the Physics Informed PointNet++.<br>
-                Both the predictions obtained from the models and the ground truth simulations
-                resulting from OpenFOAM are available, together with the Mean Absolute Error and the Navier-Stokes-Darcy
-                equations
-                residuals, calculated using autograd.<br>
-                The source code of the project is available on <a
-                    href="https://github.com/Gallinator/porous-cfd">GitHub</a>.<br><br>
-                © 2025 Ciceri Luigi
-            </span>
-        </mdui-dialog>
     </mdui-layout>
     <script src="../js/inference.js"></script>
 </body>

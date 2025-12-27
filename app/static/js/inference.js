@@ -1,9 +1,5 @@
 document.getElementById("backIcon").addEventListener("click", () => history.back())
 
-let infoDialog = document.getElementById("infoDialog")
-
-document.getElementById("infoIcon").addEventListener("click", () => infoDialog.open = true)
-
 let predictedIcon = document.getElementById("predictedIcon")
 let trueIcon = document.getElementById("trueIcon")
 let errorIcon = document.getElementById("errorIcon")

@@ -1,5 +1,7 @@
 let uuid = self.crypto.randomUUID();
 
+let infoDialog = document.getElementById("infoDialog")
+
 let myDiv = document.getElementById("myDiv")
 
 function mdColorToPlotly(color) {
@@ -96,6 +98,17 @@ curveEditor.onupdate = function () {
   controlData.x = controlPoints.x
   controlData.y = controlPoints.y
   Plotly.redraw('myDiv')
+}
+
+document.getElementById("infoDialogAcceptButton").addEventListener("click", () => {
+  infoDialog.open = false
+  curveEditor.enabled = true
+})
+
+if (sessionStorage.getItem("isFirstLaunch") == null) {
+  infoDialog.open = true
+  curveEditor.enabled = false
+  sessionStorage.setItem("isFirstLaunch", "false")
 }
 
 menuIcon.addEventListener("click", () => {

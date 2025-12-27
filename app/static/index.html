@@ -3,6 +3,9 @@
 
 <head>
     <title>Porous CFD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css">
     <link rel="stylesheet" href="./css/styles.css">
@@ -79,6 +82,35 @@
                 corners.</span>
             <div style="width: 100%;">
                 <mdui-button id="errorDialogAcceptButton" variant="text" style="float: right;">OK</mdui-button>
+            </div>
+        </mdui-dialog>
+
+        <mdui-dialog id="infoDialog">
+            <span slot="headline">About</span>
+            <span slot="description">This webapp allows to experiment with the 2D models presented in the paper
+                <i>Modeling diffusion in complex media through Physically Informed Neural Networks</i>.<br> The goal of the
+                paper was the simulation of variable mixed fluid-porous domains using Physics Informed Neural
+                Networks.<br>
+                The predictions are computed using the Physics Informed PointNet or the Physics Informed PointNet++.<br>
+                Both the predictions obtained from the models and the ground truth simulations
+                resulting from OpenFOAM are available, together with the Mean Absolute Error and the Navier-Stokes-Darcy
+                equations
+                residuals, calculated using autograd.<br>
+                To draw a custom porous object:
+                <ul>
+                    <li>Drag the control points to set the shape</li>
+                    <li>Right click to add a new control point</li>
+                    <li>CTRL-Right click to delete a control point</li>
+                </ul>
+                © 2025 Ciceri Luigi
+            </span>
+            <div style="display: flex; width: 100%; justify-content: center;">
+                <a href="https://github.com/Gallinator/porous-cfd" class="button-icon">
+                    <i class="fa-brands fa-github fa-xl" style="float: center;"></i>
+                </a>
+            </div>
+            <div style="width: 100%;">
+                <mdui-button id="infoDialogAcceptButton" variant="text" style="float: right;">Got it!</mdui-button>
             </div>
         </mdui-dialog>
     </div>

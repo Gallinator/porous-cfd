@@ -179,37 +179,65 @@ class CurveEditor {
 
             let clickedPoint = getPlotPos(this.div, event)
 
-            let minDist = Number.MAX_VALUE
-            let minId = 0
-
-            let nControls = this.curve.closed ? this.curve.controlPoints.length - this.curve.degree : this.curve.controlPoints.length
-
-            for (let i = 0; i < nControls; i++) {
-                let p = this.curve.controlPoints[i]
-                let dist = this.getDistance(clickedPoint, p)
-                if (dist < minDist) {
-                    minDist = dist
-                    minId = i
-                }
+            if (this.isDeleteKeyDown) {
+                if (this.curve.controlPoints.length - this.curve.degree == 3)
+                    return
+                this.deletePoint(clickedPoint)
             }
+            else
+                this.insertPoint(clickedPoint)
 
-            let nextP = this.curve.controlPoints[(minId + 1) % nControls]
-            let prevP = this.curve.controlPoints[(minId - 1 + nControls) % nControls]
-            let minP = this.curve.controlPoints[minId]
-
-            let nextVec = { x: nextP.x - minP.x, y: nextP.y - minP.y }
-            let prevVec = { x: minP.x - prevP.x, y: minP.y - prevP.y }
-            let halfVec = { x: (nextVec.x + prevVec.x) / 2, y: (nextVec.y + prevVec.y) / 2 }
-            let clickedVec = { x: clickedPoint.x - minP.x, y: clickedPoint.y - minP.y }
-            
-            let dot = halfVec.x * clickedVec.x + halfVec.y * clickedVec.y
-
-            if (dot > 0)
-                minId = (minId + 1) % nControls
-
-            this.curve.addControlPoint(new Point(clickedPoint.x, clickedPoint.y), minId);
             this.onupdate();
         });
+    }
+
+    deletePoint(clickedPoint) {
+        let minDist = Number.MAX_VALUE
+        let minId = 0
+        let nControls = this.curve.closed ? this.curve.controlPoints.length - this.curve.degree : this.curve.controlPoints.length
+
+        for (let i = 0; i < nControls; i++) {
+            let p = this.curve.controlPoints[i]
+            let dist = this.getDistance(clickedPoint, p)
+            if (dist < minDist) {
+                minDist = dist
+                minId = i
+            }
+        }
+
+        this.curve.deleteControlPoint(minId)
+    }
+
+    insertPoint(clickedPoint) {
+        let minDist = Number.MAX_VALUE
+        let minId = 0
+
+        let nControls = this.curve.closed ? this.curve.controlPoints.length - this.curve.degree : this.curve.controlPoints.length
+
+        for (let i = 0; i < nControls; i++) {
+            let p = this.curve.controlPoints[i]
+            let dist = this.getDistance(clickedPoint, p)
+            if (dist < minDist) {
+                minDist = dist
+                minId = i
+            }
+        }
+
+        let nextP = this.curve.controlPoints[(minId + 1) % nControls]
+        let prevP = this.curve.controlPoints[(minId - 1 + nControls) % nControls]
+        let minP = this.curve.controlPoints[minId]
+
+        let nextVec = { x: nextP.x - minP.x, y: nextP.y - minP.y }
+        let prevVec = { x: minP.x - prevP.x, y: minP.y - prevP.y }
+        let halfVec = { x: (nextVec.x + prevVec.x) / 2, y: (nextVec.y + prevVec.y) / 2 }
+        let clickedVec = { x: clickedPoint.x - minP.x, y: clickedPoint.y - minP.y }
+
+        let dot = halfVec.x * clickedVec.x + halfVec.y * clickedVec.y
+
+        if (dot > 0)
+            minId = (minId + 1) % nControls
+
+        this.curve.addControlPoint(new Point(clickedPoint.x, clickedPoint.y), minId);
     }
 
     getDistance(p1, p2) {

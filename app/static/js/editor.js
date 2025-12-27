@@ -12,6 +12,7 @@ const example = document.getElementById("baseContainer");
 const navigationDrawer = example.querySelector("mdui-navigation-drawer");
 const menuIcon = document.getElementById("menuIcon");
 const acceptIcon = document.getElementById("acceptIcon")
+const infoIcon = document.getElementById("infoIcon")
 const splineDegreeSlider = document.getElementById("splineDegreeSlider")
 const splinePointsSlider = document.getElementById("splinePointsSlider")
 const modelSelector = document.getElementById("modelSelector")
@@ -110,6 +111,11 @@ if (sessionStorage.getItem("isFirstLaunch") == null) {
   curveEditor.enabled = false
   sessionStorage.setItem("isFirstLaunch", "false")
 }
+
+infoIcon.addEventListener("click", () => {
+  infoDialog.open = true
+  curveEditor.enabled = false
+})
 
 menuIcon.addEventListener("click", () => {
   navigationDrawer.open = true

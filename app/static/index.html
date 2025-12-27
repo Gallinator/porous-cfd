@@ -22,6 +22,7 @@
             <mdui-top-app-bar-title>Porous object drawer</mdui-top-app-bar-title>
             <div style="flex-grow: 1"></div>
             <mdui-button-icon id="acceptIcon" icon="check--rounded"></mdui-button-icon>
+            <mdui-button-icon id="infoIcon" icon="info--rounded"></mdui-button-icon>
         </mdui-top-app-bar>
 
         <mdui-navigation-drawer modal close-on-esc close-on-overlay-click contained>
@@ -88,7 +89,8 @@
         <mdui-dialog id="infoDialog">
             <span slot="headline">About</span>
             <span slot="description">This webapp allows to experiment with the 2D models presented in the paper
-                <i>Modeling diffusion in complex media through Physically Informed Neural Networks</i>.<br> The goal of the
+                <i>Modeling diffusion in complex media through Physically Informed Neural Networks</i>.<br> The goal of
+                the
                 paper was the simulation of variable mixed fluid-porous domains using Physics Informed Neural
                 Networks.<br>
                 The predictions are computed using the Physics Informed PointNet or the Physics Informed PointNet++.<br>

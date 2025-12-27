@@ -1,4 +1,6 @@
+import os.path
 import shutil
+import traceback
 from multiprocessing import Process
 import numpy as np
 import torch
@@ -170,6 +172,10 @@ async def predict(input_data: Predict2dInput):
         return {"raw_data": raw_data, "grid_data": grid_data}
     except:
         traceback.print_exc()
+
+        if os.path.exists(session_dir):
+            shutil.rmtree(session_dir)
+
         raise HTTPException(status_code=500)
 
 

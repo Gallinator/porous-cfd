@@ -173,6 +173,10 @@ class CurveEditor {
         });
     }
 
+    getDistance(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
+    }
+
     isWithinThreshold(pointer, tgt) {
         return Math.abs(pointer.x - tgt.x) < this.selectThreshold && Math.abs(pointer.y - tgt.y) < this.selectThreshold
     }

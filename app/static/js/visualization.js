@@ -123,8 +123,18 @@ class CurveEditor {
         this.enabled = true
         this.moving = false
         this.movingId = false
+        this.isDeleteKeyDown = false
 
         this.handler = { onupdate: () => { } }
+
+        this.div.ownerDocument.addEventListener("keydown", (event) => {
+            if (event.ctrlKey)
+                this.isDeleteKeyDown = true
+        })
+        this.div.ownerDocument.addEventListener("keyup", (event) => {
+            if (event.ctrlKey)
+                this.isDeleteKeyDown = false
+        })
 
         this.div.ownerDocument.addEventListener("mousedown", (evt) => {
             if (!isInsidePlot(this.div, evt) || !this.enabled) return

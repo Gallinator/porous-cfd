@@ -38,6 +38,12 @@ class BSpline {
         this.knots = this.createKnots()
     };
 
+    deleteControlPoint(id) {
+        this.controlPoints.splice(id, 1)
+        this.updateOverlappingControlPoints()
+        this.knots = this.createKnots()
+    }
+
     moveControlPoint(i, posX, posY) {
         this.controlPoints[i].x = posX
         this.controlPoints[i].y = posY

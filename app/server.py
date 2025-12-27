@@ -71,7 +71,7 @@ openfoam_cmd = f'{settings.openfoam_dir}/etc/openfoam'
 
 
 @app.post("/predict", summary="Predict flow from porous object", response_model=dict[str, Response2d])
-def predict(input_data: Predict2dInput):
+async def predict(input_data: Predict2dInput):
     session_dir = f"sessions/{input_data.uuid}"
 
     try:

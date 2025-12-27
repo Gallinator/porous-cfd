@@ -72,9 +72,9 @@ openfoam_cmd = f'{settings.openfoam_dir}/etc/openfoam'
 
 @app.post("/predict", summary="Predict flow from porous object", response_model=dict[str, Response2d])
 def predict(input_data: Predict2dInput):
-    try:
-        session_dir = f"sessions/{input_data.uuid}"
+    session_dir = f"sessions/{input_data.uuid}"
 
+    try:
         # Generate mesh using a new process due to blender import issues
         predict_process = Process(target=generate_f, args=(input_data, session_dir))
         predict_process.start()

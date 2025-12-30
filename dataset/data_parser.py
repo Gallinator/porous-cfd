@@ -129,7 +129,7 @@ def parse_internal_fields(case_dir: str, *fields, max_dim=3) -> DataFrame:
     fields_df = DataFrame()
 
     if 'C' in fields:
-        fields_df = add_multidim_field(fields_df, 'C', last_step.cell_centers().internal_field, max_dim)
+        fields_df = add_multidim_field(fields_df, 'C', last_step["C"].internal_field, max_dim)
 
     cell_to_region = make_column(case[0]['cellToRegion'].internal_field)
     if 'cellToRegion' in fields:

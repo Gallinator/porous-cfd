@@ -155,7 +155,10 @@ class FoamDataset(Dataset):
         self.min_boundary = sum([self.min_points[k] for k in self.min_points.keys() if k != 'internal'])
 
         self.check_sample_size()
-        self.data = [self.load_case(str(case)) for case in track(self.samples, description='Loading data into memory')]
+
+        self.data = []
+        for case in track(self.samples, description='Loading data into memory'):
+            self.data.append(self.load_case(str(case)))
 
     def check_sample_size(self):
         """

@@ -58,6 +58,19 @@ class Generator2DBase(DataGeneratorBase):
         scales_y = parse_values(scale_dict['y'])
         return list(itertools.product(scales_x, scales_y))
 
+    def parse_position_jitter(self, jitter_dict: dict) -> list[list[float]]:
+        """
+        Parse the position jitter values, defined as (min,max).
+        Supports defining separate x and y ranges, a single xy range, empty list () and no jitter dictionary.
+        """
+        if not jitter_dict or [] in jitter_dict.values():
+            return [[0, 0], [0, 0]]
+
+        if 'xy' in jitter_dict:
+            return [jitter_dict["xy"], jitter_dict["xy"]]
+
+        return [jitter_dict["x"], jitter_dict["y"]]
+
     def parse_angles(self, config: dict) -> list:
         """
         Parse a generic angle defined as (min,max,n_angles) from transforms.json. If no angle is found 0 is returned.

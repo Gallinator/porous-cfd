@@ -30,6 +30,7 @@ class Generator2DVariable(Generator2DBase):
                 self.import_mesh(f'{meshes_dir}/{mesh}')
                 rotations = self.parse_rotations(transforms['rotation'])
                 scales = self.parse_scale(transforms['scale'])
+                jitter_x, jitter_y = self.parse_position_jitter(transforms.get("jitter", None))
                 params = list(itertools.product(rotations, scales))
                 for r, s in params:
                     if len(params) > 1 and rng.random() > self.drop_p:
@@ -46,7 +47,7 @@ class Generator2DVariable(Generator2DBase):
                     bpy.ops.object.editmode_toggle()
                     bpy.ops.mesh.select_all(action='SELECT')
 
-                    offset = (rng.random() * 0.15, (rng.random() - 0.5) * 2 * 0.1)
+                    offset = (self.get_random_in_range(*jitter_x, rng), self.get_random_in_range(*jitter_y, rng))
                     bpy.ops.transform.translate(value=(*offset, 0),
                                                 orient_type='GLOBAL')
                     bpy.ops.object.editmode_toggle()
@@ -65,6 +66,7 @@ class Generator2DVariable(Generator2DBase):
     def generate_openfoam_cases(self, meshes_dir: Path, dest_dir: Path, case_config_dir: Path, rng: Random):
         with open(f'{case_config_dir}/config.json', 'r') as config:
             config = json.load(config)['cfd params']
+            jitter_config = config.get("jitter", None)
             params = list(itertools.product(config['inlet'], config['coeffs']))
             inlet_angles = self.parse_angles(config)
             for inlet_u, coeffs in params:
@@ -74,12 +76,16 @@ class Generator2DVariable(Generator2DBase):
                         continue
                     d = coeffs['d']
                     f = coeffs['f']
-                    random_inlet_u = inlet_u + (rng.random() - 0.5) * 2 * 0.015
+
+                    if jitter_config and "inlet" in jitter_config:
+                        inlet_u += + self.get_random_in_range(-jitter_config["inlet"] / 2, jitter_config["inlet"] / 2,
+                                                              rng)
+
                     inlet_angle = min(inlet_angles) + (max(inlet_angles) - min(inlet_angles)) * rng.random()
                     inlet_angle_rad = math.radians(inlet_angle)
-                    u_x, u_y = random_inlet_u * math.cos(inlet_angle_rad), random_inlet_u * math.sin(inlet_angle_rad)
+                    u_x, u_y = inlet_u * math.cos(inlet_angle_rad), inlet_u * math.sin(inlet_angle_rad)
 
-                    case_path = f"{dest_dir}/{Path(m).stem}_d{d[0]}_{f[0]}_in{random_inlet_u:.4f}_a{inlet_angle:.2f}"
+                    case_path = f"{dest_dir}/{Path(m).stem}_d{d[0]}_{f[0]}_in{inlet_u:.4f}_a{inlet_angle:.2f}"
                     shutil.copytree(self.case_template_dir, case_path)
                     shutil.copyfile(m, f"{case_path}/snappyHexMesh/constant/triSurface/mesh.obj")
 

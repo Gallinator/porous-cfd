@@ -81,7 +81,7 @@ class Generator2DVariable(Generator2DBase):
                         inlet_u += + self.get_random_in_range(-jitter_config["inlet"] / 2, jitter_config["inlet"] / 2,
                                                               rng)
 
-                    inlet_angle = min(inlet_angles) + (max(inlet_angles) - min(inlet_angles)) * rng.random()
+                    inlet_angle = self.get_random_in_range(min(inlet_angles), max(inlet_angles), rng)
                     inlet_angle_rad = math.radians(inlet_angle)
                     u_x, u_y = inlet_u * math.cos(inlet_angle_rad), inlet_u * math.sin(inlet_angle_rad)
 

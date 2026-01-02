@@ -64,7 +64,7 @@ class Generator3DBase(DataGeneratorBase):
         """
         for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
             process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       stdout=subprocess.DEVNULL, text=True)
+                                       stdout=subprocess.DEVNULL, text=True, start_new_session=True)
             process.communicate(f"{case}/Run")
             process.wait()
             if process.returncode != 0:

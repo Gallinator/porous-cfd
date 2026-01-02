@@ -96,7 +96,7 @@ class Generator2DBase(DataGeneratorBase):
         """
         for case in track(glob.glob(f"{split_dir}/*"), description="Generating geometries"):
             process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       stdout=subprocess.DEVNULL, text=True)
+                                       stdout=subprocess.DEVNULL, text=True, start_new_session=True)
             process.communicate(f"{case}/snappyHexMesh/Run")
             process.wait()
             if process.returncode != 0:
@@ -104,7 +104,7 @@ class Generator2DBase(DataGeneratorBase):
 
         for case in track(glob.glob(f"{split_dir}/*"), description="Running cases"):
             process = subprocess.Popen(self.openfoam_bin, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       stdout=subprocess.DEVNULL, text=True)
+                                       stdout=subprocess.DEVNULL, text=True, start_new_session=True)
             process.communicate(f"{case}/simpleFoam/Run")
             process.wait()
             if process.returncode != 0:

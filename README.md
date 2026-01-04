@@ -8,6 +8,8 @@ The models are trained with losses enforcing the Navier-Stokes-Darcy equations c
 
 A selection of 2D and 3D experiments can be run both locally and on SLURM clusters with Singularity.
 
+## Demo
+A demo web app allows to experiment with the 2D models. It is available on [Hugging Face Spaces](https://huggingface.co/spaces/Gallinator/porous-cfd).
 
  ## Quick start
 - #### Install [OpenFOAM 2412](https://develop.openfoam.com/Development/openfoam/-/wikis/precompiled/)

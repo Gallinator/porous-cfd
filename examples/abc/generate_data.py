@@ -9,7 +9,7 @@ def run():
     data_root = Path(args.data_root_dir)
     data_root.mkdir(exist_ok=True, parents=True)
     if not args.meta_only:
-        download_from_gdrive('1pOGB9vO_Jf3YeRemJSs0yC5nBBKZcRTH&confirm', 'assets/Abc.tar.gz')
+        download_from_gdrive('1KPM2IvOa8YUUtt7yHfVA551xKat2Mdzx&confirm', 'assets/Abc.tar.gz')
         extract('assets/Abc.tar.gz', 'assets/meshes/standard')
 
     openfoam_cmd = f'{args.openfoam_dir}/etc/openfoam'

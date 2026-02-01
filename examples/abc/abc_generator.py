@@ -8,7 +8,7 @@ import bpy
 import mathutils
 import numpy as np
 from bpy import ops
-from bpy.typing import Object
+from bpy.types import Object
 from datagen.generator_3d import Generator3DBase
 
 

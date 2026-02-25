@@ -1,6 +1,6 @@
 # Modeling diffusion in complex media through Physically Informed Neural Networks
-Official implementation of the paper *Geometry-Aware Physics-Informed PointNets
-for Modeling Flows Across Porous Structures* accepted at the MEDES 25 conference. 
+Official implementation of the paper ["Geometry-Aware Physics-Informed PointNets for Modeling Flows Across Porous Structures
+"](https://arxiv.org/abs/2602.14108) accepted at the MEDES 25 conference. 
 
 It is possible to simulate mixed fluid-porous fluid domains using PIPN (Physics Informed Pointnet), PIPN++, PI-GANO (Physics Informed Geometry Aware Neural Operator) and PI-GANO++ architectures.
 

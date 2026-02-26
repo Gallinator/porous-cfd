@@ -14,7 +14,7 @@ class FoamData:
     Supports batched data tensors.
     """
 
-    def __init__(self, data: Tensor, labels: dict[str:Tensor], domain: dict[str:(list | None)]):
+    def __init__(self, data: Tensor, labels: dict[str:(list | None)], domain: dict[str:Tensor]):
         """
         :param data: Tensor of shape (B,N,D) or (N,D)
         :param labels: Dictionary of labels.

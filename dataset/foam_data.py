@@ -79,3 +79,12 @@ class FoamData:
         new_data = self.data.to(*args, **kwargs)
         new_domain = {d: s.to(*args, **kwargs) for d, s in self.domain.items()}
         return FoamData(new_data, self.labels, new_domain)
+
+    def detach(self):
+        """
+        Calls detach() on the underlying tensors.
+        :return: A copy of this FoamData.
+        """
+        new_data = self.data.detach()
+        new_domain = {d: s.detach() for d, s in self.domain.items()}
+        return FoamData(new_data, self.labels, new_domain)
